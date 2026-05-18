@@ -60,6 +60,26 @@ def test_image_buffer_rejects_wrong_byte_length() -> None:
         ImageBuffer(width=2, height=1, channels=3, encoding=ImageEncoding.RGB8, data=b"short")
 
 
+def test_image_buffer_rejects_rgb8_wrong_channels() -> None:
+    with pytest.raises(ValueError, match="RGB8"):
+        ImageBuffer(width=2, height=1, channels=1, encoding=ImageEncoding.RGB8, data=b"\x00\x00")
+
+
+def test_image_buffer_rejects_depth_f32_wrong_channels() -> None:
+    with pytest.raises(ValueError, match="DEPTH_F32"):
+        ImageBuffer(width=2, height=1, channels=3, encoding=ImageEncoding.DEPTH_F32, data=b"\x00" * 24)
+
+
+def test_image_buffer_coerces_bytearray_data_to_bytes() -> None:
+    payload = bytearray(b"\x00\x00\x00\xff\xff\xff")
+    image = ImageBuffer(width=2, height=1, channels=3, encoding=ImageEncoding.RGB8, data=payload)
+
+    payload[0] = 0x7F
+
+    assert isinstance(image.data, bytes)
+    assert image.data == b"\x00\x00\x00\xff\xff\xff"
+
+
 def test_multi_view_observation_requires_matching_timestamps() -> None:
     first = CameraObservation(
         camera_id="front",
@@ -84,7 +104,7 @@ def test_multi_view_observation_accepts_distinct_camera_ids() -> None:
     timestamp = Timestamp.from_seconds(3.0)
     observation = MultiViewObservation(
         timestamp=timestamp,
-        views=(
+        views=[
             CameraObservation(
                 camera_id="front",
                 timestamp=timestamp,
@@ -99,7 +119,8 @@ def test_multi_view_observation_accepts_distinct_camera_ids() -> None:
                 intrinsics=_intrinsics(),
                 color=_rgb(),
             ),
-        ),
+        ],
     )
 
+    assert observation.views == (observation.views[0], observation.views[1])
     assert observation.camera_ids == ("front", "left")

@@ -24,12 +24,17 @@ class ImageBuffer:
     data: bytes
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "data", bytes(self.data))
         if self.width <= 0:
             raise ValueError("ImageBuffer width must be positive")
         if self.height <= 0:
             raise ValueError("ImageBuffer height must be positive")
         if self.channels <= 0:
             raise ValueError("ImageBuffer channels must be positive")
+        if self.encoding is ImageEncoding.RGB8 and self.channels != 3:
+            raise ValueError("ImageBuffer RGB8 encoding requires 3 channels")
+        if self.encoding is ImageEncoding.DEPTH_F32 and self.channels != 1:
+            raise ValueError("ImageBuffer DEPTH_F32 encoding requires 1 channel")
         bytes_per_channel = 4 if self.encoding is ImageEncoding.DEPTH_F32 else 1
         expected_length = self.width * self.height * self.channels * bytes_per_channel
         if len(self.data) != expected_length:
@@ -60,6 +65,7 @@ class MultiViewObservation:
     views: tuple[CameraObservation, ...]
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "views", tuple(self.views))
         if not self.views:
             raise ValueError("MultiViewObservation requires at least one camera view")
         for view in self.views:
