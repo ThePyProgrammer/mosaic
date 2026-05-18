@@ -44,6 +44,18 @@ def test_camera_intrinsics_project_point() -> None:
     assert pixel.v == 440.5
 
 
+def test_camera_intrinsics_project_uses_optical_frame_axes() -> None:
+    intrinsics = _intrinsics()
+    center = intrinsics.project((0.0, 0.0, 4.0))
+    positive_x = intrinsics.project((1.0, 0.0, 4.0))
+    positive_y = intrinsics.project((0.0, 1.0, 4.0))
+
+    assert positive_x.u > center.u
+    assert positive_x.v == center.v
+    assert positive_y.u == center.u
+    assert positive_y.v > center.v
+
+
 def test_camera_intrinsics_rejects_non_positive_depth_projection() -> None:
     with pytest.raises(ValueError, match="non-positive depth"):
         _intrinsics().project((0.0, 0.0, 0.0))

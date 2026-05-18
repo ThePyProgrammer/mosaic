@@ -31,6 +31,13 @@ class CameraIntrinsics:
             raise ValueError("CameraIntrinsics cy must be within image height")
 
     def project(self, point_camera: tuple[float, float, float]) -> Pixel:
+        """Project camera optical-frame coordinates into pixel coordinates.
+
+        The input tuple is expressed in a camera optical frame: +z forward is
+        positive depth, +x right increases u, and +y down increases v.
+        Points with non-positive depth are rejected.
+        """
+
         x, y, z = point_camera
         if z <= 0.0:
             raise ValueError("Cannot project point with non-positive depth")
