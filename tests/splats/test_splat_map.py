@@ -50,6 +50,39 @@ def test_gaussian_splat_coerces_mutable_sequence_inputs() -> None:
     assert isinstance(splat.color_rgb, tuple)
 
 
+def test_gaussian_splat_covariance_upper_reconstructs_symmetric_matrix() -> None:
+    splat = GaussianSplat(
+        center=(0.0, 0.0, 0.0),
+        covariance_upper=(1.0, 0.2, 0.3, 2.0, 0.4, 3.0),
+    )
+    xx, xy, xz, yy, yz, zz = splat.covariance_upper
+
+    covariance_matrix = (
+        (xx, xy, xz),
+        (xy, yy, yz),
+        (xz, yz, zz),
+    )
+
+    assert covariance_matrix == (
+        (1.0, 0.2, 0.3),
+        (0.2, 2.0, 0.4),
+        (0.3, 0.4, 3.0),
+    )
+
+
+def test_gaussian_splat_accepts_non_diagonal_positive_definite_covariance() -> None:
+    covariance_upper = (1.0, 0.2, 0.3, 2.0, 0.4, 3.0)
+
+    splat = GaussianSplat(center=(0.0, 0.0, 0.0), covariance_upper=covariance_upper)
+
+    assert splat.covariance_upper == covariance_upper
+
+
+def test_gaussian_splat_docstring_states_covariance_layout() -> None:
+    assert GaussianSplat.__doc__ is not None
+    assert "(xx, xy, xz, yy, yz, zz)" in GaussianSplat.__doc__
+
+
 def test_gaussian_splat_rejects_non_positive_definite_covariance() -> None:
     with pytest.raises(ValueError, match="positive definite"):
         GaussianSplat(
