@@ -30,6 +30,16 @@ def test_camera_rig_exposes_camera_ids_in_order() -> None:
     assert rig.camera("left").pose.child_frame == FrameId("camera/left")
 
 
+def test_camera_rig_freezes_input_cameras_sequence() -> None:
+    cameras = [CameraMount(camera_id="front", pose=_pose("camera/front"), intrinsics=_intrinsics())]
+
+    rig = CameraRig(frame=FrameId("base_link"), cameras=cameras)
+    cameras.append(CameraMount(camera_id="left", pose=_pose("camera/left"), intrinsics=_intrinsics()))
+
+    assert isinstance(rig.cameras, tuple)
+    assert rig.camera_ids == ("front",)
+
+
 def test_camera_rig_rejects_duplicate_camera_ids() -> None:
     with pytest.raises(ValueError, match="unique"):
         CameraRig(

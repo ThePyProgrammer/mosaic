@@ -34,6 +34,7 @@ class CameraRig:
     cameras: tuple[CameraMount, ...]
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "cameras", tuple(self.cameras))
         if not self.cameras:
             raise ValueError("CameraRig requires at least one camera")
         camera_ids = [camera.camera_id for camera in self.cameras]
