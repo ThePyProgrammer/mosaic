@@ -18,6 +18,14 @@ from mosaic.artifacts.core import (
     translation3_from_artifact,
     translation3_to_artifact,
 )
+from mosaic.artifacts.evaluation import (
+    benchmark_artifact_from_artifact,
+    benchmark_artifact_to_artifact,
+    metric_result_from_artifact,
+    metric_result_to_artifact,
+    regression_result_from_artifact,
+    regression_result_to_artifact,
+)
 from mosaic.artifacts.schema import ArtifactDict, SCHEMA_VERSION, make_artifact, require_artifact
 from mosaic.artifacts.slam import splat_slam_update_from_artifact, splat_slam_update_to_artifact
 from mosaic.artifacts.splats import (
@@ -30,6 +38,8 @@ from mosaic.artifacts.splats import (
 __all__ = [
     "ArtifactDict",
     "SCHEMA_VERSION",
+    "benchmark_artifact_from_artifact",
+    "benchmark_artifact_to_artifact",
     "camera_intrinsics_from_artifact",
     "camera_intrinsics_to_artifact",
     "camera_observation_from_artifact",
@@ -41,12 +51,16 @@ __all__ = [
     "image_buffer_from_artifact",
     "image_buffer_to_artifact",
     "make_artifact",
+    "metric_result_from_artifact",
+    "metric_result_to_artifact",
     "multiview_observation_from_artifact",
     "multiview_observation_to_artifact",
     "pose3_from_artifact",
     "pose3_to_artifact",
     "quaternion_from_artifact",
     "quaternion_to_artifact",
+    "regression_result_from_artifact",
+    "regression_result_to_artifact",
     "require_artifact",
     "splat_map_from_artifact",
     "splat_map_to_artifact",

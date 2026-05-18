@@ -2,8 +2,18 @@ import json
 
 import pytest
 
-from mosaic.artifacts import splat_slam_update_from_artifact, splat_slam_update_to_artifact
+from mosaic.artifacts import (
+    benchmark_artifact_from_artifact,
+    benchmark_artifact_to_artifact,
+    metric_result_from_artifact,
+    metric_result_to_artifact,
+    regression_result_from_artifact,
+    regression_result_to_artifact,
+    splat_slam_update_from_artifact,
+    splat_slam_update_to_artifact,
+)
 from mosaic.core import FrameId, Pose3, Quaternion, Timestamp, Translation3
+from mosaic.evaluation import BenchmarkArtifact, MetricResult, RegressionResult, write_benchmark_artifact
 from mosaic.slam import SplatSlamUpdate, TrackingState
 from mosaic.splats import GaussianSplat, SplatMap
 
@@ -85,3 +95,98 @@ def test_splat_slam_update_artifact_rejects_unknown_schema_version() -> None:
 
     with pytest.raises(ValueError, match="schema_version"):
         splat_slam_update_from_artifact(artifact)
+
+
+def test_metric_result_artifact_round_trips() -> None:
+    metric = MetricResult(name="splat_count", value=2.0, unit="splats")
+
+    artifact = metric_result_to_artifact(metric)
+    restored = metric_result_from_artifact(artifact)
+
+    assert artifact["schema"] == "mosaic.metric_result"
+    assert artifact["payload"] == {"name": "splat_count", "value": 2.0, "unit": "splats"}
+    assert restored == metric
+
+
+def test_regression_result_artifact_round_trips() -> None:
+    result = RegressionResult(metric_name="splat_count", passed=True, observed=2.0, threshold=1.0)
+
+    artifact = regression_result_to_artifact(result)
+    restored = regression_result_from_artifact(artifact)
+
+    assert artifact["schema"] == "mosaic.regression_result"
+    assert restored == result
+
+
+def test_regression_result_artifact_preserves_missing_observed_value() -> None:
+    result = RegressionResult(metric_name="splat_count", passed=False, observed=None, threshold=1.0)
+
+    artifact = regression_result_to_artifact(result)
+    restored = regression_result_from_artifact(artifact)
+
+    assert artifact["payload"]["observed"] is None
+    assert restored.observed is None
+
+
+def test_benchmark_artifact_as_dict_is_not_general_schema_envelope() -> None:
+    artifact = _benchmark_artifact()
+
+    serialized = artifact.as_dict()
+
+    assert serialized == {
+        "scenario_name": "scenario",
+        "backend_name": "backend",
+        "backend_metadata": {"name": "backend"},
+        "update_count": 1,
+        "metrics": [{"name": "splat_count", "value": 1.0, "unit": "splats"}],
+        "diagnostics": {"snapshot_splat_count": 1},
+        "failure_classification": "none",
+    }
+    assert "schema" not in serialized
+    assert "schema_version" not in serialized
+    assert "payload" not in serialized
+
+
+def test_benchmark_artifact_wrapper_uses_explicit_schema_envelope() -> None:
+    artifact = _benchmark_artifact()
+
+    envelope = benchmark_artifact_to_artifact(artifact)
+    restored = benchmark_artifact_from_artifact(envelope)
+
+    assert envelope["schema"] == "mosaic.benchmark_artifact"
+    assert envelope["schema_version"] == 1
+    assert envelope["payload"] == artifact.as_dict()
+    assert restored == artifact
+
+
+def test_write_benchmark_artifact_keeps_narrow_deterministic_json(tmp_path) -> None:
+    artifact = _benchmark_artifact()
+    path = tmp_path / "artifact.json"
+
+    write_benchmark_artifact(artifact, path)
+
+    text = path.read_text()
+    assert json.loads(text) == artifact.as_dict()
+    assert "schema" not in json.loads(text)
+    assert text.startswith("{\n  \"backend_metadata\"")
+    assert text.endswith("\n")
+
+
+def test_evaluation_artifact_rejects_unknown_schema_version() -> None:
+    artifact = metric_result_to_artifact(MetricResult(name="splat_count", value=2.0, unit="splats"))
+    artifact["schema_version"] = 2
+
+    with pytest.raises(ValueError, match="schema_version"):
+        metric_result_from_artifact(artifact)
+
+
+def _benchmark_artifact() -> BenchmarkArtifact:
+    return BenchmarkArtifact(
+        scenario_name="scenario",
+        backend_name="backend",
+        update_count=1,
+        metrics=[{"name": "splat_count", "value": 1.0, "unit": "splats"}],
+        backend_metadata={"name": "backend"},
+        diagnostics={"snapshot_splat_count": 1},
+        failure_classification="none",
+    )
