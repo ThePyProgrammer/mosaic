@@ -121,6 +121,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BASE-02 | Phase 1 | Pending |
 | BASE-03 | Phase 1 | Pending |
 | BASE-04 | Phase 1 | Pending |
+| FUSE-01 | Phase 1 | Pending |
+| FUSE-03 | Phase 1 | Pending |
+| EVAL-01 | Phase 1 | Pending |
+| EVAL-03 | Phase 1 | Pending |
+| AGNT-01 | Phase 1 | Pending |
+| AGNT-03 | Phase 1 | Pending |
 | SEM-01 | Phase 2 | Pending |
 | SEM-02 | Phase 2 | Pending |
 | SEM-03 | Phase 2 | Pending |
@@ -130,18 +136,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BACK-02 | Phase 3 | Pending |
 | BACK-03 | Phase 3 | Pending |
 | BACK-04 | Phase 3 | Pending |
-| FUSE-01 | Phase 4 | Pending |
 | FUSE-02 | Phase 4 | Pending |
-| FUSE-03 | Phase 4 | Pending |
 | FUSE-04 | Phase 4 | Pending |
-| EVAL-01 | Phase 5 | Pending |
 | EVAL-02 | Phase 5 | Pending |
-| EVAL-03 | Phase 5 | Pending |
 | EVAL-04 | Phase 5 | Pending |
 | EVAL-05 | Phase 5 | Pending |
-| AGNT-01 | Phase 6 | Pending |
 | AGNT-02 | Phase 6 | Pending |
-| AGNT-03 | Phase 6 | Pending |
 | AGNT-04 | Phase 6 | Pending |
 | REPR-01 | Phase 7 | Pending |
 | REPR-02 | Phase 7 | Pending |
@@ -162,4 +162,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-18*
-*Last updated: 2026-05-18 after roadmap creation*
+*Last updated: 2026-05-18 after worktree-baseline roadmap update*
