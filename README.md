@@ -1,36 +1,132 @@
 # Mosaic
 
-Mosaic is a typed, headless Python library for 3D Gaussian Splatting SLAM over multi-view moving cameras on robotic systems: quadrupeds, UGVs, humanoids, and custom camera rigs.
+Mosaic is a typed, headless Python library for 3D Gaussian Splatting SLAM contracts over multi-view moving cameras on robotic systems. Phase 1 establishes the merged main-checkout baseline: pure-Python representation types, deterministic reference implementations, public package surfaces, tests, and documentation that let later backend, fusion, evaluation, and agent work harden against a known contract.
 
-The library is built around one core idea: robotic world models should be useful to both SLAM backends and intelligent agents. Mosaic treats LLM/LVLM agents as first-class consumers of the representation, not as afterthoughts that scrape raw maps, prompts, or dense splat dumps.
+Mosaic is intentionally library-first. It provides stable Python APIs for robotic SLAM backends, evaluation tools, platform camera rigs, fusion seams, and bounded agent-facing posterior queries without coupling the core package to one robot, simulator, LLM provider, browser runtime, or CUDA-heavy backend; those integrations are deferred and not required for the Phase 1 core.
 
-## Mission
+## Scope
 
-Mosaic provides stable pure-Python contracts for splat-native robotic perception:
+The supported Phase 1 baseline includes:
 
-- frames, timestamps, poses, camera intrinsics, image buffers, and multi-view observations
-- immutable Gaussian splats and `SplatMap` snapshots
-- deterministic replay sequences and fake backend lifecycles
-- robot-neutral platform and camera-rig descriptions
-- splat-native fusion seams that preserve provenance
-- deterministic evaluation artifacts and regression gates
-- bounded agent-facing posterior queries over map state
+- frame, timestamp, pose, camera, image-buffer, and multi-view observation contracts
+- immutable `GaussianSplat` primitives and `SplatMap` snapshots
+- deterministic in-memory multi-view replay sequences
+- `SplatSlamBackend` lifecycle contracts plus `DeterministicSplatBackend` as a reference backend for tests and examples
+- robot-neutral platform, embodiment, camera-rig, registry, and representative preset contracts
+- initial fusion contracts over immutable splat maps using `FusionInput`, `FusionResult`, and `ProvenancePreservingFusion`
+- deterministic synthetic scenarios, benchmark artifacts, and `RegressionGate` checks
+- provider-free agent posterior query contracts including `LocalRadiusQuery` and `SplatPosteriorView`
 
-The long-term goal is to make agents able to perceive, inspect belief, reason over uncertainty and provenance, coordinate with robots, and query memory through typed deterministic APIs. Agents should ask questions of the representation instead of receiving unbounded raw geometry or provider-specific prompt blobs.
+The baseline does not claim production SLAM quality. It nails down typed surfaces and deterministic behavior first, because the real work later is pointless if every backend, evaluator, robot rig, and agent consumer disagrees about the shape of the representation.
 
-## Why agents are first-class citizens
+## Install and Test
 
-Most robotic mapping stacks expose geometry for planners and visualizers first, then bolt on language-agent access later. Mosaic takes a different stance: if agents are expected to reason inside a robot's world model, the representation must expose agent-appropriate views from the start.
+Mosaic targets Python 3.12+ and uses `uv` for the project environment.
 
-In Mosaic, first-class agent access means:
+```bash
+uv sync
+uv run pytest -q
+```
 
-- **Bounded outputs**: agent APIs return typed summaries, local views, counts, provenance, and diagnostics instead of full map dumps by default.
-- **Provider-free contracts**: the core package does not import LLM SDKs, ROS, Habitat, or robot execution dependencies.
-- **Evidence and provenance**: posterior and memory APIs carry source information so downstream agents can explain what they believe and why.
-- **Determinism before autonomy**: queries and evaluation artifacts are designed to be repeatable before real robot or LLM integrations are added.
-- **Representation-native tools**: future agent tools will query spatial/raster memory, scene graphs, text summaries, belief/provenance, commitments, and context through stable Python interfaces.
+The observed merged-main Phase 1 baseline is at least 73 passing tests with:
 
-Current agent-facing APIs include `LocalRadiusQuery`, `SplatQueryResult`, `PosteriorSummary`, `ProvenanceSummary`, and `SplatPosteriorView`.
+```text
+73 passed
+```
+
+The package keeps the Phase 1 runtime boundary empty in `pyproject.toml`:
+
+```toml
+dependencies = []
+```
+
+`pytest` is a development dependency used by the test workflow. Do not add runtime dependency installation steps to use the Phase 1 core package.
+
+## Public API Map
+
+Public imports are exposed from explicit package surfaces. The root `mosaic` package re-exports the stable Phase 1 primitives, while subpackages group the same contracts by responsibility.
+
+| Package surface | Responsibility | Representative APIs |
+|-----------------|----------------|---------------------|
+| `mosaic.core` | Frames, timestamps, poses, cameras, image buffers, and observations | `FrameId`, `Timestamp`, `Pose3`, `CameraIntrinsics`, `MultiViewObservation` |
+| `mosaic.datasets` | Replayable multi-view sequences | `MultiViewSequence`, `InMemorySequence` |
+| `mosaic.splats` | Gaussian primitives and immutable map snapshots | `GaussianSplat`, `SplatMap` |
+| `mosaic.slam` | Backend lifecycle protocols and deterministic reference backend | `SplatSlamBackend`, `SplatSlamUpdate`, `TrackingState`, `DeterministicSplatBackend` |
+| `mosaic.platforms` | Robot-neutral platform descriptions and camera rigs | `CameraRig`, `PlatformRegistry`, `quadruped_front_rig`, `ugv_surround_rig`, `humanoid_stereo_rig` |
+| `mosaic.fusion` | Splat-map fusion contracts and deterministic reference strategy | `FusionInput`, `FusionResult`, `FusionStatus`, `ProvenancePreservingFusion` |
+| `mosaic.evaluation` | Synthetic scenarios, benchmark artifacts, metrics, and regression gates | `synthetic_forward_sequence`, `run_slam_benchmark`, `RegressionGate`, `check_regression_gates` |
+| `mosaic.agents` | Provider-free bounded posterior query contracts | `LocalRadiusQuery`, `SplatQueryResult`, `PosteriorSummary`, `ProvenanceSummary`, `SplatPosteriorView` |
+
+Root imports are intended for concise examples and user-facing smoke checks:
+
+```python
+from mosaic import (
+    DeterministicSplatBackend,
+    FrameId,
+    ProvenancePreservingFusion,
+    RegressionGate,
+    SplatMap,
+    SplatPosteriorView,
+    check_regression_gates,
+    run_slam_benchmark,
+    synthetic_forward_sequence,
+)
+```
+
+## Quick Smoke Examples
+
+Run a deterministic synthetic benchmark and write a local artifact:
+
+```python
+from pathlib import Path
+
+from mosaic import (
+    DeterministicSplatBackend,
+    FrameId,
+    RegressionGate,
+    check_regression_gates,
+    run_slam_benchmark,
+    synthetic_forward_sequence,
+    write_benchmark_artifact,
+)
+
+scenario = synthetic_forward_sequence(frame_count=3)
+backend = DeterministicSplatBackend(map_frame=FrameId("map"))
+artifact = run_slam_benchmark(scenario, backend)
+write_benchmark_artifact(artifact, Path("benchmark.json"))
+results = check_regression_gates(
+    artifact,
+    (RegressionGate(metric_name="splat_count", minimum=3.0),),
+)
+
+assert artifact.scenario_name == "synthetic-forward-3"
+assert all(result.passed for result in results)
+```
+
+Fuse two local splat maps while preserving provenance:
+
+```python
+from mosaic import FrameId, FusionInput, GaussianSplat, ProvenancePreservingFusion, SplatMap
+
+map_frame = FrameId("map")
+left = SplatMap(
+    frame=map_frame,
+    splats=(
+        GaussianSplat(
+            center=(0.0, 0.0, 1.0),
+            covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1),
+            provenance="left-camera",
+        ),
+    ),
+)
+right = SplatMap(frame=map_frame)
+result = ProvenancePreservingFusion().fuse(FusionInput(maps=(left, right)))
+
+assert result.status.value == "fused"
+assert len(result.map) == 1
+```
+
+Query an agent-facing posterior view without exposing a full raw map dump:
 
 ```python
 from mosaic import FrameId, GaussianSplat, LocalRadiusQuery, SplatMap, SplatPosteriorView
@@ -46,7 +142,6 @@ splat_map = SplatMap(
         ),
     ),
 )
-
 view = SplatPosteriorView(splat_map)
 nearby = view.query_local(LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=1.0))
 summary = view.summary()
@@ -57,104 +152,35 @@ assert summary.splat_count == 1
 assert provenance.counts == {"front-camera": 1}
 ```
 
-## Current baseline
+## Backend and Dependency Boundary
 
-The former `splat-slam-foundation` worktree has been merged into the main checkout. The current baseline includes:
+Mosaic Phase 1 is a pure-Python headless library. Core imports are expected to work with `dependencies = []` and without GPU, native computer-vision stacks, robot middleware, browser services, or provider SDKs.
 
-| Area | Public surface |
-|------|----------------|
-| Core geometry and observations | `FrameId`, `Timestamp`, `Pose3`, `Quaternion`, `Translation3`, `CameraIntrinsics`, `CameraObservation`, `ImageBuffer`, `MultiViewObservation` |
-| Splat maps | `GaussianSplat`, `SplatMap` |
-| Dataset replay | `MultiViewSequence`, `InMemorySequence` |
-| SLAM backend contracts | `SplatSlamBackend`, `SplatSlamUpdate`, `BackendCapabilities`, `TrackingState`, `DeterministicSplatBackend` |
-| Platform rigs | `CameraMount`, `CameraRig`, `Embodiment`, `PlatformDescription`, `PlatformRegistry`, `quadruped_front_rig`, `ugv_surround_rig`, `humanoid_stereo_rig` |
-| Fusion | `FusionInput`, `FusionResult`, `FusionStatus`, `SplatFusionStrategy`, `ProvenancePreservingFusion` |
-| Evaluation | `SyntheticScenario`, `MetricResult`, `BenchmarkArtifact`, `RegressionGate`, `RegressionResult`, `run_slam_benchmark`, `check_regression_gates` |
-| Agent posterior access | `AgentQueryKind`, `LocalRadiusQuery`, `SplatQueryResult`, `PosteriorSummary`, `ProvenanceSummary`, `SplatPosteriorView` |
+`DeterministicSplatBackend` is a deterministic reference backend for contract tests, examples, replay validation, and benchmark smoke checks. It is not a real 3D Gaussian Splatting optimizer.
 
-The current package has no required runtime dependencies beyond Python. Development uses `pytest` through the `dev` dependency group.
+`ProvenancePreservingFusion` is a provenance-preserving contract strategy. It validates compatible map inputs and preserves splats and source information for tests. It is not real Gaussian optimization, uncertainty minimization, loop closure, map alignment, or multi-session reconstruction.
 
-## Install and test
+The following are deferred, not required for Phase 1, and out of scope for the core setup path:
 
-Mosaic targets Python 3.12+ and uses `uv`.
+- real 3DGS/CUDA backend integrations
+- ROS wrappers, robot execution, and vendor robot SDKs
+- Habitat or simulator benchmark runners
+- browser UI or WebSockets demos
+- LLM provider integrations and agent runtime orchestration
+- native image-processing or tensor stacks as required runtime dependencies
 
-```bash
-uv run pytest -q
-```
+Downstream packages can wrap Mosaic for those environments later. The Mosaic core owns typed representation contracts and deterministic seams first.
 
-The current merged baseline reports 73 passing tests.
+## Known Hardening Gaps
 
-## Roadmap
+Phase 1 intentionally leaves several hardening tracks for later phases:
 
-Mosaic v1 is a library-foundation release. Real CUDA-backed 3DGS SLAM, ROS wrappers, Habitat runners, browser UI, and LLM provider integrations are intentionally deferred until stable contracts and regression gates exist.
+- coordinate-frame semantics still need explicit pose direction, parent/child frame meaning, handedness, optical-frame convention, and timestamp precision tests
+- Gaussian covariance layout and artifact schemas need versioned serialization and round-trip coverage
+- backend registry metadata, availability checks, optional dependency reporting, and parametrized contract tests are not complete
+- fusion diagnostics need richer uncertainty, conflict, and anti-occupancy-grid semantics beyond the initial reference strategy
+- evaluation needs broader metric families, failure classification, JSON/JSONL schema hardening, and gates before real backend integration
+- agent posterior APIs need richer uncertainty summaries and repeated-query determinism coverage before representation memory layers are added
+- ARNA-informed spatial, scene-graph, text, belief/provenance, commitment, and tool-memory APIs are planned but not part of this baseline
 
-### Phase 1: Merged Foundation Baseline Completion
-
-Finish the merged baseline by documenting and validating the now-main implementation. This phase covers the public module map, install/test workflow, fake-backend boundary, initial fusion/evaluation APIs, and initial agent posterior APIs.
-
-### Phase 2: Coordinate and Artifact Hardening
-
-Make pose direction, parent/child frames, optical-frame convention, handedness, timestamp precision, covariance layout, and versioned artifact schemas explicit and tested.
-
-### Phase 3: Backend Registry and Contracts
-
-Define backend metadata, availability checks, capability reporting, lifecycle contract tests, and optional-dependency boundaries so real backends can be added without contaminating core imports.
-
-### Phase 4: Fusion Diagnostics and Semantics Hardening
-
-Extend the initial fusion seam with richer uncertainty, conflict, provenance, and machine-readable diagnostics while explicitly rejecting occupancy-grid union assumptions.
-
-### Phase 5: Evaluation Metric and Failure Gate Hardening
-
-Broaden deterministic scenarios, metrics, benchmark artifacts, and regression gates so lifecycle, trajectory, map/fusion, and agent-query failures can be classified before real backend integration.
-
-### Phase 6: Agent Posterior View Hardening
-
-Extend the landed `SplatPosteriorView` with richer bounded posterior summaries, uncertainty semantics, and repeated-query determinism coverage.
-
-### Phase 7: Representation Memories and Tools
-
-Add ARNA-informed representation memory contracts and deterministic tool families for agent-friendly access:
-
-- spatial/raster memory
-- scene graph memory
-- text summary memory
-- belief/provenance memory
-- commitment memory
-- perception, navigation, coordination, belief, and context query tools
-
-This is where Mosaic moves from agent posterior queries over splats to a broader representation layer that agents can inspect, reason over, and use for coordination.
-
-### Phase 8: Documentation and Release Readiness
-
-Document implemented APIs, deferred integrations, examples, contributor policy, dependency policy, optional extras guidance, and release boundaries.
-
-## Deferred integrations
-
-These are important, but not part of the v1 core foundation:
-
-- real 3D Gaussian Splatting SLAM backends
-- CUDA, PyTorch, OpenCV, or native backend dependencies as required installs
-- ROS nodes or robot command execution
-- Habitat/ARNA benchmark reproduction
-- browser UI, WebSockets, or demo orchestration
-- LLM/LVLM SDK integration
-- robot-specific calibrated platform packages
-- persistent distributed memory stores
-
-The intended shape is: Mosaic owns stable representation contracts; downstream systems wrap those contracts for specific robots, simulators, backends, UIs, or agents.
-
-## Design boundaries
-
-Mosaic should stay:
-
-- **headless**: no UI or service runtime in core
-- **typed**: public APIs are explicit Python contracts
-- **splat-native**: no occupancy-grid-first abstraction leak
-- **backend-isolated**: heavy or fragile real backends stay behind protocols and registries
-- **agent-friendly**: bounded deterministic posterior and memory views are first-class APIs
-- **provider-free**: no core dependency on any LLM provider or agent framework
-
-## Status
-
-Mosaic is early but no longer empty: the core foundation, fake backend, platform rigs, fusion seam, evaluation harness, and first agent posterior view are implemented. The next priority is completing Phase 1 documentation and validation so later hardening phases can proceed without redefining the baseline.
+The cranky version: Phase 1 gives us a usable typed contract baseline, not magic robotic autonomy. That is a feature, not a bug.
