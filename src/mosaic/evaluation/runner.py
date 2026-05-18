@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 from typing import Sequence
 
 from mosaic.evaluation.metrics import MetricResult, splat_count_metric
@@ -12,6 +14,23 @@ from mosaic.slam import SplatSlamBackend
 MetricDict = dict[str, str | float]
 
 
+class FrozenMetricSequence(Sequence[MetricDict]):
+    def __init__(self, metrics: Sequence[MetricDict]) -> None:
+        self._metrics = tuple(MappingProxyType(dict(metric)) for metric in metrics)
+
+    def __getitem__(self, index: int) -> MetricDict:
+        return self._metrics[index]
+
+    def __len__(self) -> int:
+        return len(self._metrics)
+
+    def __iter__(self) -> Iterator[MetricDict]:
+        return iter(self._metrics)
+
+    def __eq__(self, other: object) -> bool:
+        return list(self) == other
+
+
 @dataclass(frozen=True, slots=True)
 class BenchmarkArtifact:
     scenario_name: str
@@ -19,12 +38,15 @@ class BenchmarkArtifact:
     update_count: int
     metrics: Sequence[MetricDict]
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metrics", FrozenMetricSequence(self.metrics))
+
     def as_dict(self) -> dict[str, str | int | list[MetricDict]]:
         return {
             "scenario_name": self.scenario_name,
             "backend_name": self.backend_name,
             "update_count": self.update_count,
-            "metrics": list(self.metrics),
+            "metrics": [dict(metric) for metric in self.metrics],
         }
 
 

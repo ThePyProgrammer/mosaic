@@ -1,4 +1,5 @@
 import json
+from typing import cast
 
 from mosaic.core import FrameId
 from mosaic.evaluation import BenchmarkArtifact, run_slam_benchmark, synthetic_forward_sequence, write_benchmark_artifact
@@ -31,6 +32,21 @@ def test_benchmark_artifact_is_json_ready() -> None:
         "update_count": 2,
         "metrics": [{"name": "splat_count", "value": 2.0, "unit": "splats"}],
     }
+
+
+def test_benchmark_artifact_as_dict_does_not_expose_internal_metrics() -> None:
+    artifact = BenchmarkArtifact(
+        scenario_name="scenario",
+        backend_name="backend",
+        update_count=1,
+        metrics=[{"name": "splat_count", "value": 1.0, "unit": "splats"}],
+    )
+
+    serialized = artifact.as_dict()
+    metrics = cast(list[dict[str, str | float]], serialized["metrics"])
+    metrics[0]["value"] = 999.0
+
+    assert artifact.as_dict()["metrics"] == [{"name": "splat_count", "value": 1.0, "unit": "splats"}]
 
 
 def test_write_benchmark_artifact_writes_stable_json(tmp_path) -> None:
