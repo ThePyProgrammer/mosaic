@@ -19,6 +19,12 @@ from mosaic.artifacts.core import (
     translation3_to_artifact,
 )
 from mosaic.artifacts.schema import ArtifactDict, SCHEMA_VERSION, make_artifact, require_artifact
+from mosaic.artifacts.splats import (
+    gaussian_splat_from_artifact,
+    gaussian_splat_to_artifact,
+    splat_map_from_artifact,
+    splat_map_to_artifact,
+)
 
 __all__ = [
     "ArtifactDict",
@@ -29,6 +35,8 @@ __all__ = [
     "camera_observation_to_artifact",
     "frame_id_from_artifact",
     "frame_id_to_artifact",
+    "gaussian_splat_from_artifact",
+    "gaussian_splat_to_artifact",
     "image_buffer_from_artifact",
     "image_buffer_to_artifact",
     "make_artifact",
@@ -39,6 +47,8 @@ __all__ = [
     "quaternion_from_artifact",
     "quaternion_to_artifact",
     "require_artifact",
+    "splat_map_from_artifact",
+    "splat_map_to_artifact",
     "timestamp_from_artifact",
     "timestamp_to_artifact",
     "translation3_from_artifact",
