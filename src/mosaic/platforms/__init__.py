@@ -1,3 +1,4 @@
+from mosaic.platforms.registry import PlatformRegistry
 from mosaic.platforms.types import CameraMount, CameraRig, Embodiment, PlatformDescription
 
 __all__ = [
@@ -5,4 +6,5 @@ __all__ = [
     "CameraRig",
     "Embodiment",
     "PlatformDescription",
+    "PlatformRegistry",
 ]
