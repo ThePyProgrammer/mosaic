@@ -35,7 +35,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can run the main-checkout test workflow and see the merged suite pass at or above the observed 73-test coverage.
   4. User can call initial `FusionInput`/`ProvenancePreservingFusion`, synthetic benchmark artifact writing, regression gate checks, provider-free agent query contract types, and `SplatPosteriorView` local/summary/provenance queries without heavy runtime dependencies.
   5. User can read the README and understand Mosaic's library-first scope, fake-backend boundary, install/test commands, v1 module map, and which initial modules still need hardening.
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 01-01-PLAN.md — Document and verify the merged main-checkout package baseline.
+- [ ] 01-02-PLAN.md — Validate initial fusion protocol and provenance-preserving reference strategy.
+- [ ] 01-03-PLAN.md — Validate deterministic evaluation scenarios, benchmark artifacts, and initial regression gates.
+- [ ] 01-04-PLAN.md — Validate provider-free bounded agent posterior query contracts.
 
 ### Phase 2: Coordinate and Artifact Hardening
 **Goal**: Users can rely on explicit coordinate, covariance, timestamp, and artifact semantics across downstream fusion and evaluation work.
@@ -119,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Merged Foundation Baseline Completion | 0/TBD | In progress | merged code baseline present; README/docs gap remains |
+| 1. Merged Foundation Baseline Completion | 0/4 | In progress | merged code baseline present; README/docs gap remains |
 | 2. Coordinate and Artifact Hardening | 0/TBD | Not started | - |
 | 3. Backend Registry and Contracts | 0/TBD | Not started | - |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |

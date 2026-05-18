@@ -55,7 +55,7 @@ The highest-value plan should verify and document the package as users experienc
 | FUSE-01 | Mosaic exposes a fusion protocol over immutable `SplatMap` snapshots with explicit input validation and frame compatibility checks. | `FusionInput`, `FusionResult`, `FusionStatus`, and `SplatFusionStrategy` exist; tests cover empty input, frame mismatch, tuple freezing, and read-only diagnostics. [VERIFIED: codebase] |
 | FUSE-03 | A deterministic reference fusion strategy exists for tests without claiming real Gaussian optimization quality. | `ProvenancePreservingFusion` concatenates splats, preserves provenance, and reports `uncertainty_model = preserved-not-optimized`. [VERIFIED: codebase] |
 | EVAL-01 | Mosaic provides deterministic synthetic multi-view scenarios that can drive the fake backend and future registered backends. | `synthetic_forward_sequence()` creates deterministic `SyntheticScenario`/`InMemorySequence` observations. [VERIFIED: codebase] |
-| EVAL-03 | Benchmark runs emit stable JSON/JSONL artifacts with scenario, backend metadata, metrics, diagnostics, and failure classification. | Current `BenchmarkArtifact` emits stable JSON with scenario/backend/update_count/metrics; diagnostics and failure classification are later hardening gaps per roadmap. [VERIFIED: codebase] [VERIFIED: `.planning/ROADMAP.md`] |
+| EVAL-03 | Benchmark runs emit stable JSON/JSONL artifacts with scenario, backend metadata, metrics, diagnostics, and failure classification. | Phase 1 must close full EVAL-03 coverage by extending the current stable benchmark artifact with diagnostics and failure classification fields/tests; later Phase 5 can deepen metric and gate taxonomy but cannot be used to omit EVAL-03 fields. [VERIFIED: `.planning/REQUIREMENTS.md`] [VERIFIED: checker feedback] |
 | AGNT-01 | Mosaic exposes typed posterior query requests and bounded deterministic result objects over `SplatMap` snapshots. | `LocalRadiusQuery`, `SplatQueryResult`, `PosteriorSummary`, `ProvenanceSummary`, and `SplatPosteriorView` exist. [VERIFIED: codebase] |
 | AGNT-03 | Agent-facing APIs are provider-free Python contracts and do not import LLM SDKs, ROS, Habitat, or robot execution dependencies. | `agents` modules import only dataclasses/math plus Mosaic types; project dependencies are empty except dev pytest. [VERIFIED: codebase] |
 
@@ -272,12 +272,12 @@ from mosaic import FrameId, SplatMap, ProvenancePreservingFusion, SplatPosterior
 **How to avoid:** Keep Phase 1 examples standard-library + Mosaic only; package runtime dependencies remain empty. [VERIFIED: `pyproject.toml`]  
 **Warning signs:** `dependencies = []` changes, or README install commands add PyTorch/OpenCV/ROS/Habitat/LLM SDKs. [VERIFIED: `pyproject.toml`] [VERIFIED: `.planning/REQUIREMENTS.md`]
 
-### Pitfall 4: Misrepresenting Evaluation Artifact Completeness
+### Pitfall 4: Under-Implementing Evaluation Artifact Completeness
 
-**What goes wrong:** README or acceptance criteria claim full diagnostics/failure classification even though Phase 1 artifact only contains scenario/backend/update_count/metrics. [VERIFIED: codebase]  
-**Why it happens:** Requirement EVAL-03 includes richer artifact language, but roadmap explicitly lists richer metrics/failure classification as remaining gaps. [VERIFIED: `.planning/ROADMAP.md`]  
-**How to avoid:** State that initial stable JSON artifact exists, while richer diagnostics/failure classification are Phase 5 hardening. [VERIFIED: `.planning/ROADMAP.md`]  
-**Warning signs:** Docs call Phase 1 benchmark artifacts a complete regression/failure taxonomy. [VERIFIED: codebase]
+**What goes wrong:** README, plans, or acceptance criteria claim EVAL-03 while benchmark artifacts only contain scenario/backend/update_count/metrics and omit diagnostics or failure classification. [VERIFIED: checker feedback]  
+**Why it happens:** The current code started with a small artifact schema, while EVAL-03 explicitly requires diagnostics and failure classification. [VERIFIED: `.planning/REQUIREMENTS.md`]  
+**How to avoid:** Extend Phase 1 benchmark artifacts and tests to include diagnostics and failure classification. Later Phase 5 may deepen metrics and regression-gate categories, but Phase 1 must not claim EVAL-03 without these fields. [VERIFIED: `.planning/REQUIREMENTS.md`]  
+**Warning signs:** `BenchmarkArtifact.as_dict()` returns only `scenario_name`, `backend_name`, `update_count`, and `metrics`. [VERIFIED: codebase]
 
 ### Pitfall 5: Forgetting Main Checkout Baseline
 
@@ -384,17 +384,15 @@ provenance = view.provenance()
 | A1 | README examples should be minimal and may use current root package exports rather than only subpackage imports. [ASSUMED] | Code Examples / Architecture Patterns | If the project wants subpackage-only docs, README examples may need adjustment. |
 | A2 | No commit should be created by this research agent unless the orchestrator later runs the configured docs commit command. [ASSUMED] | Metadata | If commit_docs is strictly enforced here, uncommitted research artifacts may need a follow-up commit step. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **How much README example code is enough for Phase 1 versus Phase 8?**
-   - What we know: Phase 1 explicitly requires README scope, fake-backend boundary, install/test commands, v1 module map, and hardening gaps. [VERIFIED: `.planning/ROADMAP.md`]
-   - What's unclear: Whether Phase 1 should include a full end-to-end example; DOCS-02 later requires a minimal end-to-end example. [VERIFIED: `.planning/REQUIREMENTS.md`]
-   - Recommendation: Include a short smoke example in Phase 1, but leave polished end-to-end documentation for Phase 8. [ASSUMED]
+1. **RESOLVED: How much README example code is enough for Phase 1 versus Phase 8?**
+   - Resolution: Phase 1 README must include short smoke examples for current root exports, fusion, evaluation artifact writing, and bounded posterior querying because BASE-03 requires users to understand the merged baseline. It must not become the polished DOCS-02 end-to-end guide; Phase 8 still owns release-ready narrative examples and contributor documentation. [VERIFIED: `.planning/ROADMAP.md`] [VERIFIED: `.planning/REQUIREMENTS.md`]
+   - Plan impact: Plan 01-01 requires `## Quick Smoke Examples` and README contract tests for commands/module map/boundaries, while avoiding full tutorial scope. [VERIFIED: `01-01-PLAN.md`]
 
-2. **Should Phase 1 update tests for README snippets?**
-   - What we know: Existing tests already cover public imports, fusion, evaluation, regression, and agent posterior behavior. [VERIFIED: codebase]
-   - What's unclear: Whether README examples should be doctested or simply mirrored by existing tests. [ASSUMED]
-   - Recommendation: Prefer existing pytest smoke coverage plus manually runnable README snippets; avoid adding doctest infrastructure in Phase 1. [ASSUMED]
+2. **RESOLVED: Should Phase 1 update tests for README snippets?**
+   - Resolution: Yes. Phase 1 adds a lightweight `tests/test_readme_contract.py` guard for headings, commands, module names, dependency boundary wording, and runtime `dependencies = []`. It does not add doctest or a new documentation test framework. [VERIFIED: `01-01-PLAN.md`]
+   - Plan impact: `tests/test_readme_contract.py` follows the existing pytest style and is classified in `01-PATTERNS.md` with `tests/test_public_api.py` as its closest analog. [VERIFIED: `01-PATTERNS.md`]
 
 ## Environment Availability
 
