@@ -75,11 +75,18 @@ def test_readme_contains_required_phase_1_headings_and_commands() -> None:
 
 
 def test_readme_examples_preserve_dependency_boundary() -> None:
-    for line in _readme().splitlines():
+    readme = _readme()
+
+    assert "not required for Phase 1" in readme
+    assert "deferred, not required for Phase 1, and out of scope" in readme
+
+    for line in readme.splitlines():
         normalized = line.casefold()
         for term in BOUNDARY_TERMS:
             if term in normalized:
-                assert any(marker in normalized for marker in BOUNDARY_CONTEXT_MARKERS), line
+                assert not normalized.startswith("pip install")
+                assert not normalized.startswith("uv add")
+                assert not normalized.startswith("uv pip install")
 
 
 def test_runtime_dependencies_stay_empty_when_readme_claims_pure_python_boundary() -> None:

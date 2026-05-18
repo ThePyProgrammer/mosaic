@@ -2,7 +2,7 @@
 
 Mosaic is a typed, headless Python library for 3D Gaussian Splatting SLAM contracts over multi-view moving cameras on robotic systems. Phase 1 establishes the merged main-checkout baseline: pure-Python representation types, deterministic reference implementations, public package surfaces, tests, and documentation that let later backend, fusion, evaluation, and agent work harden against a known contract.
 
-Mosaic is intentionally library-first. It provides stable Python APIs for robotic SLAM backends, evaluation tools, platform camera rigs, fusion seams, and bounded agent-facing posterior queries without coupling the core package to one robot, simulator, LLM provider, browser runtime, or CUDA-heavy backend.
+Mosaic is intentionally library-first. It provides stable Python APIs for robotic SLAM backends, evaluation tools, platform camera rigs, fusion seams, and bounded agent-facing posterior queries without coupling the core package to one robot, simulator, LLM provider, browser runtime, or CUDA-heavy backend; those integrations are deferred and not required for the Phase 1 core.
 
 ## Scope
 
