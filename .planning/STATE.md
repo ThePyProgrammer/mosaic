@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: Phase 01 complete (4/4) — ready to discuss Phase 02
-last_updated: 2026-05-18T07:24:34.992Z
-last_activity: 2026-05-18 -- Phase 02 planning complete
+status: executing
+stopped_at: Updated roadmap and state for merged main-checkout implementation evidence; not committed yet.
+last_updated: "2026-05-18T08:34:41.804Z"
+last_activity: 2026-05-18 -- Phase 02 execution started
 progress:
   total_phases: 8
   completed_phases: 1
@@ -21,14 +21,14 @@ progress:
 See: /home/prannayag/pragnition/robotics/mosaic/.planning/PROJECT.md (updated 2026-05-18)
 
 **Core value:** Mosaic must provide stable typed representation contracts that let robotic SLAM backends, evaluation tools, platform rigs, and agent-friendly posterior APIs evolve independently without coupling the library to one robot, simulator, LLM provider, or CUDA-heavy backend.
-**Current focus:** Phase 02 — coordinate and artifact hardening
+**Current focus:** Phase 02 — coordinate-and-artifact-hardening
 
 ## Current Position
 
-Phase: 02
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-05-18
+Phase: 02 (coordinate-and-artifact-hardening) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 02
+Last activity: 2026-05-18 -- Phase 02 execution started
 
 Progress: [----------] 0%
 

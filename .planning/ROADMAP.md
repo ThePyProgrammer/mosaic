@@ -64,8 +64,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Harden coordinate semantics and pose transform operations.
-- [ ] 02-02-PLAN.md — Harden Gaussian covariance layout and edge-case validation.
+- [x] 02-01-PLAN.md — Harden coordinate semantics and pose transform operations.
+- [x] 02-02-PLAN.md — Harden Gaussian covariance layout and edge-case validation.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
-| 2. Coordinate and Artifact Hardening | 0/TBD | Not started | - |
+| 2. Coordinate and Artifact Hardening | 2/4 | In Progress|  |
 | 3. Backend Registry and Contracts | 0/TBD | Not started | - |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
