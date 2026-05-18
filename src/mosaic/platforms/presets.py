@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from math import cos, pi, sin
+
 from mosaic.core import CameraIntrinsics, FrameId, Pose3, Quaternion, Translation3
 from mosaic.platforms.registry import PlatformRegistry
 from mosaic.platforms.types import CameraMount, CameraRig, Embodiment, PlatformDescription
@@ -9,7 +11,11 @@ def _intrinsics(width: int = 640, height: int = 480) -> CameraIntrinsics:
     return CameraIntrinsics(width=width, height=height, fx=400.0, fy=400.0, cx=width / 2.0, cy=height / 2.0)
 
 
-def _mount(camera_id: str, x: float, y: float, z: float) -> CameraMount:
+def _yaw_rotation(yaw: float) -> Quaternion:
+    return Quaternion(w=cos(yaw / 2.0), x=0.0, y=0.0, z=sin(yaw / 2.0))
+
+
+def _mount(camera_id: str, x: float, y: float, z: float, rotation: Quaternion | None = None) -> CameraMount:
     base_frame = FrameId("base_link")
     return CameraMount(
         camera_id=camera_id,
@@ -17,7 +23,7 @@ def _mount(camera_id: str, x: float, y: float, z: float) -> CameraMount:
             parent_frame=base_frame,
             child_frame=FrameId(f"camera/{camera_id}"),
             translation=Translation3(x=x, y=y, z=z),
-            rotation=Quaternion.identity(),
+            rotation=rotation or Quaternion.identity(),
         ),
         intrinsics=_intrinsics(),
     )
@@ -43,9 +49,9 @@ def ugv_surround_rig() -> PlatformDescription:
             frame=base_frame,
             cameras=(
                 _mount("front", 0.45, 0.0, 0.55),
-                _mount("left", 0.0, 0.35, 0.55),
-                _mount("right", 0.0, -0.35, 0.55),
-                _mount("rear", -0.45, 0.0, 0.55),
+                _mount("left", 0.0, 0.35, 0.55, _yaw_rotation(pi / 2.0)),
+                _mount("right", 0.0, -0.35, 0.55, _yaw_rotation(-pi / 2.0)),
+                _mount("rear", -0.45, 0.0, 0.55, _yaw_rotation(pi)),
             ),
         ),
     )
