@@ -19,6 +19,7 @@ from mosaic.artifacts.core import (
     translation3_to_artifact,
 )
 from mosaic.artifacts.schema import ArtifactDict, SCHEMA_VERSION, make_artifact, require_artifact
+from mosaic.artifacts.slam import splat_slam_update_from_artifact, splat_slam_update_to_artifact
 from mosaic.artifacts.splats import (
     gaussian_splat_from_artifact,
     gaussian_splat_to_artifact,
@@ -49,6 +50,8 @@ __all__ = [
     "require_artifact",
     "splat_map_from_artifact",
     "splat_map_to_artifact",
+    "splat_slam_update_from_artifact",
+    "splat_slam_update_to_artifact",
     "timestamp_from_artifact",
     "timestamp_to_artifact",
     "translation3_from_artifact",
