@@ -12,6 +12,18 @@ from mosaic.core import (
     Translation3,
 )
 from mosaic.datasets import InMemorySequence, MultiViewSequence
+from mosaic.evaluation import (
+    BenchmarkArtifact,
+    MetricResult,
+    RegressionGate,
+    RegressionResult,
+    SyntheticScenario,
+    check_regression_gates,
+    run_slam_benchmark,
+    splat_count_metric,
+    synthetic_forward_sequence,
+    write_benchmark_artifact,
+)
 from mosaic.fusion import FusionInput, FusionResult, FusionStatus, ProvenancePreservingFusion, SplatFusionStrategy
 from mosaic.platforms import (
     CameraMount,
@@ -31,6 +43,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "BackendCapabilities",
+    "BenchmarkArtifact",
     "CameraIntrinsics",
     "CameraMount",
     "CameraObservation",
@@ -45,6 +58,7 @@ __all__ = [
     "ImageBuffer",
     "ImageEncoding",
     "InMemorySequence",
+    "MetricResult",
     "MultiViewObservation",
     "MultiViewSequence",
     "Pixel",
@@ -52,17 +66,25 @@ __all__ = [
     "PlatformRegistry",
     "ProvenancePreservingFusion",
     "Pose3",
+    "RegressionGate",
+    "RegressionResult",
     "Quaternion",
     "SplatMap",
     "SplatFusionStrategy",
     "SplatSlamBackend",
+    "SyntheticScenario",
     "SplatSlamUpdate",
     "Timestamp",
     "TrackingState",
     "Translation3",
     "__version__",
+    "check_regression_gates",
     "default_platform_registry",
     "humanoid_stereo_rig",
     "quadruped_front_rig",
+    "run_slam_benchmark",
+    "splat_count_metric",
+    "synthetic_forward_sequence",
     "ugv_surround_rig",
+    "write_benchmark_artifact",
 ]

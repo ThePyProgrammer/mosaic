@@ -1,4 +1,5 @@
 from mosaic import (
+    BenchmarkArtifact,
     CameraIntrinsics,
     CameraRig,
     DeterministicSplatBackend,
@@ -9,10 +10,12 @@ from mosaic import (
     InMemorySequence,
     PlatformRegistry,
     ProvenancePreservingFusion,
+    RegressionGate,
     SplatMap,
     Timestamp,
     TrackingState,
     quadruped_front_rig,
+    synthetic_forward_sequence,
 )
 
 
@@ -38,3 +41,11 @@ def test_public_api_exports_platform_types() -> None:
 def test_public_api_exports_fusion_types() -> None:
     assert FusionInput.__name__ == "FusionInput"
     assert ProvenancePreservingFusion().name == "provenance-preserving"
+
+
+def test_public_api_exports_evaluation_types() -> None:
+    scenario = synthetic_forward_sequence(frame_count=1)
+
+    assert scenario.name == "synthetic-forward-1"
+    assert BenchmarkArtifact.__name__ == "BenchmarkArtifact"
+    assert RegressionGate(metric_name="splat_count", minimum=1.0).minimum == 1.0
