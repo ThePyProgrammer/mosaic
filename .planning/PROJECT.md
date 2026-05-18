@@ -17,12 +17,12 @@ Mosaic must provide stable typed representation contracts that let robotic SLAM 
 - ✓ Current repository is an installable Python package scaffold with `src/mosaic/` and `pyproject.toml` — existing main checkout
 - ✓ The active `splat-slam-foundation` worktree has implemented and tested the first foundation slice: core geometry, camera observations, splat maps, deterministic dataset replay, a fake backend lifecycle, and platform camera rigs — migration worktree baseline
 - ✓ Codebase maps exist for both the main checkout and the active migration worktree — initialization mapping
+- ✓ Coordinate-frame direction, timestamp precision, pose transforms, camera optical-frame projection, and covariance tuple semantics are explicit and tested — validated in Phase 02
+- ✓ Versioned artifact envelopes and round-trip serializers exist for core values, observations, splat maps, backend updates, and evaluation outputs — validated in Phase 02
 
 ### Active
 
 - [ ] Stabilize and merge the `splat-slam-foundation` worktree as the baseline library foundation.
-- [ ] Pin coordinate-frame and pose semantics before adding pose math, camera-to-rig transforms, fusion, or evaluation metrics.
-- [ ] Add serialization and machine-readable artifact schemas for core data, backend updates, splat maps, and evaluation outputs.
 - [ ] Add backend registry, capability metadata, availability checks, and contract-test parametrization while keeping heavy backends isolated.
 - [ ] Add posterior-aware splat-map fusion seams that preserve uncertainty and provenance instead of occupancy-grid union assumptions.
 - [ ] Add deterministic evaluation scenarios, metrics, benchmark artifact writing, and regression gates before integrating real 3DGS backends.
@@ -86,4 +86,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-18 after initialization*
+*Last updated: 2026-05-18 after Phase 02 completion*
