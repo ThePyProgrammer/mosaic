@@ -2,9 +2,9 @@
 
 ## Overview
 
-Mosaic v1 delivers a typed, headless Python library foundation for splat-native robotic SLAM contracts and agent-friendly posterior access. A 2026-05-18 scan of `/home/prannayag/pragnition/robotics/.mosaic-worktrees/splat-slam-foundation` found the worktree has advanced beyond the original baseline: it now includes core/datasets/platforms/slam/splats plus initial `fusion`, `evaluation`, and `agents` query-contract modules, with 69 passing tests.
+Mosaic v1 delivers a typed, headless Python library foundation for splat-native robotic SLAM contracts and agent-friendly posterior access. The former `splat-slam-foundation` worktree has now been merged into the main checkout: current source includes core/datasets/platforms/slam/splats plus `fusion`, `evaluation`, and `agents` modules, including the SplatMap-backed `SplatPosteriorView`; `uv run pytest -q` reports 73 passing tests.
 
-The roadmap now treats that expanded worktree as the Phase 1 merge baseline. Later phases no longer duplicate those initial modules; they harden the remaining gaps: coordinate/artifact semantics, backend registry metadata, deeper fusion diagnostics, richer evaluation failure classification, SplatMap-backed posterior views, ARNA-informed representation memories, and release documentation. Real 3DGS backends, ROS, Habitat, UI, and LLM integrations remain deferred until these contracts and regression gates exist.
+The roadmap now treats that merged main-checkout implementation as the Phase 1 code baseline. Later phases no longer duplicate landed modules; they harden the remaining gaps: README/release-facing documentation, coordinate/artifact semantics, backend registry metadata, deeper fusion diagnostics, richer evaluation artifacts and failure classification, posterior uncertainty/determinism hardening, ARNA-informed representation memories, and release readiness. Real 3DGS backends, ROS, Habitat, UI, and LLM integrations remain deferred until these contracts and regression gates exist.
 
 ## Phases
 
@@ -14,26 +14,26 @@ The roadmap now treats that expanded worktree as the Phase 1 merge baseline. Lat
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Expanded Foundation Baseline Merge** - Stabilize and merge the active worktree, including initial fusion, evaluation, and agent-query contracts, as the public Mosaic package baseline.
+- [ ] **Phase 1: Merged Foundation Baseline Completion** - Finish the merged baseline by documenting and validating the now-main implementation, including initial fusion, evaluation, and agent posterior APIs.
 - [ ] **Phase 2: Coordinate and Artifact Hardening** - Make pose, frame, covariance, timestamp, and versioned artifact semantics explicit and tested.
 - [ ] **Phase 3: Backend Registry and Contracts** - Define backend metadata, availability checks, and lifecycle contract coverage without heavy dependency leakage.
 - [ ] **Phase 4: Fusion Diagnostics and Semantics Hardening** - Extend the initial fusion seam with explicit uncertainty/conflict diagnostics and anti-occupancy-grid tests.
 - [ ] **Phase 5: Evaluation Metric and Failure Gate Hardening** - Extend the initial evaluation harness with richer metrics, failure classification, and regression gates before real backend integration.
-- [ ] **Phase 6: Agent Posterior View Implementation** - Build SplatMap-backed posterior query behavior on top of the existing provider-free query contracts.
+- [ ] **Phase 6: Agent Posterior View Hardening** - Extend the landed SplatPosteriorView with richer bounded posterior summaries, uncertainty semantics, and determinism coverage.
 - [ ] **Phase 7: Representation Memories and Tools** - Add ARNA-informed memory contracts and deterministic tool families for agent-friendly representation access.
 - [ ] **Phase 8: Documentation and Release Readiness** - Document implemented APIs, deferred integrations, examples, contributor policy, and release boundaries.
 
 ## Phase Details
 
-### Phase 1: Expanded Foundation Baseline Merge
-**Goal**: Users can install, import, test, and understand the expanded Mosaic package baseline from the active worktree.
+### Phase 1: Merged Foundation Baseline Completion
+**Goal**: Users can install, import, test, and understand the merged Mosaic package baseline from the main checkout.
 **Depends on**: Nothing (first phase)
 **Requirements**: BASE-01, BASE-02, BASE-03, BASE-04, FUSE-01, FUSE-03, EVAL-01, EVAL-03, AGNT-01, AGNT-03
 **Success Criteria** (what must be TRUE):
-  1. User can work from the main checkout and find the stabilized implementation from `splat-slam-foundation` merged into the Mosaic package.
-  2. User can import supported public APIs for core, datasets, splats, SLAM, platforms, initial fusion, initial evaluation, and agent query contracts from documented package surfaces.
-  3. User can run the merged main-checkout test workflow and see the worktree baseline suite pass at or above the observed 69-test coverage.
-  4. User can call initial `FusionInput`/`ProvenancePreservingFusion`, synthetic benchmark artifact writing, regression gate checks, and provider-free agent query contract types without heavy runtime dependencies.
+  1. User can work from the main checkout and find the merged implementation in the Mosaic package.
+  2. User can import supported public APIs for core, datasets, splats, SLAM, platforms, initial fusion, initial evaluation, and agent posterior APIs from documented package surfaces.
+  3. User can run the main-checkout test workflow and see the merged suite pass at or above the observed 73-test coverage.
+  4. User can call initial `FusionInput`/`ProvenancePreservingFusion`, synthetic benchmark artifact writing, regression gate checks, provider-free agent query contract types, and `SplatPosteriorView` local/summary/provenance queries without heavy runtime dependencies.
   5. User can read the README and understand Mosaic's library-first scope, fake-backend boundary, install/test commands, v1 module map, and which initial modules still need hardening.
 **Plans**: TBD
 
@@ -81,14 +81,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. User can verify real 3DGS backend integration is still blocked until these evaluation gates exist and pass.
 **Plans**: TBD
 
-### Phase 6: Agent Posterior View Implementation
-**Goal**: Agent consumers can ask bounded deterministic posterior questions over splat snapshots through provider-free Python contracts.
+### Phase 6: Agent Posterior View Hardening
+**Goal**: Agent consumers can rely on richer bounded posterior questions over splat snapshots through provider-free Python contracts.
 **Depends on**: Phase 5
 **Requirements**: AGNT-02, AGNT-04
 **Success Criteria** (what must be TRUE):
   1. User can request local spatial views, scene/map summaries, uncertainty summaries, and provenance summaries over actual `SplatMap` snapshots without receiving raw full map dumps by default.
-  2. User can run determinism tests showing repeated queries against fixed snapshots return stable results.
-  3. User can distinguish existing query/result dataclasses from implemented posterior view behavior.
+  2. User can run determinism tests showing repeated local, summary, uncertainty, and provenance queries against fixed snapshots return stable results.
+  3. User can inspect documented boundaries between landed `SplatPosteriorView` local/summary/provenance behavior and richer future representation-memory queries.
 **Plans**: TBD
 
 ### Phase 7: Representation Memories and Tools
@@ -119,12 +119,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Expanded Foundation Baseline Merge | 0/TBD | Not started | - |
+| 1. Merged Foundation Baseline Completion | 0/TBD | In progress | merged code baseline present; README/docs gap remains |
 | 2. Coordinate and Artifact Hardening | 0/TBD | Not started | - |
 | 3. Backend Registry and Contracts | 0/TBD | Not started | - |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
-| 6. Agent Posterior View Implementation | 0/TBD | Not started | - |
+| 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
 | 7. Representation Memories and Tools | 0/TBD | Not started | - |
 | 8. Documentation and Release Readiness | 0/TBD | Not started | - |
 
@@ -175,11 +175,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 - Mapped to phases: 37
 - Unmapped: 0
 
-## Worktree Evidence
+## Main Checkout Evidence
 
-Observed on 2026-05-18 in `/home/prannayag/pragnition/robotics/.mosaic-worktrees/splat-slam-foundation`:
+Observed on 2026-05-18 in `/home/prannayag/pragnition/robotics/mosaic` after merging the Mosaic worktree changes:
 
-- Recent commits include `feat: expose splat fusion api`, `feat: add deterministic evaluation metrics`, `feat: add synthetic evaluation scenarios`, `feat: add slam benchmark artifacts`, `feat: add benchmark regression gates`, `feat: expose evaluation harness api`, and `feat: add agent posterior query contracts`.
-- Test command `uv run --directory /home/prannayag/pragnition/robotics/.mosaic-worktrees/splat-slam-foundation pytest -q` reported `69 passed in 0.22s`.
-- Implemented initial modules include `src/mosaic/fusion/`, `src/mosaic/evaluation/`, and `src/mosaic/agents/queries.py`.
-- Remaining gaps include SplatMap-backed agent posterior view behavior, richer evaluation metrics/failure classes, explicit fusion uncertainty/conflict semantics, coordinate/artifact hardening, and backend registry metadata.
+- Recent commits include `Merge branch 'mosaic-splat-slam-foundation'`, `feat: expose agent posterior api`, `feat: add splat posterior view`, `feat: add agent posterior query contracts`, `feat: expose evaluation harness api`, `feat: add benchmark regression gates`, and `feat: expose splat fusion api`.
+- Test command `uv run pytest -q` reported `73 passed in 0.29s`.
+- Implemented modules include `src/mosaic/core/`, `src/mosaic/datasets/`, `src/mosaic/splats/`, `src/mosaic/slam/`, `src/mosaic/platforms/`, `src/mosaic/fusion/`, `src/mosaic/evaluation/`, and `src/mosaic/agents/`.
+- Public exports now include `SplatPosteriorView`, `LocalRadiusQuery`, `PosteriorSummary`, `ProvenanceSummary`, and `SplatQueryResult` from the root package surface.
+- Remaining gaps include README/release documentation, richer evaluation metrics/failure classes, explicit fusion uncertainty/conflict semantics, coordinate/artifact hardening, backend registry metadata, posterior uncertainty summaries, and broader repeated-query determinism coverage.

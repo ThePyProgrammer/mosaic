@@ -5,14 +5,14 @@
 See: /home/prannayag/pragnition/robotics/mosaic/.planning/PROJECT.md (updated 2026-05-18)
 
 **Core value:** Mosaic must provide stable typed representation contracts that let robotic SLAM backends, evaluation tools, platform rigs, and agent-friendly posterior APIs evolve independently without coupling the library to one robot, simulator, LLM provider, or CUDA-heavy backend.
-**Current focus:** Phase 1: Expanded Foundation Baseline Merge
+**Current focus:** Phase 1: Merged Foundation Baseline Completion
 
 ## Current Position
 
-Phase: 1 of 8 (Expanded Foundation Baseline Merge)
+Phase: 1 of 8 (Merged Foundation Baseline Completion)
 Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-05-18 — Rescanned `/home/prannayag/pragnition/robotics/.mosaic-worktrees/splat-slam-foundation`, observed 69 passing tests plus initial fusion, evaluation, and agent-query contracts, and updated the roadmap baseline accordingly.
+Status: In progress
+Last activity: 2026-05-18 — Inspected the merged main checkout after worktree integration; observed merged core/datasets/platforms/slam/splats/fusion/evaluation/agents modules, public `SplatPosteriorView` exports, and `uv run pytest -q` reporting 73 passing tests.
 
 Progress: [----------] 0%
 
@@ -27,12 +27,12 @@ Progress: [----------] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Expanded Foundation Baseline Merge | 0 | TBD | N/A |
+| 1. Merged Foundation Baseline Completion | 0 | TBD | N/A |
 | 2. Coordinate and Artifact Hardening | 0 | TBD | N/A |
 | 3. Backend Registry and Contracts | 0 | TBD | N/A |
 | 4. Fusion Diagnostics and Semantics Hardening | 0 | TBD | N/A |
 | 5. Evaluation Metric and Failure Gate Hardening | 0 | TBD | N/A |
-| 6. Agent Posterior View Implementation | 0 | TBD | N/A |
+| 6. Agent Posterior View Hardening | 0 | TBD | N/A |
 | 7. Representation Memories and Tools | 0 | TBD | N/A |
 | 8. Documentation and Release Readiness | 0 | TBD | N/A |
 
@@ -63,11 +63,12 @@ None yet.
 | Date | Task | Result |
 |------|------|--------|
 | 2026-05-18 | migrate-reference-files | Moved Argus, Superpowers, and ARNA reference files into `.planning/references/` with origin-based commits. |
+| 2026-05-18 | update-roadmap-after-merge | Updated roadmap/state evidence after worktree changes landed in main; current suite reports 73 passing tests. |
 
 ### Blockers/Concerns
 
-- [Phase 1]: Main checkout and expanded foundation worktree differ substantially; merge/stabilization must preserve the observed 69-test baseline and public API boundaries for core, datasets, platforms, SLAM, splats, fusion, evaluation, and agent query contracts.
-- [Phase 2]: Coordinate-frame semantics must be pinned before fusion diagnostics, evaluation failure classification, or SplatMap-backed agent posterior behavior is trusted.
+- [Phase 1]: Code baseline is now merged in main, but README/release-facing documentation must still explain the public API surface, fake-backend boundary, install/test workflow, and remaining hardening gaps.
+- [Phase 2]: Coordinate-frame semantics must be pinned before fusion diagnostics, evaluation failure classification, or hardened agent posterior behavior is trusted.
 
 ## Deferred Items
 
@@ -82,5 +83,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-05-18
-Stopped at: Updated ROADMAP.md, REQUIREMENTS.md traceability, and STATE.md for the expanded worktree baseline.
+Stopped at: Updated roadmap and state for merged main-checkout implementation evidence; not committed yet.
 Resume file: None
