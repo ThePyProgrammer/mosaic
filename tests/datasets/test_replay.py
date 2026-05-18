@@ -46,6 +46,19 @@ def test_in_memory_sequence_replays_observations_in_order() -> None:
     assert len(sequence) == 2
 
 
+def test_in_memory_sequence_freezes_list_inputs() -> None:
+    first = _observation(1.0)
+    second = _observation(2.0)
+    observations = [first, second]
+
+    sequence = InMemorySequence(observations)
+    observations.append(_observation(3.0))
+
+    assert len(sequence) == 2
+    assert isinstance(sequence.observations, tuple)
+    assert list(sequence.observations) == [first, second]
+
+
 def test_in_memory_sequence_rejects_empty_sequences() -> None:
     with pytest.raises(ValueError, match="at least one"):
         InMemorySequence(())
