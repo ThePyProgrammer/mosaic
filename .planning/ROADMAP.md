@@ -69,7 +69,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-03-PLAN.md — Add v1 artifact envelopes for core, observations, splats, and maps.
+- [x] 02-03-PLAN.md — Add v1 artifact envelopes for core, observations, splats, and maps.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
-| 2. Coordinate and Artifact Hardening | 2/4 | In Progress|  |
+| 2. Coordinate and Artifact Hardening | 3/4 | In Progress|  |
 | 3. Backend Registry and Contracts | 0/TBD | Not started | - |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
