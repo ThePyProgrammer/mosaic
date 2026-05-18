@@ -87,7 +87,19 @@ Plans:
   3. User can run the same backend contract tests against any registered backend implementation.
   4. User can verify lifecycle behavior for reset, process, snapshot, lost tracking, not-initialized behavior, diagnostics, and deterministic replay.
 
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Add backend descriptors, availability checks, and factory registry.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Add reusable backend lifecycle contract helpers.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Wire deterministic backend and benchmark compatibility coverage through the new contract seam.
 
 ### Phase 4: Fusion Diagnostics and Semantics Hardening
 
@@ -165,7 +177,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
 | 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
-| 3. Backend Registry and Contracts | 0/TBD | Not started | - |
+| 3. Backend Registry and Contracts | 0/3 | Not started | - |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
 | 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
