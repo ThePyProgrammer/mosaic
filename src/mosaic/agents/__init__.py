@@ -1,3 +1,4 @@
+from mosaic.agents.posteriors import SplatPosteriorView
 from mosaic.agents.queries import (
     AgentQueryKind,
     LocalRadiusQuery,
@@ -11,5 +12,6 @@ __all__ = [
     "LocalRadiusQuery",
     "PosteriorSummary",
     "ProvenanceSummary",
+    "SplatPosteriorView",
     "SplatQueryResult",
 ]
