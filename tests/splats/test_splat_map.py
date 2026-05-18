@@ -26,9 +26,23 @@ def test_gaussian_splat_rejects_invalid_opacity() -> None:
         )
 
 
+def test_gaussian_splat_rejects_covariance_tuple_length_other_than_six() -> None:
+    with pytest.raises(ValueError, match="six values"):
+        GaussianSplat(
+            center=(0.0, 0.0, 0.0),
+            covariance_upper=(1.0, 0.0, 0.0, 1.0, 0.0),
+        )
+
+
 def test_gaussian_splat_rejects_non_positive_covariance_diagonal() -> None:
     with pytest.raises(ValueError, match="covariance diagonal"):
         GaussianSplat(center=(0.0, 0.0, 0.0), covariance_upper=(0.0, 0.0, 0.0, 0.1, 0.0, 0.1))
+
+    with pytest.raises(ValueError, match="covariance diagonal"):
+        GaussianSplat(center=(0.0, 0.0, 0.0), covariance_upper=(0.1, 0.0, 0.0, 0.0, 0.0, 0.1))
+
+    with pytest.raises(ValueError, match="covariance diagonal"):
+        GaussianSplat(center=(0.0, 0.0, 0.0), covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.0))
 
 
 def test_gaussian_splat_coerces_mutable_sequence_inputs() -> None:
@@ -88,6 +102,30 @@ def test_gaussian_splat_rejects_non_positive_definite_covariance() -> None:
         GaussianSplat(
             center=(0.0, 0.0, 0.0),
             covariance_upper=(1.0, 2.0, 0.0, 1.0, 0.0, 1.0),
+        )
+
+
+def test_gaussian_splat_rejects_zero_leading_2x2_covariance_minor() -> None:
+    with pytest.raises(ValueError, match="positive definite"):
+        GaussianSplat(
+            center=(0.0, 0.0, 0.0),
+            covariance_upper=(1.0, 1.0, 0.0, 1.0, 0.0, 1.0),
+        )
+
+
+def test_gaussian_splat_rejects_non_positive_3x3_covariance_determinant() -> None:
+    with pytest.raises(ValueError, match="positive definite"):
+        GaussianSplat(
+            center=(0.0, 0.0, 0.0),
+            covariance_upper=(1.0, 0.0, 1.0, 1.0, 1.0, 1.0),
+        )
+
+
+def test_gaussian_splat_rejects_too_large_off_diagonal_covariance() -> None:
+    with pytest.raises(ValueError, match="positive definite"):
+        GaussianSplat(
+            center=(0.0, 0.0, 0.0),
+            covariance_upper=(1.0, 1.5, 0.0, 1.0, 0.0, 1.0),
         )
 
 
