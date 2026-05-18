@@ -36,10 +36,29 @@ class Quaternion:
     def as_tuple(self) -> tuple[float, float, float, float]:
         return (self.w, self.x, self.y, self.z)
 
+    def rotate_point(self, point: tuple[float, float, float]) -> tuple[float, float, float]:
+        return point
+
 
 @dataclass(frozen=True, slots=True)
 class Pose3:
+    """Rigid transform from child-frame coordinates into parent-frame coordinates.
+
+    Pose3(parent_frame=A, child_frame=B) represents T_parent_child: it maps
+    points expressed in frame B into frame A. Mosaic uses right-handed
+    robot/body frames by default; camera optical-frame projection conventions
+    are documented on CameraIntrinsics.project.
+    """
+
     parent_frame: FrameId
     child_frame: FrameId
     translation: Translation3 = field(default_factory=Translation3)
     rotation: Quaternion = field(default_factory=Quaternion.identity)
+
+    def apply_to_point(self, point: tuple[float, float, float]) -> tuple[float, float, float]:
+        rotated = self.rotation.rotate_point(point)
+        return (
+            rotated[0] + self.translation.x,
+            rotated[1] + self.translation.y,
+            rotated[2] + self.translation.z,
+        )

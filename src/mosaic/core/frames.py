@@ -6,6 +6,14 @@ from typing import Self
 
 @dataclass(frozen=True, order=True, slots=True)
 class Timestamp:
+    """Canonical Mosaic timestamp stored as integer nanoseconds.
+
+    Timestamp.nanoseconds is the canonical artifact precision. Timestamp
+    artifacts store integer nanoseconds and do not use a seconds payload field.
+    from_seconds() is only a convenience conversion and uses
+    round(seconds * 1_000_000_000) to produce integer nanoseconds.
+    """
+
     nanoseconds: int
 
     def __post_init__(self) -> None:
@@ -24,6 +32,13 @@ class Timestamp:
 
 @dataclass(frozen=True, order=True, slots=True)
 class FrameId:
+    """Named coordinate frame identifier.
+
+    Mosaic uses right-handed robot/body frames by default. Camera projection
+    APIs separately document optical-frame axes when a FrameId names an optical
+    camera frame.
+    """
+
     value: str
 
     def __post_init__(self) -> None:
