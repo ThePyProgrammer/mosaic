@@ -5,6 +5,13 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class GaussianSplat:
+    """Gaussian primitive with covariance_upper in upper-triangular order.
+
+    covariance_upper stores the symmetric 3x3 covariance matrix as
+    (xx, xy, xz, yy, yz, zz), reconstructing rows as (xx, xy, xz),
+    (xy, yy, yz), and (xz, yz, zz).
+    """
+
     center: tuple[float, float, float]
     covariance_upper: tuple[float, float, float, float, float, float]
     color_rgb: tuple[float, float, float] = (1.0, 1.0, 1.0)
