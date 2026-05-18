@@ -16,7 +16,7 @@ The roadmap now treats that merged main-checkout implementation as the Phase 1 c
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Merged Foundation Baseline Completion** - Finish the merged baseline by documenting and validating the now-main implementation, including initial fusion, evaluation, and agent posterior APIs. (completed 2026-05-18)
-- [ ] **Phase 2: Coordinate and Artifact Hardening** - Make pose, frame, covariance, timestamp, and versioned artifact semantics explicit and tested.
+- [x] **Phase 2: Coordinate and Artifact Hardening** - Make pose, frame, covariance, timestamp, and versioned artifact semantics explicit and tested. (completed 2026-05-18)
 - [ ] **Phase 3: Backend Registry and Contracts** - Define backend metadata, availability checks, and lifecycle contract coverage without heavy dependency leakage.
 - [ ] **Phase 4: Fusion Diagnostics and Semantics Hardening** - Extend the initial fusion seam with explicit uncertainty/conflict diagnostics and anti-occupancy-grid tests.
 - [ ] **Phase 5: Evaluation Metric and Failure Gate Hardening** - Extend the initial evaluation harness with richer metrics, failure classification, and regression gates before real backend integration.
@@ -73,7 +73,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-04-PLAN.md — Add backend/evaluation artifact round trips and benchmark distinction tests.
+- [x] 02-04-PLAN.md — Add backend/evaluation artifact round trips and benchmark distinction tests.
 
 ### Phase 3: Backend Registry and Contracts
 
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
-| 2. Coordinate and Artifact Hardening | 3/4 | In Progress|  |
+| 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
 | 3. Backend Registry and Contracts | 0/TBD | Not started | - |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
