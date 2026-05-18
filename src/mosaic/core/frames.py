@@ -17,6 +17,8 @@ class Timestamp:
     nanoseconds: int
 
     def __post_init__(self) -> None:
+        if isinstance(self.nanoseconds, bool) or not isinstance(self.nanoseconds, int):
+            raise ValueError("Timestamp nanoseconds must be an integer")
         if self.nanoseconds < 0:
             raise ValueError("Timestamp nanoseconds must be non-negative")
 

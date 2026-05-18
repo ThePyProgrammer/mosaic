@@ -61,6 +61,19 @@ def test_camera_intrinsics_rejects_non_positive_depth_projection() -> None:
         _intrinsics().project((0.0, 0.0, 0.0))
 
 
+def test_camera_intrinsics_rejects_non_finite_values() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        CameraIntrinsics(width=640, height=480, fx=float("nan"), fy=401.0, cx=320.0, cy=240.0)
+
+    with pytest.raises(ValueError, match="finite"):
+        CameraIntrinsics(width=640, height=480, fx=400.0, fy=float("inf"), cx=320.0, cy=240.0)
+
+
+def test_camera_intrinsics_rejects_non_finite_projection_input() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        _intrinsics().project((float("nan"), 0.0, 4.0))
+
+
 def test_image_buffer_validates_rgb_length() -> None:
     image = _rgb()
 

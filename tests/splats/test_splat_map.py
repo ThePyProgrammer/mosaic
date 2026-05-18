@@ -26,6 +26,28 @@ def test_gaussian_splat_rejects_invalid_opacity() -> None:
         )
 
 
+def test_gaussian_splat_rejects_non_finite_numeric_values() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        GaussianSplat(center=(float("nan"), 0.0, 0.0), covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1))
+
+    with pytest.raises(ValueError, match="finite"):
+        GaussianSplat(center=(0.0, 0.0, 0.0), covariance_upper=(float("nan"), 0.0, 0.0, 0.1, 0.0, 0.1))
+
+    with pytest.raises(ValueError, match="finite"):
+        GaussianSplat(
+            center=(0.0, 0.0, 0.0),
+            covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1),
+            color_rgb=(float("inf"), 0.0, 0.0),
+        )
+
+    with pytest.raises(ValueError, match="finite"):
+        GaussianSplat(
+            center=(0.0, 0.0, 0.0),
+            covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1),
+            opacity=float("nan"),
+        )
+
+
 def test_gaussian_splat_rejects_covariance_tuple_length_other_than_six() -> None:
     with pytest.raises(ValueError, match="six values"):
         GaussianSplat(

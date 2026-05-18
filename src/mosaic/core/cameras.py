@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,6 +24,8 @@ class CameraIntrinsics:
             raise ValueError("CameraIntrinsics width must be positive")
         if self.height <= 0:
             raise ValueError("CameraIntrinsics height must be positive")
+        if not all(isfinite(value) for value in (self.fx, self.fy, self.cx, self.cy)):
+            raise ValueError("CameraIntrinsics numeric values must be finite")
         if self.fx <= 0.0 or self.fy <= 0.0:
             raise ValueError("CameraIntrinsics focal lengths must be positive")
         if not 0.0 <= self.cx <= float(self.width):
@@ -39,6 +42,8 @@ class CameraIntrinsics:
         """
 
         x, y, z = point_camera
+        if not all(isfinite(value) for value in point_camera):
+            raise ValueError("Cannot project point with non-finite coordinates")
         if z <= 0.0:
             raise ValueError("Cannot project point with non-positive depth")
         return Pixel(u=(self.fx * x / z) + self.cx, v=(self.fy * y / z) + self.cy)

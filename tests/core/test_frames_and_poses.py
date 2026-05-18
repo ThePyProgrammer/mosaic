@@ -30,9 +30,25 @@ def test_timestamp_rejects_negative_values() -> None:
         Timestamp(-1)
 
 
+def test_timestamp_rejects_non_integer_nanoseconds() -> None:
+    with pytest.raises(ValueError, match="integer"):
+        Timestamp(1.5)  # type: ignore[arg-type]
+
+    with pytest.raises(ValueError, match="integer"):
+        Timestamp(True)  # type: ignore[arg-type]
+
+
 def test_frame_id_rejects_blank_values() -> None:
     with pytest.raises(ValueError, match="FrameId"):
         FrameId("  ")
+
+
+def test_translation_rejects_non_finite_coordinates() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        Translation3(float("nan"), 0.0, 0.0)
+
+    with pytest.raises(ValueError, match="finite"):
+        Translation3(0.0, float("inf"), 0.0)
 
 
 def test_pose_tracks_parent_and_child_frames() -> None:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from math import isclose, sqrt
+from math import isclose, isfinite, sqrt
 from typing import Self
 
 from mosaic.core.frames import FrameId
@@ -12,6 +12,10 @@ class Translation3:
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
+
+    def __post_init__(self) -> None:
+        if not all(isfinite(value) for value in self.as_tuple()):
+            raise ValueError("Translation3 coordinates must be finite")
 
     def as_tuple(self) -> tuple[float, float, float]:
         return (self.x, self.y, self.z)
