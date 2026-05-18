@@ -4,9 +4,11 @@ from mosaic import (
     DeterministicSplatBackend,
     Embodiment,
     FrameId,
+    FusionInput,
     GaussianSplat,
     InMemorySequence,
     PlatformRegistry,
+    ProvenancePreservingFusion,
     SplatMap,
     Timestamp,
     TrackingState,
@@ -31,3 +33,8 @@ def test_public_api_exports_platform_types() -> None:
     assert platform.embodiment is Embodiment.QUADRUPED
     assert isinstance(platform.camera_rig, CameraRig)
     assert PlatformRegistry.__name__ == "PlatformRegistry"
+
+
+def test_public_api_exports_fusion_types() -> None:
+    assert FusionInput.__name__ == "FusionInput"
+    assert ProvenancePreservingFusion().name == "provenance-preserving"

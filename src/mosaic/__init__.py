@@ -12,6 +12,7 @@ from mosaic.core import (
     Translation3,
 )
 from mosaic.datasets import InMemorySequence, MultiViewSequence
+from mosaic.fusion import FusionInput, FusionResult, FusionStatus, ProvenancePreservingFusion, SplatFusionStrategy
 from mosaic.platforms import (
     CameraMount,
     CameraRig,
@@ -37,6 +38,9 @@ __all__ = [
     "DeterministicSplatBackend",
     "Embodiment",
     "FrameId",
+    "FusionInput",
+    "FusionResult",
+    "FusionStatus",
     "GaussianSplat",
     "ImageBuffer",
     "ImageEncoding",
@@ -46,9 +50,11 @@ __all__ = [
     "Pixel",
     "PlatformDescription",
     "PlatformRegistry",
+    "ProvenancePreservingFusion",
     "Pose3",
     "Quaternion",
     "SplatMap",
+    "SplatFusionStrategy",
     "SplatSlamBackend",
     "SplatSlamUpdate",
     "Timestamp",
