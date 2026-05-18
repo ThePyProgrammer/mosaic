@@ -69,3 +69,15 @@ def test_splat_map_appends_without_mutating_original() -> None:
     assert len(updated) == 1
     assert updated.frame == frame
     assert updated.splats == (splat,)
+
+
+def test_splat_map_freezes_mutable_input_sequence() -> None:
+    frame = FrameId("map")
+    splat = GaussianSplat(center=(0.0, 0.0, 1.0), covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1))
+    splats = [splat]
+
+    splat_map = SplatMap(frame=frame, splats=splats)
+    splats.append(GaussianSplat(center=(0.0, 1.0, 0.0), covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1)))
+
+    assert isinstance(splat_map.splats, tuple)
+    assert len(splat_map) == 1

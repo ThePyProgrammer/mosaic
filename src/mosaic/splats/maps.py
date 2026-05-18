@@ -12,6 +12,9 @@ class SplatMap:
     frame: FrameId
     splats: tuple[GaussianSplat, ...] = ()
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "splats", tuple(self.splats))
+
     def with_splats(self, splats: Iterable[GaussianSplat]) -> Self:
         return type(self)(frame=self.frame, splats=self.splats + tuple(splats))
 
