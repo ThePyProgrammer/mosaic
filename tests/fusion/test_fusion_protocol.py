@@ -28,9 +28,13 @@ def test_fusion_input_requires_matching_frames() -> None:
         FusionInput(maps=(_map("map"), _map("other")))
 
 
-def test_fusion_input_exposes_common_frame() -> None:
-    fusion_input = FusionInput(maps=(_map("map"), _map("map")))
+def test_fusion_input_defensively_freezes_maps() -> None:
+    maps = [_map("map")]
+    fusion_input = FusionInput(maps=maps)
+    maps.append(_map("map"))
 
+    assert isinstance(fusion_input.maps, tuple)
+    assert len(fusion_input.maps) == 1
     assert fusion_input.frame == FrameId("map")
 
 

@@ -21,6 +21,7 @@ class FusionInput:
     maps: tuple[SplatMap, ...]
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "maps", tuple(self.maps))
         if not self.maps:
             raise ValueError("FusionInput requires at least one map")
         frames = {splat_map.frame for splat_map in self.maps}
