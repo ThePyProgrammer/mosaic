@@ -31,6 +31,33 @@ def test_gaussian_splat_rejects_non_positive_covariance_diagonal() -> None:
         GaussianSplat(center=(0.0, 0.0, 0.0), covariance_upper=(0.0, 0.0, 0.0, 0.1, 0.0, 0.1))
 
 
+def test_gaussian_splat_coerces_mutable_sequence_inputs() -> None:
+    center = [1.0, 2.0, 3.0]
+    covariance_upper = [0.5, 0.0, 0.0, 0.5, 0.0, 0.5]
+    color_rgb = [0.2, 0.3, 0.4]
+
+    splat = GaussianSplat(center=center, covariance_upper=covariance_upper, color_rgb=color_rgb)
+
+    center[0] = 9.0
+    covariance_upper[0] = 9.0
+    color_rgb[0] = 9.0
+
+    assert splat.center == (1.0, 2.0, 3.0)
+    assert splat.covariance_upper == (0.5, 0.0, 0.0, 0.5, 0.0, 0.5)
+    assert splat.color_rgb == (0.2, 0.3, 0.4)
+    assert isinstance(splat.center, tuple)
+    assert isinstance(splat.covariance_upper, tuple)
+    assert isinstance(splat.color_rgb, tuple)
+
+
+def test_gaussian_splat_rejects_non_positive_definite_covariance() -> None:
+    with pytest.raises(ValueError, match="positive definite"):
+        GaussianSplat(
+            center=(0.0, 0.0, 0.0),
+            covariance_upper=(1.0, 2.0, 0.0, 1.0, 0.0, 1.0),
+        )
+
+
 def test_splat_map_appends_without_mutating_original() -> None:
     frame = FrameId("map")
     base = SplatMap(frame=frame)

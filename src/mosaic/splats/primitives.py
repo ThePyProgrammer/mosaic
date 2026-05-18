@@ -12,13 +12,28 @@ class GaussianSplat:
     provenance: str | None = None
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "center", tuple(self.center))
+        object.__setattr__(self, "covariance_upper", tuple(self.covariance_upper))
+        object.__setattr__(self, "color_rgb", tuple(self.color_rgb))
+
         if len(self.center) != 3:
             raise ValueError("GaussianSplat center must contain three coordinates")
         if len(self.covariance_upper) != 6:
             raise ValueError("GaussianSplat covariance_upper must contain six values")
-        xx, _, _, yy, _, zz = self.covariance_upper
+        xx, xy, xz, yy, yz, zz = self.covariance_upper
         if xx <= 0.0 or yy <= 0.0 or zz <= 0.0:
             raise ValueError("GaussianSplat covariance diagonal values must be positive")
+        if xx * yy - xy * xy <= 0.0:
+            raise ValueError("GaussianSplat covariance must be positive definite")
+        determinant = (
+            xx * yy * zz
+            + 2.0 * xy * xz * yz
+            - xx * yz * yz
+            - yy * xz * xz
+            - zz * xy * xy
+        )
+        if determinant <= 0.0:
+            raise ValueError("GaussianSplat covariance must be positive definite")
         if len(self.color_rgb) != 3:
             raise ValueError("GaussianSplat color_rgb must contain three channels")
         if any(channel < 0.0 or channel > 1.0 for channel in self.color_rgb):
