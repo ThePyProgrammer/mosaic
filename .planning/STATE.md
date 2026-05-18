@@ -58,6 +58,12 @@ Recent decisions affecting current work:
 
 None yet.
 
+### Quick Tasks Completed
+
+| Date | Task | Result |
+|------|------|--------|
+| 2026-05-18 | migrate-reference-files | Moved Argus, Superpowers, and ARNA reference files into `.planning/references/` with origin-based commits. |
+
 ### Blockers/Concerns
 
 - [Phase 1]: Main checkout and expanded foundation worktree differ substantially; merge/stabilization must preserve the observed 69-test baseline and public API boundaries for core, datasets, platforms, SLAM, splats, fusion, evaluation, and agent query contracts.
