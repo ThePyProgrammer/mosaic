@@ -1,4 +1,5 @@
 from mosaic import (
+    AgentQueryKind,
     BenchmarkArtifact,
     CameraIntrinsics,
     CameraRig,
@@ -8,10 +9,12 @@ from mosaic import (
     FusionInput,
     GaussianSplat,
     InMemorySequence,
+    LocalRadiusQuery,
     PlatformRegistry,
     ProvenancePreservingFusion,
     RegressionGate,
     SplatMap,
+    SplatPosteriorView,
     Timestamp,
     TrackingState,
     quadruped_front_rig,
@@ -49,3 +52,11 @@ def test_public_api_exports_evaluation_types() -> None:
     assert scenario.name == "synthetic-forward-1"
     assert BenchmarkArtifact.__name__ == "BenchmarkArtifact"
     assert RegressionGate(metric_name="splat_count", minimum=1.0).minimum == 1.0
+
+
+def test_public_api_exports_agent_types() -> None:
+    view = SplatPosteriorView(SplatMap(frame=FrameId("map")))
+    query = LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=1.0)
+
+    assert query.kind is AgentQueryKind.LOCAL_GEOMETRY
+    assert view.query_local(query).count == 0

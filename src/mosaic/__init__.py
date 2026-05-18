@@ -1,3 +1,11 @@
+from mosaic.agents import (
+    AgentQueryKind,
+    LocalRadiusQuery,
+    PosteriorSummary,
+    ProvenanceSummary,
+    SplatPosteriorView,
+    SplatQueryResult,
+)
 from mosaic.core import (
     CameraIntrinsics,
     CameraObservation,
@@ -42,6 +50,7 @@ from mosaic.splats import GaussianSplat, SplatMap
 __version__ = "0.1.0"
 
 __all__ = [
+    "AgentQueryKind",
     "BackendCapabilities",
     "BenchmarkArtifact",
     "CameraIntrinsics",
@@ -58,19 +67,24 @@ __all__ = [
     "ImageBuffer",
     "ImageEncoding",
     "InMemorySequence",
+    "LocalRadiusQuery",
     "MetricResult",
     "MultiViewObservation",
     "MultiViewSequence",
     "Pixel",
     "PlatformDescription",
     "PlatformRegistry",
+    "PosteriorSummary",
     "ProvenancePreservingFusion",
+    "ProvenanceSummary",
     "Pose3",
     "RegressionGate",
     "RegressionResult",
     "Quaternion",
     "SplatMap",
     "SplatFusionStrategy",
+    "SplatPosteriorView",
+    "SplatQueryResult",
     "SplatSlamBackend",
     "SyntheticScenario",
     "SplatSlamUpdate",
