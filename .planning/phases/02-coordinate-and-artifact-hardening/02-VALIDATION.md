@@ -38,12 +38,15 @@ created: 2026-05-18
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 02-01-01 | 01 | 1 | SEM-01 | T-02-01 | Reject ambiguous frame/timestamp semantics by testing exact documented behavior | unit | `uv run pytest tests/core/test_frames_and_poses.py tests/core/test_observations.py -q` | yes | pending |
-| 02-01-02 | 01 | 1 | SEM-02 | T-02-02 | Reject incompatible pose composition before math is applied | unit | `uv run pytest tests/core/test_frames_and_poses.py -q` | yes | pending |
-| 02-02-01 | 02 | 1 | SEM-03 | T-02-03 | Reject invalid covariance tuple length, diagonal, determinant, and off-diagonal edge cases | unit | `uv run pytest tests/splats/test_splat_map.py -q` | yes | pending |
-| 02-03-01 | 03 | 2 | ART-01 | T-02-04 | Reject unknown artifact schema names or schema versions before constructing domain objects | unit | `uv run pytest tests/artifacts -q` | no, create in Wave 0 | pending |
-| 02-03-02 | 03 | 2 | ART-02 | T-02-05 | Preserve integer timestamp nanoseconds, enum values, bytes encoding, tuple order, and diagnostics mappings across round trips | round-trip | `uv run pytest tests/artifacts -q` | no, create in Wave 0 | pending |
-| 02-04-01 | 04 | 2 | ART-01, ART-02 | T-02-06 | Keep existing `BenchmarkArtifact` JSON distinct from the broader v1 artifact envelope and deterministic under `sort_keys=True` | unit/round-trip | `uv run pytest tests/evaluation tests/artifacts -q` | partial | pending |
+| 02-01-01 | 01 | 1 | SEM-01 | T-02-01, T-02-05 | Reject ambiguous timestamp, pose-direction, handedness, and optical-frame semantics through exact documented behavior | unit/docs | `uv run pytest tests/core/test_frames_and_poses.py tests/core/test_observations.py -q` | yes | pending |
+| 02-01-02 | 01 | 1 | SEM-02 | T-02-02 | Reject incompatible pose composition before math is applied and verify transform order/inversion | unit | `uv run pytest tests/core/test_frames_and_poses.py -q` | yes | pending |
+| 02-02-01 | 02 | 1 | SEM-03 | T-02-03 | Preserve covariance_upper layout as upper-triangular `(xx, xy, xz, yy, yz, zz)` and reject layout ambiguity | unit | `uv run pytest tests/splats/test_splat_map.py -q` | yes | pending |
+| 02-02-02 | 02 | 1 | SEM-03 | T-02-03 | Reject invalid covariance tuple length, diagonal, determinant, and off-diagonal edge cases | unit | `uv run pytest tests/splats/test_splat_map.py -q` | yes | pending |
+| 02-03-01 | 03 | 2 | ART-01 | T-02-04 | Reject unknown artifact schema names or schema versions before constructing domain objects | unit | `uv run pytest tests/artifacts/test_core_artifacts.py -q` | no, create in Wave 0 | pending |
+| 02-03-02 | 03 | 2 | ART-01, ART-02, SEM-01 | T-02-05 | Preserve integer timestamp nanoseconds, pose frame direction, enum values, bytes encoding, tuple order, and diagnostics-compatible mappings across core/observation round trips | round-trip | `uv run pytest tests/artifacts/test_core_artifacts.py -q` | no, create in Wave 0 | pending |
+| 02-03-03 | 03 | 2 | ART-01, ART-02, SEM-03 | T-02-03, T-02-04 | Preserve Gaussian covariance tuple order and reject unknown splat/map artifact schema versions before construction | round-trip | `uv run pytest tests/artifacts/test_splat_artifacts.py -q` | no, create in Wave 0 | pending |
+| 02-04-01 | 04 | 3 | ART-01, ART-02 | T-02-04, T-02-05 | Preserve SplatSlamUpdate timestamp, tracking state, optional pose, map update, and diagnostics through validated schema envelopes | round-trip | `uv run pytest tests/artifacts/test_slam_and_evaluation_artifacts.py -q` | no, create in Wave 0 | pending |
+| 02-04-02 | 04 | 3 | ART-01, ART-02 | T-02-04, T-02-06 | Keep existing `BenchmarkArtifact` JSON distinct from the broader v1 artifact envelope and deterministic under `sort_keys=True` | unit/round-trip | `uv run pytest tests/evaluation tests/artifacts/test_slam_and_evaluation_artifacts.py -q` | partial | pending |
 
 ---
 

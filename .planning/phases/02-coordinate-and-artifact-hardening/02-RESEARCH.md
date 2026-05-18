@@ -379,20 +379,20 @@ def test_pose_composition_applies_child_then_parent() -> None:
 | A4 | Image artifacts should use an explicit bytes encoding, likely base64, if `ImageBuffer.data` is round-tripped through JSON. | Common Pitfalls | Wrong encoding choice could affect artifact interoperability. |
 | A5 | JSON Schema should be used as design vocabulary rather than a runtime validator dependency in Phase 2. | Standard Stack | If downstream consumers require formal `.schema.json` files now, planner must add tasks for schema documents. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should Phase 2 produce formal `.schema.json` files or only versioned Python artifact dictionaries?** [ASSUMED]
    - What we know: ART-01 says versioned JSON-ready artifact schemas, and JSON Schema object docs define `properties`, `required`, and property controls. [VERIFIED: .planning/REQUIREMENTS.md][CITED: https://json-schema.org/understanding-json-schema/reference/object]
    - What's unclear: The roadmap does not specify whether schemas must be machine-validated files. [VERIFIED: .planning/ROADMAP.md]
-   - Recommendation: Start with explicit Python schema names/versions and round-trip tests; add formal schema files only if planner/user wants interoperability deliverables. [ASSUMED]
+   - RESOLVED: Phase 2 produces versioned Python artifact dictionaries/envelopes only; no formal `.schema.json` files in this phase. Start with explicit Python schema names/versions and round-trip tests. [ASSUMED]
 2. **Should existing `camera/front` frame IDs be renamed to `camera/front_optical` in tests/presets?** [ASSUMED]
    - What we know: REP 103 names optical-frame axes separately, and current tests use generic camera frame IDs. [CITED: https://www.ros.org/reps/rep-0103.html][VERIFIED: codebase]
    - What's unclear: No current Mosaic doc chooses naming conventions for optical frames. [VERIFIED: codebase]
-   - Recommendation: Add docs and tests clarifying whether camera poses are optical poses; consider `_optical` suffix where projection is involved. [ASSUMED]
+   - RESOLVED: Do not globally rename existing `camera/front` IDs. Document optical-frame semantics and use `camera/front_optical` where projection/optical-frame examples or tests need explicitness. [ASSUMED]
 3. **Should `Timestamp.from_seconds()` continue using `round()`?** [VERIFIED: codebase]
    - What we know: Current code rounds seconds to nanoseconds. [VERIFIED: codebase]
    - What's unclear: Rounding policy for half-nanosecond values is not documented. [VERIFIED: codebase]
-   - Recommendation: Document integer nanoseconds as canonical artifact representation and test exact known conversions; avoid artifact round-trips through float seconds. [ASSUMED]
+   - RESOLVED: Keep `Timestamp.from_seconds()` using the existing round-to-nearest-nanosecond behavior, document/test it, and make artifacts serialize canonical integer nanoseconds. Avoid artifact round-trips through float seconds. [ASSUMED]
 
 ## Environment Availability
 
