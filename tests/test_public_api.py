@@ -1,12 +1,16 @@
 from mosaic import (
     CameraIntrinsics,
+    CameraRig,
     DeterministicSplatBackend,
+    Embodiment,
     FrameId,
     GaussianSplat,
     InMemorySequence,
+    PlatformRegistry,
     SplatMap,
     Timestamp,
     TrackingState,
+    quadruped_front_rig,
 )
 
 
@@ -19,3 +23,11 @@ def test_public_api_exports_core_foundation_types() -> None:
     assert DeterministicSplatBackend().name == "deterministic-splat"
     assert TrackingState.TRACKING.value == "tracking"
     assert InMemorySequence.__name__ == "InMemorySequence"
+
+
+def test_public_api_exports_platform_types() -> None:
+    platform = quadruped_front_rig()
+
+    assert platform.embodiment is Embodiment.QUADRUPED
+    assert isinstance(platform.camera_rig, CameraRig)
+    assert PlatformRegistry.__name__ == "PlatformRegistry"
