@@ -9,12 +9,13 @@ The roadmap now treats that merged main-checkout implementation as the Phase 1 c
 ## Phases
 
 **Phase Numbering:**
+
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Merged Foundation Baseline Completion** - Finish the merged baseline by documenting and validating the now-main implementation, including initial fusion, evaluation, and agent posterior APIs.
+- [x] **Phase 1: Merged Foundation Baseline Completion** - Finish the merged baseline by documenting and validating the now-main implementation, including initial fusion, evaluation, and agent posterior APIs. (completed 2026-05-18)
 - [ ] **Phase 2: Coordinate and Artifact Hardening** - Make pose, frame, covariance, timestamp, and versioned artifact semantics explicit and tested.
 - [ ] **Phase 3: Backend Registry and Contracts** - Define backend metadata, availability checks, and lifecycle contract coverage without heavy dependency leakage.
 - [ ] **Phase 4: Fusion Diagnostics and Semantics Hardening** - Extend the initial fusion seam with explicit uncertainty/conflict diagnostics and anti-occupancy-grid tests.
@@ -26,95 +27,133 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Merged Foundation Baseline Completion
+
 **Goal**: Users can install, import, test, and understand the merged Mosaic package baseline from the main checkout.
 **Depends on**: Nothing (first phase)
 **Requirements**: BASE-01, BASE-02, BASE-03, BASE-04, FUSE-01, FUSE-03, EVAL-01, EVAL-03, AGNT-01, AGNT-03
 **Success Criteria** (what must be TRUE):
+
   1. User can work from the main checkout and find the merged implementation in the Mosaic package.
   2. User can import supported public APIs for core, datasets, splats, SLAM, platforms, initial fusion, initial evaluation, and agent posterior APIs from documented package surfaces.
   3. User can run the main-checkout test workflow and see the merged suite pass at or above the observed 73-test coverage.
   4. User can call initial `FusionInput`/`ProvenancePreservingFusion`, synthetic benchmark artifact writing, regression gate checks, provider-free agent query contract types, and `SplatPosteriorView` local/summary/provenance queries without heavy runtime dependencies.
   5. User can read the README and understand Mosaic's library-first scope, fake-backend boundary, install/test commands, v1 module map, and which initial modules still need hardening.
+
 **Plans**: 4 plans
 Plans:
-- [ ] 01-01-PLAN.md — Document and verify the merged main-checkout package baseline.
-- [ ] 01-02-PLAN.md — Validate initial fusion protocol and provenance-preserving reference strategy.
-- [ ] 01-03-PLAN.md — Validate deterministic evaluation scenarios, benchmark artifacts, and initial regression gates.
-- [ ] 01-04-PLAN.md — Validate provider-free bounded agent posterior query contracts.
+
+- [x] 01-01-PLAN.md — Document and verify the merged main-checkout package baseline.
+- [x] 01-02-PLAN.md — Validate initial fusion protocol and provenance-preserving reference strategy.
+- [x] 01-03-PLAN.md — Validate deterministic evaluation scenarios, benchmark artifacts, and initial regression gates.
+- [x] 01-04-PLAN.md — Validate provider-free bounded agent posterior query contracts.
 
 ### Phase 2: Coordinate and Artifact Hardening
+
 **Goal**: Users can rely on explicit coordinate, covariance, timestamp, and artifact semantics across downstream fusion and evaluation work.
 **Depends on**: Phase 1
 **Requirements**: SEM-01, SEM-02, SEM-03, ART-01, ART-02
 **Success Criteria** (what must be TRUE):
+
   1. User can read and test the exact meaning of pose direction, parent/child frames, optical-frame convention, handedness, and timestamp precision.
   2. User can compose, invert, and apply core pose/camera transforms with behavior verified by tests.
   3. User can inspect Gaussian covariance layout and validity rules, including edge cases covered by tests.
   4. User can serialize and round-trip versioned JSON-ready artifacts for core values, observations, splats, maps, backend updates, and evaluation results.
   5. User can distinguish the existing benchmark artifact JSON from the broader v1 artifact schema requirements.
-**Plans**: TBD
+
+**Plans**: 4 plans
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Harden coordinate semantics and pose transform operations.
+- [ ] 02-02-PLAN.md — Harden Gaussian covariance layout and edge-case validation.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-03-PLAN.md — Add v1 artifact envelopes for core, observations, splats, and maps.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-04-PLAN.md — Add backend/evaluation artifact round trips and benchmark distinction tests.
 
 ### Phase 3: Backend Registry and Contracts
+
 **Goal**: Users can register, inspect, availability-check, and contract-test SLAM backends without importing CUDA/native dependencies into core modules.
 **Depends on**: Phase 2
 **Requirements**: BACK-01, BACK-02, BACK-03, BACK-04
 **Success Criteria** (what must be TRUE):
+
   1. User can inspect backend metadata including name, version, capabilities, parameters, dependencies, and out-of-process status.
   2. User can check backend availability and receive unavailable-dependency diagnostics without loading heavy optional packages.
   3. User can run the same backend contract tests against any registered backend implementation.
   4. User can verify lifecycle behavior for reset, process, snapshot, lost tracking, not-initialized behavior, diagnostics, and deterministic replay.
+
 **Plans**: TBD
 
 ### Phase 4: Fusion Diagnostics and Semantics Hardening
+
 **Goal**: Users can trust the initial fusion seam as a splat-native protocol with explicit provenance, uncertainty, conflict, and non-occupancy-grid semantics.
 **Depends on**: Phase 3
 **Requirements**: FUSE-02, FUSE-04
 **Success Criteria** (what must be TRUE):
+
   1. User can inspect fusion results for provenance, source-map diagnostics, uncertainty/conflict summaries, and machine-readable status beyond simple source/splat counts.
   2. User can run tests that explicitly reject occupancy-grid union assumptions and verify provenance-preserving splat behavior.
   3. User can see documented boundaries explaining that the reference strategy concatenates/preserves splats for contract tests and does not claim real Gaussian optimization quality.
+
 **Plans**: TBD
 
 ### Phase 5: Evaluation Metric and Failure Gate Hardening
+
 **Goal**: Users can evaluate deterministic backend behavior and regression failures before any real 3DGS backend integration is attempted.
 **Depends on**: Phase 4
 **Requirements**: EVAL-02, EVAL-04, EVAL-05
 **Success Criteria** (what must be TRUE):
+
   1. User can inspect metrics for splat counts, tracking/lifecycle status, trajectory consistency hooks, map-quality hooks, and agent-query stability hooks.
   2. User can consume benchmark JSON/JSONL artifacts containing scenario data, backend metadata, metrics, diagnostics, and failure classification.
   3. User can use regression gates that distinguish lifecycle, pose/trajectory, map/fusion, and agent-query failures before real backend work begins.
   4. User can verify real 3DGS backend integration is still blocked until these evaluation gates exist and pass.
+
 **Plans**: TBD
 
 ### Phase 6: Agent Posterior View Hardening
+
 **Goal**: Agent consumers can rely on richer bounded posterior questions over splat snapshots through provider-free Python contracts.
 **Depends on**: Phase 5
 **Requirements**: AGNT-02, AGNT-04
 **Success Criteria** (what must be TRUE):
+
   1. User can request local spatial views, scene/map summaries, uncertainty summaries, and provenance summaries over actual `SplatMap` snapshots without receiving raw full map dumps by default.
   2. User can run determinism tests showing repeated local, summary, uncertainty, and provenance queries against fixed snapshots return stable results.
   3. User can inspect documented boundaries between landed `SplatPosteriorView` local/summary/provenance behavior and richer future representation-memory queries.
+
 **Plans**: TBD
 
 ### Phase 7: Representation Memories and Tools
+
 **Goal**: Agent consumers can use deterministic representation-memory contracts and tool facades for perception, navigation, coordination, belief/provenance, and memory/context queries.
 **Depends on**: Phase 6
 **Requirements**: REPR-01, REPR-02, REPR-03, REPR-04, REPR-05, REPR-06, REPR-07, REPR-08
 **Success Criteria** (what must be TRUE):
+
   1. User can model typed IDs, entity kinds, relation kinds, evidence references, source metadata, query families, claims, conflicts, confidence, status, timestamps, and staleness transitions.
   2. User can query spatial/raster, scene graph, text, belief/provenance, and commitment memories through typed in-memory contracts.
   3. User can call a deterministic tool facade for one query in each family: perception, navigation, coordination, belief/provenance, and memory/context.
   4. User can run scenario tests for conflicting robot reports, stale claims, frontier/traversability queries, blocked-path explanations, and ARNA-style memory ablations.
+
 **Plans**: TBD
 
 ### Phase 8: Documentation and Release Readiness
+
 **Goal**: Users and contributors can understand exactly what v1 implements, what remains deferred, how to run the library, and how to extend it without violating backend boundaries.
 **Depends on**: Phase 7
 **Requirements**: DOCS-01, DOCS-02, DOCS-03
 **Success Criteria** (what must be TRUE):
+
   1. User can read public docs that distinguish implemented foundation APIs from planned real backend, ROS, Habitat, UI, and LLM integrations.
   2. User can follow a minimal end-to-end example using deterministic replay, fake backend, splat snapshot, evaluation artifact, and agent posterior query.
   3. Contributor can find dependency policy, optional extras guidance, test commands, and the rule that heavy backends stay behind registry/adapter seams.
+
 **Plans**: TBD
 
 ## Progress
@@ -124,7 +163,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Merged Foundation Baseline Completion | 0/4 | In progress | merged code baseline present; README/docs gap remains |
+| 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
 | 2. Coordinate and Artifact Hardening | 0/TBD | Not started | - |
 | 3. Backend Registry and Contracts | 0/TBD | Not started | - |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
@@ -176,6 +215,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | DOCS-03 | Phase 8 |
 
 **Coverage summary:**
+
 - v1 requirements: 37 total
 - Mapped to phases: 37
 - Unmapped: 0
