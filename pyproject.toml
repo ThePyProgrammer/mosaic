@@ -1,13 +1,22 @@
 [project]
 name = "mosaic"
 version = "0.1.0"
-description = "Add your description here"
+description = "Typed Gaussian-splatting SLAM primitives for multi-view robotic perception"
 readme = "README.md"
 authors = [
     { name = "Prannaya Gupta", email = "prannayagupta@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
 
 [build-system]
 requires = ["uv_build>=0.10.10,<0.11.0"]
