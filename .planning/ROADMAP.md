@@ -150,7 +150,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-03-PLAN.md — Add gate-derived failure taxonomy and evaluation-readiness helper.
+- [x] 05-03-PLAN.md — Add gate-derived failure taxonomy and evaluation-readiness helper.
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
 | 3. Backend Registry and Contracts | 4/4 | Complete   | 2026-05-19 |
 | 4. Fusion Diagnostics and Semantics Hardening | 3/3 | Complete   | 2026-05-19 |
-| 5. Evaluation Metric and Failure Gate Hardening | 2/4 | In Progress|  |
+| 5. Evaluation Metric and Failure Gate Hardening | 3/4 | In Progress|  |
 | 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
 | 7. Representation Memories and Tools | 0/TBD | Not started | - |
 | 8. Documentation and Release Readiness | 0/TBD | Not started | - |
