@@ -1,3 +1,5 @@
+import pytest
+
 from mosaic.evaluation import (
     BenchmarkArtifact,
     EvaluationReadinessResult,
@@ -94,15 +96,36 @@ def test_regression_gate_fails_when_metric_is_missing() -> None:
     assert primary_failure_class(results) is FailureClass.TRAJECTORY
 
 
+def test_regression_gate_rejects_duplicated_metric_names() -> None:
+    artifact = BenchmarkArtifact(
+        scenario_name="scenario",
+        backend_name="backend",
+        update_count=0,
+        metrics=[
+            {"name": "tracking_success_rate", "value": 0.0, "unit": "ratio"},
+            {"name": "tracking_success_rate", "value": 1.0, "unit": "ratio"},
+        ],
+        backend_metadata={"name": "backend"},
+        diagnostics={},
+        failure_classification="none",
+    )
+
+    with pytest.raises(ValueError, match="duplicated"):
+        check_regression_gates(
+            artifact,
+            (RegressionGate("tracking_success_rate", 1.0, FailureClass.LIFECYCLE),),
+        )
+
+
 def test_primary_failure_class_uses_priority_not_gate_order_or_artifact_string() -> None:
     artifact = BenchmarkArtifact(
         scenario_name="scenario",
         backend_name="backend",
         update_count=0,
         metrics=[
-            {"name": "agent_stability", "value": 0.0, "unit": "flag"},
-            {"name": "fusion_diagnostics", "value": 0.0, "unit": "flag"},
-            {"name": "trajectory_available", "value": 0.0, "unit": "flag"},
+            {"name": "agent_query_local_stable", "value": 0.0, "unit": "flag"},
+            {"name": "fusion_diagnostic_presence", "value": 0.0, "unit": "flag"},
+            {"name": "trajectory_pose_available", "value": 0.0, "unit": "flag"},
             {"name": "tracking_success_rate", "value": 0.0, "unit": "ratio"},
         ],
         backend_metadata={"name": "backend"},
@@ -112,9 +135,9 @@ def test_primary_failure_class_uses_priority_not_gate_order_or_artifact_string()
     results = check_regression_gates(
         artifact,
         (
-            RegressionGate("agent_stability", 1.0, FailureClass.AGENT_QUERY),
-            RegressionGate("fusion_diagnostics", 1.0, FailureClass.MAP_FUSION),
-            RegressionGate("trajectory_available", 1.0, FailureClass.TRAJECTORY),
+            RegressionGate("agent_query_local_stable", 1.0, FailureClass.AGENT_QUERY),
+            RegressionGate("fusion_diagnostic_presence", 1.0, FailureClass.MAP_FUSION),
+            RegressionGate("trajectory_pose_available", 1.0, FailureClass.TRAJECTORY),
             RegressionGate("tracking_success_rate", 1.0, FailureClass.LIFECYCLE),
         ),
     )
@@ -143,9 +166,9 @@ def _readiness_artifact(**metric_values: float) -> BenchmarkArtifact:
 def _complete_gate_suite() -> tuple[RegressionGate, ...]:
     return (
         RegressionGate("tracking_success_rate", 1.0, FailureClass.LIFECYCLE),
-        RegressionGate("trajectory_available", 1.0, FailureClass.TRAJECTORY),
-        RegressionGate("fusion_diagnostics", 1.0, FailureClass.MAP_FUSION),
-        RegressionGate("agent_stability", 1.0, FailureClass.AGENT_QUERY),
+        RegressionGate("trajectory_pose_available", 1.0, FailureClass.TRAJECTORY),
+        RegressionGate("fusion_diagnostic_presence", 1.0, FailureClass.MAP_FUSION),
+        RegressionGate("agent_query_local_stable", 1.0, FailureClass.AGENT_QUERY),
     )
 
 
@@ -161,9 +184,9 @@ def test_every_failure_class_can_be_retained_on_failed_results() -> None:
     )
     gates = (
         RegressionGate("tracking_success_rate", 1.0, FailureClass.LIFECYCLE),
-        RegressionGate("trajectory_available", 1.0, FailureClass.TRAJECTORY),
-        RegressionGate("fusion_diagnostics", 1.0, FailureClass.MAP_FUSION),
-        RegressionGate("agent_stability", 1.0, FailureClass.AGENT_QUERY),
+        RegressionGate("trajectory_pose_available", 1.0, FailureClass.TRAJECTORY),
+        RegressionGate("fusion_diagnostic_presence", 1.0, FailureClass.MAP_FUSION),
+        RegressionGate("agent_query_local_stable", 1.0, FailureClass.AGENT_QUERY),
     )
 
     results = check_regression_gates(artifact, gates)
@@ -233,9 +256,9 @@ def test_readiness_blocks_failed_lifecycle_tracking_success_gate() -> None:
     result = evaluation_ready_for_real_backend(
         _readiness_artifact(
             tracking_success_rate=0.0,
-            trajectory_available=1.0,
-            fusion_diagnostics=1.0,
-            agent_stability=1.0,
+            trajectory_pose_available=1.0,
+            fusion_diagnostic_presence=1.0,
+            agent_query_local_stable=1.0,
         ),
         _complete_gate_suite(),
     )
@@ -249,15 +272,15 @@ def test_readiness_blocks_lost_tracking_lifecycle_gate() -> None:
     result = evaluation_ready_for_real_backend(
         _readiness_artifact(
             lost_tracking_count=1.0,
-            trajectory_available=1.0,
-            fusion_diagnostics=1.0,
-            agent_stability=1.0,
+            trajectory_pose_available=1.0,
+            fusion_diagnostic_presence=1.0,
+            agent_query_local_stable=1.0,
         ),
         (
             RegressionGate("lost_tracking_count", 0.0, FailureClass.LIFECYCLE, maximum=0.0),
-            RegressionGate("trajectory_available", 1.0, FailureClass.TRAJECTORY),
-            RegressionGate("fusion_diagnostics", 1.0, FailureClass.MAP_FUSION),
-            RegressionGate("agent_stability", 1.0, FailureClass.AGENT_QUERY),
+            RegressionGate("trajectory_pose_available", 1.0, FailureClass.TRAJECTORY),
+            RegressionGate("fusion_diagnostic_presence", 1.0, FailureClass.MAP_FUSION),
+            RegressionGate("agent_query_local_stable", 1.0, FailureClass.AGENT_QUERY),
         ),
     )
 
@@ -269,15 +292,15 @@ def test_readiness_blocks_not_initialized_lifecycle_gate() -> None:
     result = evaluation_ready_for_real_backend(
         _readiness_artifact(
             not_initialized_tracking_count=1.0,
-            trajectory_available=1.0,
-            fusion_diagnostics=1.0,
-            agent_stability=1.0,
+            trajectory_pose_available=1.0,
+            fusion_diagnostic_presence=1.0,
+            agent_query_local_stable=1.0,
         ),
         (
             RegressionGate("not_initialized_tracking_count", 0.0, FailureClass.LIFECYCLE, maximum=0.0),
-            RegressionGate("trajectory_available", 1.0, FailureClass.TRAJECTORY),
-            RegressionGate("fusion_diagnostics", 1.0, FailureClass.MAP_FUSION),
-            RegressionGate("agent_stability", 1.0, FailureClass.AGENT_QUERY),
+            RegressionGate("trajectory_pose_available", 1.0, FailureClass.TRAJECTORY),
+            RegressionGate("fusion_diagnostic_presence", 1.0, FailureClass.MAP_FUSION),
+            RegressionGate("agent_query_local_stable", 1.0, FailureClass.AGENT_QUERY),
         ),
     )
 
@@ -290,9 +313,9 @@ def test_readiness_passes_only_for_complete_passing_gate_suite() -> None:
     result = evaluation_ready_for_real_backend(
         _readiness_artifact(
             tracking_success_rate=1.0,
-            trajectory_available=1.0,
-            fusion_diagnostics=1.0,
-            agent_stability=1.0,
+            trajectory_pose_available=1.0,
+            fusion_diagnostic_presence=1.0,
+            agent_query_local_stable=1.0,
         ),
         _complete_gate_suite(),
     )

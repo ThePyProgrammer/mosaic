@@ -4,7 +4,7 @@ from typing import cast
 
 from mosaic.artifacts.schema import ArtifactDict, make_artifact, require_artifact
 from mosaic.evaluation import BenchmarkArtifact, FailureClass, MetricResult, RegressionResult
-from mosaic.evaluation.runner import ArtifactValue, MetricDict
+from mosaic.evaluation.runner import ArtifactValue, GateResultMapping, MetricDict, ScenarioSummaryValue
 
 
 def metric_result_to_artifact(metric: MetricResult) -> ArtifactDict:
@@ -53,4 +53,6 @@ def benchmark_artifact_from_artifact(artifact: object) -> BenchmarkArtifact:
         backend_metadata=cast(dict[str, ArtifactValue], payload["backend_metadata"]),
         diagnostics=cast(dict[str, ArtifactValue], payload["diagnostics"]),
         failure_classification=cast(str, payload["failure_classification"]),
+        scenario_summary=cast(dict[str, ScenarioSummaryValue], payload.get("scenario_summary", {})),
+        gate_results=cast(list[GateResultMapping], payload.get("gate_results", [])),
     )

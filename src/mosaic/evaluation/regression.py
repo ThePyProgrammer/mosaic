@@ -84,7 +84,12 @@ def check_regression_gates(
     artifact: BenchmarkArtifact,
     gates: tuple[RegressionGate, ...],
 ) -> tuple[RegressionResult, ...]:
-    metrics = {str(metric["name"]): float(metric["value"]) for metric in artifact.metrics}
+    metrics: dict[str, float] = {}
+    for metric in artifact.metrics:
+        name = str(metric["name"])
+        if name in metrics:
+            raise ValueError(f"BenchmarkArtifact metric name is duplicated: {name}")
+        metrics[name] = float(metric["value"])
     results: list[RegressionResult] = []
     for gate in gates:
         observed = metrics.get(gate.metric_name)

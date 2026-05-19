@@ -146,8 +146,22 @@ def test_benchmark_artifact_as_dict_is_not_general_schema_envelope() -> None:
         "metrics": [{"name": "splat_count", "value": 1.0, "unit": "splats"}],
         "diagnostics": {"snapshot_splat_count": 1},
         "failure_classification": "none",
-        "scenario_summary": {},
-        "gate_results": [],
+        "scenario_summary": {
+            "name": "scenario",
+            "frame_count": 1,
+            "update_count": 1,
+            "camera_ids": ["front"],
+            "expected_map_frame": "map",
+        },
+        "gate_results": [
+            {
+                "metric_name": "splat_count",
+                "passed": True,
+                "observed": 1.0,
+                "threshold": 1.0,
+                "failure_class": "map_fusion",
+            }
+        ],
     }
     assert "schema" not in serialized
     assert "schema_version" not in serialized
@@ -196,4 +210,20 @@ def _benchmark_artifact() -> BenchmarkArtifact:
         backend_metadata={"name": "backend"},
         diagnostics={"snapshot_splat_count": 1},
         failure_classification="none",
+        scenario_summary={
+            "name": "scenario",
+            "frame_count": 1,
+            "update_count": 1,
+            "camera_ids": ["front"],
+            "expected_map_frame": "map",
+        },
+        gate_results=[
+            {
+                "metric_name": "splat_count",
+                "passed": True,
+                "observed": 1.0,
+                "threshold": 1.0,
+                "failure_class": "map_fusion",
+            }
+        ],
     )
