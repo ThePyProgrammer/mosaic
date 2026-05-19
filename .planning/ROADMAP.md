@@ -95,7 +95,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Add reusable backend lifecycle contract helpers.
+- [x] 03-02-PLAN.md — Add reusable backend lifecycle contract helpers.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -177,7 +177,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
 | 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
-| 3. Backend Registry and Contracts | 1/3 | In Progress|  |
+| 3. Backend Registry and Contracts | 2/3 | In Progress|  |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
 | 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
