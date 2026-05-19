@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 
-import pytest
-
 from mosaic.evaluation.scenarios import synthetic_forward_sequence
 from mosaic.slam.protocol import MetricValue, SplatSlamBackend, SplatSlamUpdate, TrackingState
 from mosaic.slam.registry import BackendDescriptor
@@ -22,6 +20,9 @@ def skip_unavailable_backend(descriptor: BackendDescriptor) -> None:
     reason_parts.extend(str(value) for value in availability.install_hints.values())
     reason_parts.extend(str(value) for value in availability.diagnostics.values())
     reason = ", ".join(reason_parts) or f"Backend {descriptor.name!r} is unavailable"
+
+    import pytest
+
     pytest.skip(reason)
 
 
