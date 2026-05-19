@@ -1,4 +1,4 @@
-\documentclass[11pt, a4paper]{googledeepmind}
+\documentclass[11pt, a4paper, logo]{googledeepmind}
 
 \usepackage[authoryear, sort&compress, round]{natbib}
 \bibliographystyle{abbrvnat}
@@ -33,7 +33,7 @@
 \title{Collaborative Gaussian SLAM for Multi-Robot Mapping: A Survey of Online Shared-Map Systems}
 
 \author[1]{Prannaya Gupta}
-\affil[1]{Mosaic Project}
+\affil[1]{Pragnition Labs}
 
 \date{May 2026}
 
@@ -55,7 +55,6 @@ Multi-robot Gaussian SLAM has emerged as a narrow but strategically important va
 
 This survey focuses on systems that satisfy a functional target: multiple independently moving agents, online or incremental operation, Gaussian or Gaussian-like map state, a shared-map fusion mechanism, and explicit cross-agent alignment. That target is narrower than ordinary 3DGS reconstruction and broader than papers whose title contains the word ``SLAM.'' It includes RGB-D multi-agent Gaussian SLAM systems such as MAGiC-SLAM and GRAND-SLAM \citep{yugay2025magic_slam,thomas2025grand_slam}, consensus-oriented systems such as MAC-Ego3D \citep{xu2024mac_ego3d}, communication-efficient compact-map systems such as CoKo-SLAM and CoMA-SLAM \citep{li2026coko_slam,chen2026coma_slam}, heterogeneous semantic mapping systems such as HAMMER \citep{yu2025hammer}, and provisional monocular multi-agent systems such as MAGS-SLAM \citep{cao2026mags_slam}.
 
-The survey makes three claims. First, open implementation evidence exists, but it is research-code evidence rather than reusable library evidence: MAGiC-SLAM, MAC-Ego3D, CoKo-SLAM, and CoMA-SLAM have public repositories, with caveats about native dependencies, licensing, and reproducibility.\footnote{MAGiC-SLAM: \url{https://github.com/VladimirYugay/MAGiC-SLAM}; MAC-Ego3D: \url{https://github.com/Xiaohao-Xu/MAC-Ego3D}; CoKo-SLAM: \url{https://github.com/lemonci/coko-slam}; CoMA-SLAM: \url{https://github.com/npu-chenlin/CoMA-SLAM}.} Second, several of the most architecturally relevant systems are paper-only or project-page-only for Mosaic integration purposes: HAMMER, GRAND-SLAM, and MAGS-SLAM should inform contracts and benchmarks, not be treated as auditable backends today \citep{yu2025hammer_project,thomas2025grand_slam,cao2026mags_slam_project}. Third, the benchmark surface is not yet mature: pose and rendering metrics are much more consistently reported than communication, memory, merge latency, or scaling under realistic multi-robot network conditions.
 
 \section{Problem Statement and Target Class}
 
@@ -124,22 +123,6 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \end{enumerate}
 \end{algorithm}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 7mm]
-\node[methodnode] (a) {RGB-D\\agents};
-\node[methodnode, right=of a] (l) {Local tracking\\+ Gaussian submaps};
-\node[methodnode, right=of l] (s) {Server loop\\closure};
-\node[methodnode, right=of s] (p) {Pose graph\\optimization};
-\node[methodnode, right=of p] (g) {Merged global\\Gaussian map};
-\draw[methodarrow] (a) -- (l);
-\draw[methodarrow] (l) -- node[above]{features/submaps} (s);
-\draw[methodarrow] (s) -- (p);
-\draw[methodarrow] (p) -- (g);
-\end{tikzpicture}
-\caption{MAGiC-SLAM fuses local RGB-D Gaussian submaps through a server-side loop-closure and pose-graph layer.}
-\label{fig:magic-flow}
-\end{figure}
 
 \paragraph{Evidence and caveats.} Reported ReplicaMultiagent results include about $0.27\,\mathrm{cm}$ ATE RMSE, $34.26\,\mathrm{dB}$ PSNR, $1.12\,\mathrm{GiB}$ peak GPU memory, $54\,\mathrm{MB}$ submaps, and $167\,\mathrm{s}$ global merge time. Treat it as a mature public research baseline, not a clean Mosaic dependency.
 
@@ -162,24 +145,6 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \end{enumerate}
 \end{algorithm}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 7mm]
-\node[methodnode] (a1) {Agent $i$\\local Gaussians};
-\node[methodnode, below=of a1] (a2) {Agent $j$\\local Gaussians};
-\node[methodnode, right=of a1] (intra) {Intra-agent\\consensus};
-\node[methodnode, right=of a2] (intra2) {Intra-agent\\consensus};
-\node[methodnode, right=16mm of intra, yshift=-8mm] (inter) {Async inter-agent\\consensus};
-\node[methodnode, right=of inter] (g) {Shared Gaussian\\model};
-\draw[methodarrow] (a1) -- (intra);
-\draw[methodarrow] (a2) -- (intra2);
-\draw[methodarrow] (intra) -- (inter);
-\draw[methodarrow] (intra2) -- (inter);
-\draw[methodarrow] (inter) -- (g);
-\end{tikzpicture}
-\caption{MAC-Ego3D is best understood as repeated local and cross-agent Gaussian consensus.}
-\label{fig:mac-flow}
-\end{figure}
 
 \paragraph{Evidence and caveats.} Extracted results report about $0.14\,\mathrm{cm}$ ATE RMSE on Multi-Agent Replica, $40.04\,\mathrm{dB}$ PSNR, $0.02\,\mathrm{s}$ tracking, and $0.05\,\mathrm{s}$ mapping. Communication is reported as intervals rather than bytes.
 
@@ -203,22 +168,6 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \end{enumerate}
 \end{algorithm}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 7mm]
-\node[methodnode] (r) {Robot-side\\Gaussian maps};
-\node[methodnode, right=of r] (c) {Compaction\\keyframes + Gaussians};
-\node[methodnode, right=of c] (lc) {Depth-based\\loop closure};
-\node[methodnode, right=of lc] (prune) {Prune +\\optimize};
-\node[methodnode, right=of prune] (g) {Compact shared\\Gaussian map};
-\draw[methodarrow] (r) -- (c);
-\draw[methodarrow] (c) -- node[above]{bounded upload} (lc);
-\draw[methodarrow] (lc) -- (prune);
-\draw[methodarrow] (prune) -- (g);
-\end{tikzpicture}
-\caption{CoKo-SLAM makes communication selection the central design point before server-side alignment and pruning.}
-\label{fig:coko-flow}
-\end{figure}
 
 \paragraph{Evidence and caveats.} The paper reports $85$--$95\%$ lower transmitted data, but the extracted evidence did not include absolute bandwidth. The public code is useful evidence for architecture, but dependency hygiene is rough.
 
@@ -241,20 +190,6 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \end{enumerate}
 \end{algorithm}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 7mm]
-\node[methodnode] (s) {Local Gaussian\\surfel submaps};
-\node[methodnode, right=of s] (loops) {Intra/inter\\loops};
-\node[methodnode, right=of loops] (dist) {Distributed\\keyframe opt.};
-\node[methodnode, right=of dist] (g) {Consistent shared\\surfel map};
-\draw[methodarrow] (s) -- (loops);
-\draw[methodarrow] (loops) -- node[above]{compact updates} (dist);
-\draw[methodarrow] (dist) -- (g);
-\end{tikzpicture}
-\caption{CoMA-SLAM emphasizes distributed geometric consistency over centralized dense-map upload.}
-\label{fig:coma-flow}
-\end{figure}
 
 \paragraph{Evidence and caveats.} The AAAI evidence reports improved pose/rendering/geometric consistency and a $99.8\%$ communication-bandwidth reduction claim, but exact numeric tables were not extracted. The repository was public, but no top-level license was found.
 
@@ -277,22 +212,6 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \end{enumerate}
 \end{algorithm}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 7mm]
-\node[methodnode] (h) {Heterogeneous\\robots/devices};
-\node[methodnode, right=of h] (poses) {Local SLAM poses\\+ perception};
-\node[methodnode, right=of poses] (align) {Global frame\\alignment};
-\node[methodnode, right=of align] (sem) {Metric-semantic\\3DGS training};
-\node[methodnode, right=of sem] (q) {Agent-facing\\semantic map};
-\draw[methodarrow] (h) -- (poses);
-\draw[methodarrow] (poses) -- (align);
-\draw[methodarrow] (align) -- (sem);
-\draw[methodarrow] (sem) -- (q);
-\end{tikzpicture}
-\caption{HAMMER turns mixed robot streams into a server-trained metric-semantic Gaussian map.}
-\label{fig:hammer-flow}
-\end{figure}
 
 \paragraph{Evidence and caveats.} Reported evidence includes Replica PSNR around $37.28\,\mathrm{dB}$, online updates around $15$--$38\,\mathrm{ms/frame}$, alignment around $36\,\mathrm{s}$ per new robot, and $30$--$35\,\mathrm{Mbps}$ per device in hardware tests. No public implementation was found.
 
@@ -316,22 +235,6 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \end{enumerate}
 \end{algorithm}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 7mm]
-\node[methodnode] (m) {Local Gaussian\\submaps};
-\node[methodnode, right=of m] (lc) {Inter/intra\\loop closures};
-\node[methodnode, right=of lc] (pg) {Global pose\\graph};
-\node[methodnode, right=of pg] (opt) {Optimized\\submap poses};
-\node[methodnode, right=of opt] (g) {Consistent large-scale\\Gaussian map};
-\draw[methodarrow] (m) -- (lc);
-\draw[methodarrow] (lc) -- (pg);
-\draw[methodarrow] (pg) -- (opt);
-\draw[methodarrow] (opt) -- (g);
-\end{tikzpicture}
-\caption{GRAND-SLAM separates dense local Gaussian submaps from the pose-graph consistency layer.}
-\label{fig:grand-flow}
-\end{figure}
 
 \paragraph{Evidence and caveats.} Extracted results include Multiagent Replica ATE around $0.25\,\mathrm{cm}$ and Kimera-Multi Outdoor six-agent evaluation over about $1.85\,\mathrm{km}$ with average ATE around $4.99\,\mathrm{m}$ \citep{tian2023kimera_multi}. No public code was found in the research pass.
 
@@ -355,22 +258,6 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \end{enumerate}
 \end{algorithm}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 7mm]
-\node[methodnode] (rgb) {Monocular RGB\\agents};
-\node[methodnode, right=of rgb] (local) {Local Gaussian\\submaps};
-\node[methodnode, right=of local] (compact) {Compact submap\\summaries};
-\node[methodnode, right=of compact] (verify) {Geometry +\\appearance checks};
-\node[methodnode, right=of verify] (fuse) {Occupancy-aware\\Gaussian fusion};
-\draw[methodarrow] (rgb) -- (local);
-\draw[methodarrow] (local) -- (compact);
-\draw[methodarrow] (compact) -- (verify);
-\draw[methodarrow] (verify) -- (fuse);
-\end{tikzpicture}
-\caption{MAGS-SLAM shifts the fusion contract toward compact monocular summaries and scale-aware association.}
-\label{fig:mags-flow}
-\end{figure}
 
 \paragraph{Evidence and caveats.} MAGS-SLAM is the leading claimed monocular multi-agent 3DGS SLAM direction in this set, but available evidence is project-page/arXiv-stage. Code and data were reported as release-upon-acceptance, so runtime and bandwidth claims remain provisional.
 
