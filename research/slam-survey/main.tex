@@ -106,7 +106,7 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \subsection{MAGiC-SLAM}
 \label{sec:systems:magic-slam}
 
-\textbf{Mechanics.} MAGiC-SLAM is a server-mediated RGB-D pipeline: agents track locally, build local Gaussian submaps, send features/submaps to a server, and the server uses loop closure plus pose-graph optimization before merging submaps \citep{yugay2025magic_slam}.\footnote{\url{https://github.com/VladimirYugay/MAGiC-SLAM}.} The central mechanism is not raw image fusion; it is \emph{submap plus loop constraint} fusion.
+\textbf{Mechanics.} MAGiC-SLAM is a server-mediated RGB-D pipeline: agents track locally, build local Gaussian submaps, send features/submaps to a server, and the server uses loop closure plus pose-graph optimization before merging submaps \citep{yugay2025magic_slam}.\footnote{\url{https://github.com/VladimirYugay/MAGiC-SLAM}} The central mechanism is not raw image fusion; it is \emph{submap plus loop constraint} fusion.
 
 \begin{algorithm}[H]
 \caption{MAGiC-SLAM}
@@ -128,7 +128,7 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \subsection{MAC-Ego3D}
 \label{sec:systems:mac-ego3d}
 
-\textbf{Mechanics.} MAC-Ego3D replaces a single authoritative merge step with Gaussian consensus. Each RGB-D agent maintains a local Gaussian map; nearby Gaussians are regularized within an agent, and asynchronous inter-agent consensus aligns and refines the shared structure \citep{xu2024mac_ego3d}.\footnote{\url{https://github.com/Xiaohao-Xu/MAC-Ego3D}.} The key object is the repeated consensus update, not a one-shot server merge.
+\textbf{Mechanics.} MAC-Ego3D replaces a single authoritative merge step with Gaussian consensus. Each RGB-D agent maintains a local Gaussian map; nearby Gaussians are regularized within an agent, and asynchronous inter-agent consensus aligns and refines the shared structure \citep{xu2024mac_ego3d}.\footnote{\url{https://github.com/Xiaohao-Xu/MAC-Ego3D}} The key object is the repeated consensus update, not a one-shot server merge.
 
 \begin{algorithm}[H]
 \caption{MAC-Ego3D}
@@ -149,7 +149,7 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \subsection{CoKo-SLAM}
 \label{sec:systems:coko-slam}
 
-\textbf{Mechanics.} CoKo-SLAM keeps the server pattern but changes what is transmitted: compact keyframe-optimized Gaussian/keyframe state instead of dense raw streams \citep{li2026coko_slam}.\footnote{\url{https://github.com/lemonci/coko-slam}.} The server uses compact map information, loop closure without an initial relative-pose guess, redundant-Gaussian pruning, and global optimization.
+\textbf{Mechanics.} CoKo-SLAM keeps the server pattern but changes what is transmitted: compact keyframe-optimized Gaussian/keyframe state instead of dense raw streams \citep{li2026coko_slam}.\footnote{\url{https://github.com/lemonci/coko-slam}} The server uses compact map information, loop closure without an initial relative-pose guess, redundant-Gaussian pruning, and global optimization.
 
 \begin{algorithm}[H]
 \caption{CoKo-SLAM}
@@ -171,7 +171,7 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \subsection{CoMA-SLAM}
 \label{sec:systems:coma-slam}
 
-\textbf{Mechanics.} CoMA-SLAM is a distributed multi-agent Gaussian-surfel system: agents maintain submap-centric updates, close intra/inter-agent loops, and run distributed keyframe optimization \citep{chen2026coma_slam}.\footnote{\url{https://github.com/npu-chenlin/CoMA-SLAM}.} Its representation is 2D Gaussian surfels rather than conventional 3D radiance splats, so it belongs in a broad Gaussian-map survey with that caveat.
+\textbf{Mechanics.} CoMA-SLAM is a distributed multi-agent Gaussian-surfel system: agents maintain submap-centric updates, close intra/inter-agent loops, and run distributed keyframe optimization \citep{chen2026coma_slam}.\footnote{\url{https://github.com/npu-chenlin/CoMA-SLAM}} Its representation is 2D Gaussian surfels rather than conventional 3D radiance splats, so it belongs in a broad Gaussian-map survey with that caveat.
 
 \begin{algorithm}[H]
 \caption{CoMA-SLAM}
