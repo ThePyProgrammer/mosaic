@@ -92,6 +92,7 @@ None yet.
 | 2026-05-19 | latex-link-font-xcharter | Set the Google DeepMind LaTeX class URL style to inherit XCharter text fonts and verified a Tectonic PDF build. |
 | 2026-05-19 | remove-slam-survey-sources-appendix | Removed the redundant Sources Appendix now that source URLs live in BibTeX fields and repository footnotes; verified a Tectonic PDF build. |
 | 2026-05-19 | formalize-survey-algorithms | Replaced prose-like method algorithms with formal staged process specs using inputs, state variables, stage trackers, transitions, and outputs; verified citations and Tectonic PDF build. |
+| 2026-05-19 | clean-github-footnote-labels | Removed method-specific `code repository:` labels from GitHub footnotes while preserving repository URLs; verified a Tectonic PDF build. |
 
 ### Blockers/Concerns
 
