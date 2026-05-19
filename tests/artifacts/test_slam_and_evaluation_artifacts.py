@@ -104,7 +104,12 @@ def test_metric_result_artifact_round_trips() -> None:
     restored = metric_result_from_artifact(artifact)
 
     assert artifact["schema"] == "mosaic.metric_result"
-    assert artifact["payload"] == {"name": "splat_count", "value": 2.0, "unit": "splats"}
+    assert artifact["payload"] == {
+        "name": "splat_count",
+        "value": 2.0,
+        "unit": "splats",
+        "family": "general",
+    }
     assert restored == metric
 
 

@@ -21,7 +21,9 @@ def test_run_slam_benchmark_processes_scenario_and_reports_metrics() -> None:
     assert artifact.backend_metadata["runs_out_of_process"] is False
     assert artifact.backend_metadata["parameter_deterministic"] is True
     json.dumps(artifact.as_dict()["backend_metadata"], sort_keys=True)
-    assert artifact.metrics == [{"name": "splat_count", "value": 3.0, "unit": "splats"}]
+    assert artifact.metrics == [
+        {"name": "splat_count", "value": 3.0, "unit": "splats", "family": "map_quality"}
+    ]
     assert artifact.diagnostics == {"last_splat_count": 3, "snapshot_splat_count": 3}
     assert artifact.failure_classification == "none"
     assert artifact.update_count == 3
