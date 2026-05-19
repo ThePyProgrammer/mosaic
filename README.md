@@ -53,7 +53,7 @@ Public imports are exposed from explicit package surfaces. The root `mosaic` pac
 | `mosaic.splats` | Gaussian primitives and immutable map snapshots | `GaussianSplat`, `SplatMap` |
 | `mosaic.slam` | Backend lifecycle protocols and deterministic reference backend | `SplatSlamBackend`, `SplatSlamUpdate`, `TrackingState`, `DeterministicSplatBackend` |
 | `mosaic.platforms` | Robot-neutral platform descriptions and camera rigs | `CameraRig`, `PlatformRegistry`, `quadruped_front_rig`, `ugv_surround_rig`, `humanoid_stereo_rig` |
-| `mosaic.fusion` | Splat-map fusion contracts and deterministic reference strategy | `FusionInput`, `FusionResult`, `FusionStatus`, `ProvenancePreservingFusion` |
+| `mosaic.fusion` | Splat-map fusion contracts and deterministic reference strategy | `FusionInput`, `FusionResult`, `FusionStatus`, `FusionProvenanceSummary`, `FusionUncertaintySummary`, `FusionConflictSummary`, `ProvenancePreservingFusion` |
 | `mosaic.evaluation` | Synthetic scenarios, benchmark artifacts, metrics, and regression gates | `synthetic_forward_sequence`, `run_slam_benchmark`, `RegressionGate`, `check_regression_gates` |
 | `mosaic.agents` | Provider-free bounded posterior query contracts | `LocalRadiusQuery`, `SplatQueryResult`, `PosteriorSummary`, `ProvenanceSummary`, `SplatPosteriorView` |
 
@@ -158,7 +158,7 @@ Mosaic Phase 1 is a pure-Python headless library. Core imports are expected to w
 
 `DeterministicSplatBackend` is a deterministic reference backend for contract tests, examples, replay validation, and benchmark smoke checks. It is not a real 3D Gaussian Splatting optimizer.
 
-`ProvenancePreservingFusion` is a provenance-preserving contract strategy. It validates compatible map inputs and preserves splats and source information for tests. It is not real Gaussian optimization, uncertainty minimization, loop closure, map alignment, or multi-session reconstruction.
+`ProvenancePreservingFusion` is a provenance-preserving contract strategy. It validates compatible map inputs, preserves and diagnoses splats, reports the stable machine-readable label `preserved_not_optimized`, does not optimize Gaussians, and does not collapse overlapping splats into occupancy-grid cells. It is not real Gaussian optimization, calibrated uncertainty minimization, loop closure, map alignment, or multi-session reconstruction.
 
 The following are deferred, not required for Phase 1, and out of scope for the core setup path:
 
