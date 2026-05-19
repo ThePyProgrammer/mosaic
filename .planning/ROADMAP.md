@@ -146,7 +146,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02-PLAN.md — Enrich benchmark artifacts with scenario summaries, diagnostics mirrors, and JSONL output.
+- [x] 05-02-PLAN.md — Enrich benchmark artifacts with scenario summaries, diagnostics mirrors, and JSONL output.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
 | 3. Backend Registry and Contracts | 4/4 | Complete   | 2026-05-19 |
 | 4. Fusion Diagnostics and Semantics Hardening | 3/3 | Complete   | 2026-05-19 |
-| 5. Evaluation Metric and Failure Gate Hardening | 1/4 | In Progress|  |
+| 5. Evaluation Metric and Failure Gate Hardening | 2/4 | In Progress|  |
 | 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
 | 7. Representation Memories and Tools | 0/TBD | Not started | - |
 | 8. Documentation and Release Readiness | 0/TBD | Not started | - |
