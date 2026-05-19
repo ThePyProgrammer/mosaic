@@ -4,6 +4,8 @@ from typing import Any, cast
 from mosaic.core import FrameId
 from mosaic.evaluation import (
     BenchmarkArtifact,
+    FailureClass,
+    RegressionResult,
     run_slam_benchmark,
     synthetic_forward_sequence,
     write_benchmark_artifact,
@@ -101,6 +103,37 @@ def test_benchmark_artifact_is_json_ready() -> None:
         "scenario_summary": {"name": "scenario", "frame_count": 2, "update_count": 2, "camera_ids": ["front"]},
         "gate_results": [],
     }
+
+
+def test_benchmark_artifact_serializes_failure_aware_gate_results() -> None:
+    gate_result = RegressionResult(
+        metric_name="tracking_success_rate",
+        passed=False,
+        observed=0.0,
+        threshold=1.0,
+        failure_class=FailureClass.LIFECYCLE,
+    )
+    artifact = BenchmarkArtifact(
+        scenario_name="scenario",
+        backend_name="backend",
+        update_count=1,
+        metrics=[{"name": "tracking_success_rate", "value": 0.0, "unit": "ratio"}],
+        backend_metadata={"name": "backend"},
+        diagnostics={},
+        failure_classification=FailureClass.LIFECYCLE.value,
+        gate_results=[gate_result.as_dict()],
+    )
+
+    assert artifact.as_dict()["failure_classification"] == "lifecycle"
+    assert artifact.as_dict()["gate_results"] == [
+        {
+            "metric_name": "tracking_success_rate",
+            "passed": False,
+            "observed": 0.0,
+            "threshold": 1.0,
+            "failure_class": "lifecycle",
+        }
+    ]
 
 
 def test_benchmark_artifact_as_dict_does_not_expose_internal_mappings() -> None:
