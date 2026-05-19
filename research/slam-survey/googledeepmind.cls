@@ -132,6 +132,7 @@
 % the monospaced one, which might look nicer in cases where you do not need
 % aligned columns
 \RequirePackage[scaled=1.1]{zlmtt}
+\urlstyle{same}
 
 %%======== Margins and column spacing ========
 \RequirePackage[left=2.2cm,%

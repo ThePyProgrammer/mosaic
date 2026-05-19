@@ -87,6 +87,7 @@ None yet.
 | 2026-05-18 | update-roadmap-after-merge | Updated roadmap/state evidence after worktree changes landed in main; current suite reports 73 passing tests. |
 | 2026-05-18 | research-multi-view-multi-camera-online | Wrote R3 report on native vs adaptable multi-camera 3DGS SLAM implementations to `outputs/multiview-3dgs-slam-research-multicamera.md`. |
 | 2026-05-19 | google-deepmind-slam-survey-package | Created a Google DeepMind-style LaTeX survey package under `research/slam-survey/` and verified a Tectonic PDF build. |
+| 2026-05-19 | mechanics-first-slam-survey-methods | Added algorithm blocks and compact diagrams for each surveyed multi-robot Gaussian SLAM method; verified citations and Tectonic PDF build. |
 
 ### Blockers/Concerns
 
