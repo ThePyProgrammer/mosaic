@@ -329,17 +329,15 @@ class RegressionGate:
 | A2 | Property-based tests can wait until later. | Standard Stack Alternatives | Low; deterministic pytest cases satisfy current phase constraints, but future edge-case coverage may benefit from Hypothesis. |
 | A3 | Some pitfall warning signs are inferred from common implementation failure modes. | Common Pitfalls | Low; tests can validate actual behavior. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `MetricResult.value` remain `float` or become `bool | int | float | str`?**
    - What we know: Current `MetricResult.value` is `float`, while artifact diagnostics use `bool | int | float | str`. [VERIFIED: codebase Read]
-   - What's unclear: D-09 asks for JSON-ready values and typed metric constructors/categories, but does not mandate widening metric values. [CITED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/05-evaluation-metric-and-failure-gate-hardening/05-CONTEXT.md]
-   - Recommendation: Keep metric values numeric where gates compare thresholds; represent boolean availability/stability as `1.0`/`0.0` with clear `unit="flag"` unless the planner explicitly widens the metric type and updates artifact round-trips. [ASSUMED]
+   - RESOLVED: `MetricResult.value` remains numeric `float`. Boolean availability/stability is represented as `1.0`/`0.0` with `unit="flag"`, so threshold gates can compare metric values without widening the metric value type. [VERIFIED: checker revision decision]
 
 2. **Where should the phase-ready helper live?**
    - What we know: Context permits `mosaic.evaluation.regression` or a neighboring evaluation module. [CITED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/05-evaluation-metric-and-failure-gate-hardening/05-CONTEXT.md]
-   - What's unclear: Exact return type is discretionary. [CITED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/05-evaluation-metric-and-failure-gate-hardening/05-CONTEXT.md]
-   - Recommendation: Put it in `regression.py` because it depends on gates/results and avoids storing stale derived state on `BenchmarkArtifact`. [ASSUMED]
+   - RESOLVED: The readiness helper lives in `mosaic.evaluation.regression` and returns a small frozen typed result computed from a `BenchmarkArtifact` plus supplied regression gates. It must not be stored as a stale field on `BenchmarkArtifact`. [VERIFIED: checker revision decision]
 
 ## Environment Availability
 
