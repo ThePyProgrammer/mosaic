@@ -380,22 +380,16 @@ assert result.diagnostics["fusion_uncertainty_model"] == "preserved_not_optimize
 | A1 | Exact package age and download counts for `pytest` were not fetched in this session. | Package Legitimacy Audit | Low; `pytest` is already an existing dev dependency, slopcheck returned OK, and official docs were consulted. |
 | A2 | Tests needing many decimal tolerances are a warning sign for overfit heuristics. | Common Pitfalls | Low; this is engineering judgment rather than a project-locked rule. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should fusion summary classes be root `mosaic` exports or only `mosaic.fusion` exports?**
-   - What we know: Existing public API tests root-export `FusionInput` and `ProvenancePreservingFusion`. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/tests/test_public_api.py]
-   - What's unclear: CONTEXT says new typed diagnostics should be stable if added, but does not explicitly require root exports. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/04-fusion-diagnostics-and-semantics-hardening/04-CONTEXT.md]
-   - Recommendation: Export summaries from `mosaic.fusion`; add root exports only if tests/documentation need concise user-facing imports. [ASSUMED]
+   - Resolution: Export `FusionProvenanceSummary`, `FusionUncertaintySummary`, and `FusionConflictSummary` from `mosaic.fusion` only in Phase 04. Do not add root `mosaic` exports because CONTEXT does not require them and `mosaic.fusion` avoids confusing fusion provenance summaries with agent posterior summaries. [VERIFIED: .planning/phases/04-fusion-diagnostics-and-semantics-hardening/04-01-PLAN.md]
 
 2. **What exact conflict thresholds should be used?**
-   - What we know: Conflict detection must be deterministic and conservative, preferring obvious overlap plus mismatch. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/04-fusion-diagnostics-and-semantics-hardening/04-CONTEXT.md]
-   - What's unclear: Numeric thresholds are delegated to planning/implementation. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/04-fusion-diagnostics-and-semantics-hardening/04-CONTEXT.md]
-   - Recommendation: Use module-private constants with intentionally coarse values and test only obvious positives/negatives. [ASSUMED]
+   - Resolution: Use deterministic module-private constants `_OVERLAP_RADIUS_SCALE = 2.0`, `_COLOR_MISMATCH_THRESHOLD = 0.5`, `_OPACITY_MISMATCH_THRESHOLD = 0.25`, and `_COVARIANCE_MISMATCH_RATIO = 2.0`. Tests should cover obvious positive and negative cases rather than calibrated physical overlap volumes. [VERIFIED: .planning/phases/04-fusion-diagnostics-and-semantics-hardening/04-02-PLAN.md]
 
 3. **Should `FusionMetricValue` expand beyond scalar values?**
-   - What we know: It is currently `bool | int | float | str`, and selected flat diagnostic keys should mirror key totals. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/src/mosaic/fusion/protocol.py] [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/04-fusion-diagnostics-and-semantics-hardening/04-CONTEXT.md]
-   - What's unclear: Per-provenance counts are useful for diagnostics but may not fit the current scalar alias. [VERIFIED: codebase inspection]
-   - Recommendation: Keep flat diagnostics scalar for artifact stability and put nested counts in typed summaries; add explicit `as_dict()` only if JSON artifacts need nested details later. [ASSUMED]
+   - Resolution: Keep `FusionMetricValue = bool | int | float | str` for flat artifact diagnostics. Store nested provenance/conflict maps in typed summary objects, not in `FusionResult.diagnostics`, preserving JSON-ready scalar stability for artifact consumers. [VERIFIED: .planning/phases/04-fusion-diagnostics-and-semantics-hardening/04-01-PLAN.md]
 
 ## Environment Availability
 

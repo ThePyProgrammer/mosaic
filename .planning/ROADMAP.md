@@ -112,7 +112,19 @@ Plans:
   2. User can run tests that explicitly reject occupancy-grid union assumptions and verify provenance-preserving splat behavior.
   3. User can see documented boundaries explaining that the reference strategy concatenates/preserves splats for contract tests and does not claim real Gaussian optimization quality.
 
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Define typed fusion diagnostic summaries and the expanded FusionResult contract.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — Populate ProvenancePreservingFusion diagnostics and anti-grid conflict behavior.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-03-PLAN.md — Lock README fusion boundary language and run full phase verification.
 
 ### Phase 5: Evaluation Metric and Failure Gate Hardening
 
@@ -178,7 +190,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
 | 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
 | 3. Backend Registry and Contracts | 4/4 | Complete   | 2026-05-19 |
-| 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
+| 4. Fusion Diagnostics and Semantics Hardening | 0/3 | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
 | 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
 | 7. Representation Memories and Tools | 0/TBD | Not started | - |
