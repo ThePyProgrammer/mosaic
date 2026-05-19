@@ -99,6 +99,7 @@ None yet.
 | 2026-05-19 | remove-survey-claims-paragraph | Removed the standalone introduction paragraph beginning `The survey makes three claims`; verified citations and a Tectonic PDF build. |
 | 2026-05-19 | remove-method-flow-figures | Removed figures 1 through 7 from the survey candidate-system section while preserving sequential algorithms and later taxonomy visuals; verified citations and Tectonic PDF build. |
 | 2026-05-19 | simplify-algorithm-blocks | Renamed survey algorithm captions to method names only and converted them to plain ordered lists without state trackers; verified citations and Tectonic PDF build. |
+| 2026-05-19 | paper-style-survey-format | Reframed the SLAM survey as a neutral academic paper instead of a Mosaic/developer brief; verified citations and Tectonic PDF build. |
 
 ### Blockers/Concerns
 
