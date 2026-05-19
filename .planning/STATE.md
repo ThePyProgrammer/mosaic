@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-05-19T09:28:10.386Z"
+stopped_at: context exhaustion at 76% (2026-05-19)
+last_updated: "2026-05-19T09:45:48.690Z"
 last_activity: 2026-05-19 -- Phase 05 planning complete
 progress:
   total_phases: 8
@@ -103,6 +103,7 @@ None yet.
 | 2026-05-19 | remove-repo-footnote-periods | Removed trailing full stops from repository URL footnotes; verified Tectonic PDF build. |
 | 2026-05-19 | rewrite-slam-survey-notation | Rebuilt the SLAM survey around formal shared notation, conventional algorithm pseudocode, prose taxonomy subsections, and a verified Tectonic PDF build. |
 | 2026-05-19 | taxonomy-algorithm-nodes | Added five taxonomy-level algorithm boxes explaining how each architecture pattern works; verified Tectonic PDF build and 183 passing tests. |
+| 2026-05-19 | map-terminology-normalization | Enforced agent-local map, Gaussian submap, Gaussian-surfel submap, shared map, and server-side shared map terminology; verified Tectonic PDF build and 183 passing tests. |
 
 ### Blockers/Concerns
 
@@ -121,6 +122,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-19T09:28:10.370Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-agent-posterior-view-hardening/06-CONTEXT.md
+Last session: 2026-05-19T09:45:48.683Z
+Stopped at: context exhaustion at 76% (2026-05-19)
+Resume file: None
