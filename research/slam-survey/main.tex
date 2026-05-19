@@ -347,11 +347,43 @@ The recurring question is not simply whether a method uses Gaussians. It is wher
 
 Central-server systems place most of $\alpha_t$ and $\Psi_t$ on a shared mapper. MAGiC-SLAM transmits local submaps and loop-closure evidence to a server that optimizes submap poses before merging Gaussians. CoKo-SLAM keeps the same broad centralization but reduces $p_{i,t}$ through keyframe-optimized compact packets and redundant-Gaussian pruning. HAMMER also uses a server, but its packet stream is heterogeneous and semantic: the server aligns local SLAM outputs into a global frame and updates a metric-semantic Gaussian map.
 
+\begin{algorithm}[H]
+\caption{Central-server submap and Gaussian fusion pattern}
+\label{alg:taxonomy-central-server}
+\small
+\noindent\textbf{Input:} Agent maps $\{\mathcal{M}_{i,t}\}$, local trajectories $\{\hat{\mathbf{X}}_{i,1:t}\}$, packets $\{p_{i,t}\}$, previous server map $\mathcal{G}_{t-1}$.\\
+\textbf{Output:} Server-owned shared Gaussian map $\mathcal{G}_t$ and global-frame agent transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$.
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Each agent applies $\phi_i$ locally and sends a bounded packet $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ to the server.
+  \item The server buffers packets by agent, local frame, timestamp, modality, and optional semantic descriptor.
+  \item Estimate cross-agent constraints $\mathcal{C}_t=\alpha_t(\{p_{i,t_i}\})$ using loop closure, rendered-depth alignment, camera-depth alignment, or heterogeneous frame registration.
+  \item Optimize global-frame submap or device transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$ from $\mathcal{C}_t$ and any odometry factors.
+  \item Remove or downweight redundant primitives whose support overlaps the current server map above the merge threshold.
+  \item Fuse aligned geometry, appearance, and optional semantic descriptors into $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{M}_{i,t_i}\},\mathcal{C}_t,\mathcal{P}_t)$.
+\end{enumerate}
+\end{algorithm}
+
 The advantage of this pattern is a coherent global optimization point. Server-side fusion can compare packets across agents, remove duplicate primitives, and maintain a single $\mathcal{G}_t$. The cost is that merge latency, memory, bandwidth, and single-server availability become first-order variables. MAGiC-SLAM's reported global merge time illustrates this cost, while HAMMER's hardware results are unusually explicit about per-device Mbps streams. Available ablation evidence is mostly about loop closure, alignment, compaction, or baseline comparisons rather than a complete systems ablation over bandwidth and agent count.
 
 \subsection{Distributed Gaussian Consensus}
 
 Distributed Gaussian consensus keeps each agent's local state active and uses peer updates to move local maps toward consistency. MAC-Ego3D expresses this pattern most directly: intra-agent consensus regularizes each $\mathcal{M}_{i,t}$, while inter-agent consensus uses packets from $\mathcal{N}_t(i)$ to refine cross-agent map agreement. CoMA-SLAM follows a related distributed idea with Gaussian surfel submaps, loop factors, and distributed keyframe optimization.
+
+\begin{algorithm}[H]
+\caption{Distributed Gaussian consensus pattern}
+\label{alg:taxonomy-distributed-consensus}
+\small
+\noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}^{(h)}\}$, communication graph $\mathcal{H}_t$, neighbor packets $\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$.\\
+\textbf{Output:} Consensus-refined maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and distributed shared state $\mathcal{G}_t$.
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Each agent updates its local Gaussian or Gaussian-surfel map from the newest observation and local tracking state.
+  \item Apply an intra-agent coherence step to regularize nearby primitives, surfels, or keyframe-supported submaps.
+  \item Select a consensus packet $p_{i,t}^{(h)}$ containing the local state, descriptors, or loop factors allowed by budget $b_i$.
+  \item Exchange packets with neighbors $\mathcal{N}_t(i)$ according to the asynchronous communication schedule.
+  \item Estimate pairwise alignments or consensus factors from received packets and append them to the local view of $\mathcal{C}_t$.
+  \item Compute $\mathcal{M}_{i,t}^{(h+1)}=C_{\mathrm{inter}}(\mathcal{M}_{i,t}^{(h)},\{p_{j,t}^{(h)}\};\lambda_{\mathrm{inter}})$ and publish the current distributed state.
+\end{enumerate}
+\end{algorithm}
 
 This pattern reduces dependence on a single fusion server and can naturally support asynchronous collaboration. Its hard problems are convergence, conflict resolution, duplicate primitive handling, stale packets, and communication scheduling. Reported evidence supports strong tracking/rendering for MAC-Ego3D and large relative communication reductions for CoMA-SLAM, but byte-level communication, stale-update, and failure-mode ablations remain sparse in the available evidence.
 
@@ -359,17 +391,65 @@ This pattern reduces dependence on a single fusion server and can naturally supp
 
 Submap-plus-pose-graph systems treat dense Gaussian maps as local products whose global consistency is controlled by a graph over submap poses. GRAND-SLAM is the clearest example: local RGB-D Gaussian submaps are optimized independently, loop closures add factors to $\mathcal{C}_t$, and pose-graph optimization updates the transforms that place submaps into the shared frame. MAGiC-SLAM also uses this pattern inside a centralized architecture, but GRAND-SLAM makes the submap consistency layer the main comparison unit.
 
+\begin{algorithm}[H]
+\caption{Submap-plus-pose-graph consistency pattern}
+\label{alg:taxonomy-submap-pose-graph}
+\small
+\noindent\textbf{Input:} Local submaps $\{\mathcal{B}_{i}^{m}\}$, odometry factors $\mathcal{E}^{\mathrm{odom}}_t$, loop candidates, previous submap poses $\{\mathbf{P}_v\}$.\\
+\textbf{Output:} Globally consistent submap placement and shared map $\mathcal{G}_t$.
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Track incoming observations against the active submap and decide whether to extend it or spawn a new submap node.
+  \item Optimize each active submap locally using its support frames while preserving the submap as the dense unit of fusion.
+  \item Detect intra-agent and inter-agent loop closures between keyframes or submaps and verify their relative transforms.
+  \item Build a graph with odometry edges $\mathcal{E}^{\mathrm{odom}}_t$ and cross-agent constraints $\mathcal{C}_t$.
+  \item Solve for optimized submap poses $\{\mathbf{P}_v^\star\}$ by robust pose-graph optimization.
+  \item Place each Gaussian submap in the shared frame and reconcile overlaps to obtain $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$.
+\end{enumerate}
+\end{algorithm}
+
 The strength of this pattern is that it reuses a mature SLAM abstraction: dense maps can remain local while global corrections act through $\mathbf{P}_v^\star$. The main risk is that a corrected pose graph does not by itself remove duplicate or inconsistent Gaussian primitives. A useful ablation surface is loop closure: GRAND-SLAM reports weaker results without loop closure, which supports the claim that cross-agent consistency factors, not only local photometric mapping, drive the large-scale result.
 
 \subsection{Compact Communication and Monocular Submap Fusion}
 
 Compact communication appears in both RGB-D and monocular systems, but it becomes structurally central for monocular collaboration. CoKo-SLAM uses compaction to reduce transmitted Gaussian/keyframe state while preserving enough information for server-side loop closure and pruning. MAGS-SLAM goes further: each agent has only RGB observations, so $\mu_i$ must produce compact submap summaries that support both cross-agent verification and scale-aware alignment.
 
+\begin{algorithm}[H]
+\caption{Compact communication and monocular submap fusion pattern}
+\label{alg:taxonomy-compact-monocular}
+\small
+\noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, optional scale hypotheses $\{\lambda_{i,t}\}$, packet budgets $\{b_i\}$.\\
+\textbf{Output:} Bandwidth-limited fused map $\mathcal{G}_t$ and verified cross-agent alignments.
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Estimate local poses and, for monocular agents, maintain scale hypotheses $\lambda_{i,t}$.
+  \item Score keyframes, submaps, descriptors, and Gaussians by their expected alignment or reconstruction value.
+  \item Select compact summaries $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ instead of transmitting dense observations.
+  \item Verify packet pairs using geometry, appearance, rendered depth, camera depth, or occupancy evidence.
+  \item Estimate rigid or scale-aware transforms for accepted associations and reject unsupported pairs.
+  \item Fuse only the aligned, nonredundant submap evidence into $\mathcal{G}_t$, preserving the communication budget as an explicit constraint.
+\end{enumerate}
+\end{algorithm}
+
 The tradeoff is between informativeness and bandwidth. Small packets help online operation, but if $p_{i,t}$ omits the wrong geometry, appearance, or occupancy evidence, $\alpha_t$ cannot reliably recover the transform. Monocular systems add scale ambiguity, so the alignment problem includes both rigid transform and scale hypotheses. CoKo-SLAM reports large relative transmission reductions; MAGS-SLAM is important architecturally but its code/data and quantitative communication evidence remain provisional in the sources used here.
 
 \subsection{Heterogeneous Semantic Shared Gaussian Mapping}
 
 HAMMER expands the shared map from geometry and radiance to metric-semantic scene memory. In the notation above, the Gaussian descriptor $\mathbf{h}_k$ and provenance $\pi_k$ are not auxiliary bookkeeping; they are part of what makes $\mathcal{G}_t$ useful to heterogeneous robots and downstream queries. The alignment operator $\alpha_t$ must reconcile device-specific local SLAM outputs, sensor modalities, and asynchronous packet timing before semantic Gaussian updates are meaningful.
+
+\begin{algorithm}[H]
+\caption{Heterogeneous semantic shared Gaussian mapping pattern}
+\label{alg:taxonomy-heterogeneous-semantic}
+\small
+\noindent\textbf{Input:} Heterogeneous streams $\{z_{i,t}^{\mathrm{het}}\}$, local SLAM poses $\{\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}\}$, semantic descriptors $\{e_{i,t}\}$, previous semantic map $\mathcal{G}_{t-1}$.\\
+\textbf{Output:} Metric-semantic shared map $\mathcal{G}_t$ with provenance-aware query views.
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Normalize device packets into a common record containing modality, local pose, geometry support, semantic descriptor, and provenance.
+  \item Estimate or refine each device-to-global alignment $\mathbf{A}_{0\leftarrow\ell_i}$ from local SLAM trajectories and map evidence.
+  \item Transform observations into $\mathcal{F}_0$ and associate them with supported Gaussian primitives or new primitive candidates.
+  \item Update geometry, appearance, semantic descriptor $\mathbf{h}_k$, and provenance $\pi_k$ for affected primitives.
+  \item Prune, merge, or retain conflicting primitive evidence according to uncertainty, source support, and semantic consistency.
+  \item Return bounded query views $v_t(q)=Q(\mathcal{G}_t,q)$ rather than exposing the full raw Gaussian state.
+\end{enumerate}
+\end{algorithm}
 
 This pattern is attractive because robot teams rarely have identical sensors or roles. A shared map that contains semantics, source provenance, and queryable local evidence can support navigation, inspection, and human-robot interaction more directly than a purely photometric reconstruction. The open ablation surface is correspondingly broader: papers need to isolate the value of semantic descriptors, frame-alignment design, device heterogeneity, and communication choices rather than reporting only rendering quality or depth error.
 
