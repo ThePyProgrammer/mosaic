@@ -15,6 +15,12 @@ def test_run_slam_benchmark_processes_scenario_and_reports_metrics() -> None:
     assert artifact.scenario_name == "synthetic-forward-3"
     assert artifact.backend_name == "deterministic-splat"
     assert artifact.backend_metadata["name"] == "deterministic-splat"
+    assert artifact.backend_metadata["supports_multi_view"] is True
+    assert artifact.backend_metadata["supports_incremental_mapping"] is True
+    assert artifact.backend_metadata["supports_uncertainty"] is False
+    assert artifact.backend_metadata["runs_out_of_process"] is False
+    assert artifact.backend_metadata["parameter_deterministic"] is True
+    json.dumps(artifact.as_dict()["backend_metadata"], sort_keys=True)
     assert artifact.metrics == [{"name": "splat_count", "value": 3.0, "unit": "splats"}]
     assert artifact.diagnostics == {"last_splat_count": 3, "snapshot_splat_count": 3}
     assert artifact.failure_classification == "none"
