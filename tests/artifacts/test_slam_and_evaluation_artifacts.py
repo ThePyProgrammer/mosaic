@@ -146,6 +146,8 @@ def test_benchmark_artifact_as_dict_is_not_general_schema_envelope() -> None:
         "metrics": [{"name": "splat_count", "value": 1.0, "unit": "splats"}],
         "diagnostics": {"snapshot_splat_count": 1},
         "failure_classification": "none",
+        "scenario_summary": {},
+        "gate_results": [],
     }
     assert "schema" not in serialized
     assert "schema_version" not in serialized

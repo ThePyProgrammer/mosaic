@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Mapping
 
 from mosaic.core import (
     CameraIntrinsics,
@@ -15,6 +16,8 @@ from mosaic.core import (
     Translation3,
 )
 from mosaic.datasets import InMemorySequence
+
+ScenarioSummaryValue = int | str | tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +35,28 @@ def synthetic_forward_sequence(frame_count: int) -> SyntheticScenario:
         raise ValueError("synthetic_forward_sequence frame_count must be positive")
     observations = tuple(_observation(index) for index in range(frame_count))
     return SyntheticScenario(name=f"synthetic-forward-{frame_count}", sequence=InMemorySequence(observations))
+
+
+def scenario_summary(
+    scenario: SyntheticScenario,
+    *,
+    update_count: int,
+    expected_map_frame: FrameId | str | None = None,
+) -> Mapping[str, ScenarioSummaryValue]:
+    camera_ids = tuple(
+        sorted({camera_id for observation in scenario.sequence for camera_id in observation.camera_ids})
+    )
+    summary: dict[str, ScenarioSummaryValue] = {
+        "name": scenario.name,
+        "frame_count": len(scenario.sequence),
+        "update_count": update_count,
+        "camera_ids": camera_ids,
+    }
+    if expected_map_frame is not None:
+        summary["expected_map_frame"] = (
+            expected_map_frame.value if isinstance(expected_map_frame, FrameId) else str(expected_map_frame)
+        )
+    return summary
 
 
 def _observation(index: int) -> MultiViewObservation:
