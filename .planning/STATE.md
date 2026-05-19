@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: context exhaustion at 76% (2026-05-19)
-last_updated: "2026-05-19T07:22:47.992Z"
+status: ready_to_plan
+stopped_at: Phase 04 complete (3/3) — ready to discuss Phase 05
+last_updated: 2026-05-19T07:55:03.554Z
 last_activity: 2026-05-19 -- Phase 04 execution started
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 15
-  completed_plans: 12
-  percent: 38
+  completed_plans: 15
+  percent: 50
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: /home/prannayag/pragnition/robotics/mosaic/.planning/PROJECT.md (updated 2026-05-18)
 
 **Core value:** Mosaic must provide stable typed representation contracts that let robotic SLAM backends, evaluation tools, platform rigs, and agent-friendly posterior APIs evolve independently without coupling the library to one robot, simulator, LLM provider, or CUDA-heavy backend.
-**Current focus:** Phase 04 — fusion-diagnostics-and-semantics-hardening
+**Current focus:** Phase 05 — evaluation metric and failure gate hardening
 
 ## Current Position
 
-Phase: 04 (fusion-diagnostics-and-semantics-hardening) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 04
-Last activity: 2026-05-19 -- Phase 04 execution started
+Phase: 05
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-05-19
 
 Progress: [----------] 0%
 
@@ -36,7 +36,7 @@ Progress: [----------] 0%
 
 **Velocity:**
 
-- Total plans completed: 12
+- Total plans completed: 15
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -55,6 +55,7 @@ Progress: [----------] 0%
 | 01 | 4 | - | - |
 | 02 | 4 | - | - |
 | 03 | 4 | - | - |
+| 04 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -93,6 +94,7 @@ None yet.
 | 2026-05-19 | remove-slam-survey-sources-appendix | Removed the redundant Sources Appendix now that source URLs live in BibTeX fields and repository footnotes; verified a Tectonic PDF build. |
 | 2026-05-19 | formalize-survey-algorithms | Replaced prose-like method algorithms with formal staged process specs using inputs, state variables, stage trackers, transitions, and outputs; verified citations and Tectonic PDF build. |
 | 2026-05-19 | clean-github-footnote-labels | Removed method-specific `code repository:` labels from GitHub footnotes while preserving repository URLs; verified a Tectonic PDF build. |
+| 2026-05-19 | slam-survey-zlmtt-url-font | Set survey URLs to a Latin Modern mono/typewriter font compatible with the existing zlmtt intent and verified a Tectonic PDF build. |
 | 2026-05-19 | convert-algorithms-to-sequential-flows | Replaced state-inventory algorithms with numbered sequential flows using trigger, update, and emitted-artifact fields; verified citations and Tectonic PDF build. |
 | 2026-05-19 | remove-survey-claims-paragraph | Removed the standalone introduction paragraph beginning `The survey makes three claims`; verified citations and a Tectonic PDF build. |
 | 2026-05-19 | remove-method-flow-figures | Removed figures 1 through 7 from the survey candidate-system section while preserving sequential algorithms and later taxonomy visuals; verified citations and Tectonic PDF build. |
@@ -114,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-19T07:19:54.384Z
-Stopped at: context exhaustion at 76% (2026-05-19)
+Last session: 2026-05-19T07:52:41.537Z
+Stopped at: context exhaustion at 75% (2026-05-19)
 Resume file: None
