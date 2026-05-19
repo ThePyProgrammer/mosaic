@@ -96,3 +96,23 @@ def test_runtime_dependencies_stay_empty_when_readme_claims_pure_python_boundary
     assert "pure-Python" in readme
     assert "dependencies = []" in readme
     assert "dependencies = []" in pyproject
+
+
+def test_readme_locks_phase_4_fusion_boundary_language() -> None:
+    readme = _readme()
+
+    assert "FusionProvenanceSummary" in readme
+    assert "FusionUncertaintySummary" in readme
+    assert "FusionConflictSummary" in readme
+    assert "preserved_not_optimized" in readme
+    assert "preserved-not-optimized" not in readme
+    assert "does not optimize Gaussians" in readme
+    assert "does not collapse overlapping splats into occupancy-grid cells" in readme
+
+    for line in readme.splitlines():
+        normalized = line.casefold()
+        for term in BOUNDARY_TERMS:
+            if term in normalized:
+                assert not normalized.startswith("pip install")
+                assert not normalized.startswith("uv add")
+                assert not normalized.startswith("uv pip install")
