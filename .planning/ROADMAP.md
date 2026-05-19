@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Merged Foundation Baseline Completion** - Finish the merged baseline by documenting and validating the now-main implementation, including initial fusion, evaluation, and agent posterior APIs. (completed 2026-05-18)
 - [x] **Phase 2: Coordinate and Artifact Hardening** - Make pose, frame, covariance, timestamp, and versioned artifact semantics explicit and tested. (completed 2026-05-18)
-- [ ] **Phase 3: Backend Registry and Contracts** - Define backend metadata, availability checks, and lifecycle contract coverage without heavy dependency leakage.
+- [x] **Phase 3: Backend Registry and Contracts** - Define backend metadata, availability checks, and lifecycle contract coverage without heavy dependency leakage. (completed 2026-05-19)
 - [ ] **Phase 4: Fusion Diagnostics and Semantics Hardening** - Extend the initial fusion seam with explicit uncertainty/conflict diagnostics and anti-occupancy-grid tests.
 - [ ] **Phase 5: Evaluation Metric and Failure Gate Hardening** - Extend the initial evaluation harness with richer metrics, failure classification, and regression gates before real backend integration.
 - [ ] **Phase 6: Agent Posterior View Hardening** - Extend the landed SplatPosteriorView with richer bounded posterior summaries, uncertainty semantics, and determinism coverage.
@@ -99,7 +99,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-03-PLAN.md — Wire deterministic backend and benchmark compatibility coverage through the new contract seam.
+- [x] 03-03-PLAN.md — Wire deterministic backend and benchmark compatibility coverage through the new contract seam.
 
 ### Phase 4: Fusion Diagnostics and Semantics Hardening
 
@@ -177,7 +177,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. Merged Foundation Baseline Completion | 4/4 | Complete   | 2026-05-18 |
 | 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
-| 3. Backend Registry and Contracts | 2/3 | In Progress|  |
+| 3. Backend Registry and Contracts | 3/3 | Complete   | 2026-05-19 |
 | 4. Fusion Diagnostics and Semantics Hardening | 0/TBD | Not started | - |
 | 5. Evaluation Metric and Failure Gate Hardening | 0/TBD | Not started | - |
 | 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
