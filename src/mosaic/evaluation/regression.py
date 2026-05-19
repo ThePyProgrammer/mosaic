@@ -52,7 +52,7 @@ class RegressionResult:
     passed: bool
     observed: float | None
     threshold: float
-    failure_class: FailureClass
+    failure_class: FailureClass = FailureClass.MAP_FUSION
 
     def as_dict(self) -> dict[str, bool | float | str | None]:
         return {

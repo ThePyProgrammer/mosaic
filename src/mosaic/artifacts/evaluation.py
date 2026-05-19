@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import cast
 
 from mosaic.artifacts.schema import ArtifactDict, make_artifact, require_artifact
-from mosaic.evaluation import BenchmarkArtifact, MetricResult, RegressionResult
+from mosaic.evaluation import BenchmarkArtifact, FailureClass, MetricResult, RegressionResult
 from mosaic.evaluation.runner import ArtifactValue, MetricDict
 
 
@@ -24,12 +24,7 @@ def metric_result_from_artifact(artifact: object) -> MetricResult:
 def regression_result_to_artifact(result: RegressionResult) -> ArtifactDict:
     return make_artifact(
         "mosaic.regression_result",
-        {
-            "metric_name": result.metric_name,
-            "passed": result.passed,
-            "observed": result.observed,
-            "threshold": result.threshold,
-        },
+        result.as_dict(),
     )
 
 
@@ -40,6 +35,7 @@ def regression_result_from_artifact(artifact: object) -> RegressionResult:
         passed=cast(bool, payload["passed"]),
         observed=cast(float | None, payload["observed"]),
         threshold=cast(float, payload["threshold"]),
+        failure_class=FailureClass(cast(str, payload.get("failure_class", FailureClass.MAP_FUSION.value))),
     )
 
 
