@@ -116,3 +116,29 @@ def test_readme_locks_phase_4_fusion_boundary_language() -> None:
                 assert not normalized.startswith("pip install")
                 assert not normalized.startswith("uv add")
                 assert not normalized.startswith("uv pip install")
+
+
+def test_readme_fusion_smoke_example_uses_public_api() -> None:
+    readme = _readme()
+
+    assert "assert len(result.fused_map) == 1" in readme
+    assert "assert len(result.map)" not in readme
+
+    from mosaic import FrameId, FusionInput, GaussianSplat, ProvenancePreservingFusion, SplatMap
+
+    map_frame = FrameId("map")
+    left = SplatMap(
+        frame=map_frame,
+        splats=(
+            GaussianSplat(
+                center=(0.0, 0.0, 1.0),
+                covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1),
+                provenance="left-camera",
+            ),
+        ),
+    )
+    right = SplatMap(frame=map_frame)
+    result = ProvenancePreservingFusion().fuse(FusionInput(maps=(left, right)))
+
+    assert result.status.value == "fused"
+    assert len(result.fused_map) == 1

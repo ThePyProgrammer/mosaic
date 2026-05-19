@@ -122,7 +122,15 @@ class FusionResult:
     conflicts: FusionConflictSummary = field(default_factory=FusionConflictSummary)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "diagnostics", MappingProxyType(dict(self.diagnostics)))
+        diagnostics = dict(self.diagnostics)
+        for key, value in diagnostics.items():
+            if not key.strip():
+                raise ValueError("FusionResult diagnostic keys must not be blank")
+            if isinstance(value, float) and not isfinite(value):
+                raise ValueError("FusionResult diagnostic float values must be finite")
+            if not isinstance(value, bool | int | float | str):
+                raise ValueError("FusionResult diagnostic values must be bool, int, float, or str")
+        object.__setattr__(self, "diagnostics", MappingProxyType(diagnostics))
 
 
 @runtime_checkable

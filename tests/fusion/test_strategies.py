@@ -64,6 +64,15 @@ def test_provenance_preserving_fusion_reports_typed_provenance_and_flat_counts()
     assert result.diagnostics["fused_splat_count"] == 3
 
 
+def test_provenance_preserving_fusion_normalizes_blank_provenance_to_unknown() -> None:
+    splat_map = SplatMap(frame=FrameId("map"), splats=(_splat(0.0, " "),))
+
+    result = ProvenancePreservingFusion().fuse(FusionInput(maps=(splat_map,)))
+
+    assert result.status is FusionStatus.FUSED
+    assert result.provenance.per_provenance_counts == {"unknown": 1}
+
+
 def test_provenance_preserving_fusion_reports_preserved_uncertainty_summary() -> None:
     first = SplatMap(
         frame=FrameId("map"),

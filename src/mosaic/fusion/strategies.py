@@ -141,4 +141,6 @@ def _covariance_diagonal(splat: GaussianSplat) -> tuple[float, float, float]:
 
 
 def _provenance_key(splat: GaussianSplat) -> str:
-    return splat.provenance if splat.provenance is not None else "unknown"
+    if splat.provenance is None or not splat.provenance.strip():
+        return "unknown"
+    return splat.provenance

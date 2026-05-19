@@ -222,6 +222,21 @@ def test_fusion_result_supports_compatibility_default_summaries() -> None:
     assert result.conflicts.total_candidate_count == 0
 
 
+@pytest.mark.parametrize(
+    "diagnostics",
+    [
+        {" ": 1},
+        {"source_map_count": object()},
+        {"source_map_count": []},
+        {"source_map_count": math.inf},
+        {"source_map_count": math.nan},
+    ],
+)
+def test_fusion_result_rejects_invalid_flat_diagnostics(diagnostics: dict[str, object]) -> None:
+    with pytest.raises(ValueError, match="diagnostic"):
+        FusionResult(status=FusionStatus.FUSED, fused_map=_map(), diagnostics=diagnostics)
+
+
 def test_fusion_exports_summary_types_from_subpackage() -> None:
     import mosaic.fusion as fusion
 

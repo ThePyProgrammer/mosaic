@@ -123,7 +123,7 @@ right = SplatMap(frame=map_frame)
 result = ProvenancePreservingFusion().fuse(FusionInput(maps=(left, right)))
 
 assert result.status.value == "fused"
-assert len(result.map) == 1
+assert len(result.fused_map) == 1
 ```
 
 Query an agent-facing posterior view without exposing a full raw map dump:
