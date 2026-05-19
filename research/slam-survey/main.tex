@@ -101,7 +101,7 @@ This evidence model is intentionally conservative. It separates architecture evi
 
 \section{Candidate Systems}
 
-Each system below is summarized as a concrete dataflow: what runs on each robot, what crosses the network, what alignment object is estimated, and what becomes the shared Gaussian map. The algorithm boxes are evidence-bounded sequential flows: each numbered stage advances a tracker, states its trigger, applies a named update, and emits the artifact consumed by the next stage.
+Each system below is summarized as a concrete dataflow: what runs on each robot, what crosses the network, what alignment object is estimated, and what becomes the shared Gaussian map. The algorithm boxes are evidence-bounded ordered process summaries rather than executable source code.
 
 \subsection{MAGiC-SLAM}
 \label{sec:systems:magic-slam}
@@ -109,11 +109,10 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} MAGiC-SLAM is a server-mediated RGB-D pipeline: agents track locally, build local Gaussian submaps, send features/submaps to a server, and the server uses loop closure plus pose-graph optimization before merging submaps \citep{yugay2025magic_slam}.\footnote{\url{https://github.com/VladimirYugay/MAGiC-SLAM}.} The important contract is not raw image fusion; it is \emph{submap plus loop constraint} fusion.
 
 \begin{algorithm}[H]
-\caption{MAGiC-SLAM sequential server-fusion flow}
+\caption{MAGiC-SLAM}
 \label{alg:magic-slam}
 \small
-\textbf{State:} agent $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})$; server $X_t=(\mathcal{V}_t,\mathcal{E}_t,\mathcal{C}_t,\mathcal{G}_t)$; stage tracker $s=0\rightarrow5$.
-\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+\begin{enumerate}[leftmargin=*,nosep]
   \item \textsc{Track}. \emph{Trigger:} RGB-D frame $z_{i,t}^{\mathrm{rgbd}}$. \emph{Update:} $\mathbf{T}_{i,t}\leftarrow f_{\theta}^{\mathrm{track}}(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1},\hat{\mathbf{T}}_{i,t})$. \emph{Emits:} pose $\mathbf{T}_{i,t}$.
   \item \textsc{Local map}. \emph{Trigger:} accepted pose. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow u_{\theta}^{\mathrm{gs}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgbd}},\mathbf{T}_{i,t})$. \emph{Emits:} local submap $\mathcal{M}_{i,t}$.
   \item \textsc{Upload}. \emph{Trigger:} selected keyframe/submap. \emph{Update:} $q_{i,t}\leftarrow\mu(\mathcal{K}_{i,t},\mathcal{M}_{i,t})$ and $X_t\leftarrow X_{t-1}\cup q_{i,t}$. \emph{Emits:} server packet $q_{i,t}$.
@@ -132,11 +131,10 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} MAC-Ego3D replaces a single authoritative merge step with Gaussian consensus. Each RGB-D agent maintains a local Gaussian map; nearby Gaussians are regularized within an agent, and asynchronous inter-agent consensus aligns and refines the shared structure \citep{xu2024mac_ego3d}.\footnote{\url{https://github.com/Xiaohao-Xu/MAC-Ego3D}.} The key object is the repeated consensus update, not a one-shot server merge.
 
 \begin{algorithm}[H]
-\caption{MAC-Ego3D sequential consensus flow}
+\caption{MAC-Ego3D}
 \label{alg:mac-ego3d}
 \small
-\textbf{State:} agent $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{M}_{i,t},h_{i,t})$; communication gate $c_t=\mathbb{1}[t\bmod T_{\mathrm{comm}}=0]$; stage tracker $s=0\rightarrow4$.
-\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+\begin{enumerate}[leftmargin=*,nosep]
   \item \textsc{Track}. \emph{Trigger:} RGB-D frame $z_{i,t}^{\mathrm{rgbd}}$. \emph{Update:} $(\mathbf{T}_{i,t},\tilde{\mathcal{M}}_{i,t})\leftarrow f_\theta(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1})$. \emph{Emits:} pose and provisional Gaussians.
   \item \textsc{Intra-agent consensus}. \emph{Trigger:} local primitive update. \emph{Update:} $\mathcal{M}_{i,t}^{\mathrm{loc}}\leftarrow C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$. \emph{Emits:} locally coherent map.
   \item \textsc{Exchange gate}. \emph{Trigger:} $c_t=1$; otherwise skip to publish. \emph{Update:} $B_{i,t}\leftarrow\mu(\mathcal{M}_{i,t}^{\mathrm{loc}},h_{i,t})$. \emph{Emits:} consensus packet $B_{i,t}$.
@@ -154,11 +152,10 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} CoKo-SLAM keeps the server pattern but changes what is transmitted: compact keyframe-optimized Gaussian/keyframe state instead of dense raw streams \citep{li2026coko_slam}.\footnote{\url{https://github.com/lemonci/coko-slam}.} The server uses compact map information, loop closure without an initial relative-pose guess, redundant-Gaussian pruning, and global optimization.
 
 \begin{algorithm}[H]
-\caption{CoKo-SLAM sequential compact-server flow}
+\caption{CoKo-SLAM}
 \label{alg:coko-slam}
 \small
-\textbf{State:} local $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})$; packet $p_{i,t}=(\bar{\mathcal{K}}_{i,t},\bar{\mathcal{M}}_{i,t},d_{i,t})$; server $Y_t=(\mathcal{A}_t,\mathcal{R}_t,\mathcal{G}_t)$; stage tracker $s=0\rightarrow5$.
-\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+\begin{enumerate}[leftmargin=*,nosep]
   \item \textsc{Local map}. \emph{Trigger:} RGB-D segment. \emph{Update:} refresh $\mathbf{T}_{i,t}$, $\mathcal{K}_{i,t}$, and $\mathcal{M}_{i,t}$. \emph{Emits:} robot-side map/keyframe state.
   \item \textsc{Compact}. \emph{Trigger:} upload window or keyframe event. \emph{Update:} $p_{i,t}\leftarrow\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)$ subject to $|p|\le b_i$. \emph{Emits:} compact packet.
   \item \textsc{Associate}. \emph{Trigger:} server has at least two packets. \emph{Update:} $\mathcal{A}_t\leftarrow\{(p_a,p_b):\operatorname{desc}(p_a,p_b)>\tau_d\}$. \emph{Emits:} candidate cross-agent pairs.
@@ -177,11 +174,10 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} CoMA-SLAM is a distributed multi-agent Gaussian-surfel system: agents maintain submap-centric updates, close intra/inter-agent loops, and run distributed keyframe optimization \citep{chen2026coma_slam}.\footnote{\url{https://github.com/npu-chenlin/CoMA-SLAM}.} Its representation is 2D Gaussian surfels rather than conventional 3D radiance splats, so it belongs in a broad Gaussian-map survey with that caveat.
 
 \begin{algorithm}[H]
-\caption{CoMA-SLAM sequential distributed-surfel flow}
+\caption{CoMA-SLAM}
 \label{alg:coma-slam}
 \small
-\textbf{State:} peer $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{S}_{i,t},\mathcal{K}_{i,t},\mathcal{L}_{i,t})$; peer graph $\mathcal{N}_t$; stage tracker $s=0\rightarrow4$.
-\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+\begin{enumerate}[leftmargin=*,nosep]
   \item \textsc{Surfel submap}. \emph{Trigger:} observation $z_{i,t}$. \emph{Update:} $\mathcal{S}_{i,t}\leftarrow U_{\mathrm{surfel}}(\mathcal{S}_{i,t-1},z_{i,t},\mathbf{T}_{i,t})$. \emph{Emits:} local Gaussian-surfel submap.
   \item \textsc{Loop detect}. \emph{Trigger:} new keyframe/submap. \emph{Update:} $\mathcal{L}_{i,t}\leftarrow\mathcal{L}_{i,t-1}\cup\{(k,\ell,\Delta\mathbf{T}_{k\ell}):\operatorname{loop}(k,\ell)>\tau_\ell\}$. \emph{Emits:} loop-factor set.
   \item \textsc{Share}. \emph{Trigger:} peer $j\in\mathcal{N}_t(i)$ and budget $b_i$. \emph{Update:} $m_{i\rightarrow j,t}\leftarrow\mu(\mathcal{K}_{i,t},\mathcal{L}_{i,t},\mathcal{S}_{i,t};b_i)$. \emph{Emits:} compact distributed update.
@@ -199,11 +195,10 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} HAMMER is a server-side heterogeneous semantic mapper. Robots/devices stream local SLAM poses and visual/perception outputs; the server estimates global frame alignment without prior relative poses and trains or updates a shared metric-semantic 3D Gaussian map \citep{yu2025hammer,yu2025hammer_project}. The distinctive output is not just geometry, but a semantic Gaussian map usable by downstream agents.
 
 \begin{algorithm}[H]
-\caption{HAMMER sequential heterogeneous-semantic flow}
+\caption{HAMMER}
 \label{alg:hammer}
 \small
-\textbf{State:} device packet $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{i,t}^{\mathrm{local}},e_{i,t})$; transform $\mathbf{A}_{i,t}:\mathcal{F}_i\rightarrow\mathcal{F}_G$; semantic Gaussians $(g_k,c_k,\pi_k)$; stage tracker $s=0\rightarrow4$.
-\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+\begin{enumerate}[leftmargin=*,nosep]
   \item \textsc{Stream packet}. \emph{Trigger:} robot/device sends $u_{i,t}$. \emph{Update:} buffer observation, local pose, and embedding under device id $i$. \emph{Emits:} time-stamped device packet.
   \item \textsc{Register}. \emph{Trigger:} new device or alignment check. \emph{Update:} $\mathbf{A}_{i,t}\leftarrow\arg\min_{\mathbf{A}\in SE(3)}D(\mathbf{A}\hat{\mathbf{T}}_{i,1:t}^{\mathrm{local}},\mathcal{G}_{t-1})$. \emph{Emits:} global-frame transform.
   \item \textsc{Assimilate}. \emph{Trigger:} transform available. \emph{Update:} $\tilde{z}_{i,t}\leftarrow\mathbf{A}_{i,t}\hat{\mathbf{T}}_{i,t}^{\mathrm{local}}z_{i,t}$. \emph{Emits:} global-frame observation.
@@ -221,11 +216,10 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} GRAND-SLAM is best treated as local Gaussian submaps plus a global consistency layer. Agents optimize local RGB-D Gaussian submaps; inter- and intra-robot loop closures create constraints; pose-graph optimization updates global consistency \citep{thomas2025grand_slam,thomas2025grand_slam_arxiv}. Do not describe it as CoKo-style centralized rendered-depth fusion unless a source explicitly supports that.
 
 \begin{algorithm}[H]
-\caption{GRAND-SLAM sequential submap-pose-graph flow}
+\caption{GRAND-SLAM}
 \label{alg:grand-slam}
 \small
-\textbf{State:} submap $\mathcal{B}_{i}^{m}=(\mathcal{M}_{i}^{m},\mathbf{P}_{i}^{m})$; pose graph $\mathcal{H}_t=(\mathcal{V}_t,\mathcal{E}^{\mathrm{odom}}_t,\mathcal{E}^{\mathrm{loop}}_t)$; stage tracker $s=0\rightarrow5$.
-\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+\begin{enumerate}[leftmargin=*,nosep]
   \item \textsc{Track}. \emph{Trigger:} RGB-D frame. \emph{Update:} update local pose inside active submap $\mathcal{B}_{i}^{m}$. \emph{Emits:} frame-to-submap pose.
   \item \textsc{Spawn submap}. \emph{Trigger:} $\operatorname{drift/extent}>\tau_\kappa$. \emph{Update:} $\mathcal{B}_{i}^{m+1}\leftarrow\kappa(z_{i,t}^{\mathrm{rgbd}},\mathcal{B}_{i}^{m})$. \emph{Emits:} new Gaussian submap.
   \item \textsc{Local optimize}. \emph{Trigger:} active submap has support frames. \emph{Update:} $\mathcal{M}_{i}^{m}\leftarrow\arg\min_{\mathcal{M}}\mathcal{L}_{\mathrm{photo/depth}}(\mathcal{M},z_{i,t}^{\mathrm{rgbd}},\mathbf{P}_{i}^{m})$. \emph{Emits:} locally optimized submap.
@@ -244,11 +238,10 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} MAGS-SLAM is the RGB-only outlier: each monocular agent builds local Gaussian submaps, transmits compact summaries, verifies cross-agent associations with geometry and appearance, and fuses via occupancy-aware Gaussian fusion \citep{cao2026mags_slam,cao2026mags_slam_project}. The core problem is scale-aware collaboration without active depth.
 
 \begin{algorithm}[H]
-\caption{MAGS-SLAM sequential monocular-fusion flow}
+\caption{MAGS-SLAM}
 \label{alg:mags-slam}
 \small
-\textbf{State:} local $x_{i,t}=(\hat{\mathbf{T}}_{i,t},\lambda_{i,t},\mathcal{M}_{i,t})$; fusion $Z_t=(\mathcal{A}_t,\Lambda_t,\mathcal{O}_t,\mathcal{G}_t)$; stage tracker $s=0\rightarrow5$.
-\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+\begin{enumerate}[leftmargin=*,nosep]
   \item \textsc{Monocular track}. \emph{Trigger:} RGB frame. \emph{Update:} $(\hat{\mathbf{T}}_{i,t},\lambda_{i,t})\leftarrow f_{\theta}^{\mathrm{mono}}(z_{i,1:t}^{\mathrm{rgb}})$. \emph{Emits:} scale-hypothesized pose.
   \item \textsc{Local Gaussian}. \emph{Trigger:} pose estimate. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow U_{\mathrm{rgb}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgb}},\hat{\mathbf{T}}_{i,t},\lambda_{i,t})$. \emph{Emits:} local monocular submap.
   \item \textsc{Compress}. \emph{Trigger:} upload/association window. \emph{Update:} $p_{i,t}\leftarrow\arg\max_{p\subseteq\mathcal{M}_{i,t}}\operatorname{info}(p)$ subject to $|p|\le b_i$. \emph{Emits:} compact submap summary.
