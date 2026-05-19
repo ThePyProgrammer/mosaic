@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 from typing import Sequence
 
 from mosaic.evaluation.runner import BenchmarkArtifact
@@ -40,6 +41,10 @@ class RegressionGate:
     def __post_init__(self) -> None:
         if not self.metric_name.strip():
             raise ValueError("RegressionGate metric_name must not be blank")
+        if not isfinite(self.minimum):
+            raise ValueError("RegressionGate minimum must be finite")
+        if self.maximum is not None and not isfinite(self.maximum):
+            raise ValueError("RegressionGate maximum must be finite")
         if self.failure_class is FailureClass.NONE:
             raise ValueError("RegressionGate failure_class must represent a concrete failure")
         if self.maximum is not None and self.minimum > self.maximum:
@@ -89,7 +94,10 @@ def check_regression_gates(
         name = str(metric["name"])
         if name in metrics:
             raise ValueError(f"BenchmarkArtifact metric name is duplicated: {name}")
-        metrics[name] = float(metric["value"])
+        value = float(metric["value"])
+        if not isfinite(value):
+            raise ValueError(f"BenchmarkArtifact metric value must be finite: {name}")
+        metrics[name] = value
     results: list[RegressionResult] = []
     for gate in gates:
         observed = metrics.get(gate.metric_name)

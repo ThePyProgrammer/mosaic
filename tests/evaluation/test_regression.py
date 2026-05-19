@@ -117,6 +117,32 @@ def test_regression_gate_rejects_duplicated_metric_names() -> None:
         )
 
 
+@pytest.mark.parametrize("value", [float("inf"), float("nan"), "inf", "nan"])
+def test_regression_gate_rejects_non_finite_metric_values(value: float | str) -> None:
+    artifact = BenchmarkArtifact(
+        scenario_name="scenario",
+        backend_name="backend",
+        update_count=0,
+        metrics=[{"name": "tracking_success_rate", "value": value, "unit": "ratio"}],
+        backend_metadata={"name": "backend"},
+        diagnostics={},
+        failure_classification="none",
+    )
+
+    with pytest.raises(ValueError, match="finite"):
+        check_regression_gates(
+            artifact,
+            (RegressionGate("tracking_success_rate", 1.0, FailureClass.LIFECYCLE),),
+        )
+
+
+def test_regression_gate_rejects_non_finite_thresholds() -> None:
+    with pytest.raises(ValueError, match="minimum"):
+        RegressionGate("tracking_success_rate", float("inf"), FailureClass.LIFECYCLE)
+    with pytest.raises(ValueError, match="maximum"):
+        RegressionGate("tracking_success_rate", 0.0, FailureClass.LIFECYCLE, maximum=float("inf"))
+
+
 def test_primary_failure_class_uses_priority_not_gate_order_or_artifact_string() -> None:
     artifact = BenchmarkArtifact(
         scenario_name="scenario",
