@@ -22,15 +22,19 @@ from mosaic.core import (
 from mosaic.datasets import InMemorySequence, MultiViewSequence
 from mosaic.evaluation import (
     BenchmarkArtifact,
+    EvaluationReadinessResult,
+    FailureClass,
     MetricResult,
     RegressionGate,
     RegressionResult,
     SyntheticScenario,
     check_regression_gates,
+    evaluation_ready_for_real_backend,
     run_slam_benchmark,
     splat_count_metric,
     synthetic_forward_sequence,
     write_benchmark_artifact,
+    write_benchmark_artifacts_jsonl,
 )
 from mosaic.fusion import FusionInput, FusionResult, FusionStatus, ProvenancePreservingFusion, SplatFusionStrategy
 from mosaic.platforms import (
@@ -59,6 +63,8 @@ __all__ = [
     "CameraRig",
     "DeterministicSplatBackend",
     "Embodiment",
+    "EvaluationReadinessResult",
+    "FailureClass",
     "FrameId",
     "FusionInput",
     "FusionResult",
@@ -94,6 +100,7 @@ __all__ = [
     "__version__",
     "check_regression_gates",
     "default_platform_registry",
+    "evaluation_ready_for_real_backend",
     "humanoid_stereo_rig",
     "quadruped_front_rig",
     "run_slam_benchmark",
@@ -101,4 +108,5 @@ __all__ = [
     "synthetic_forward_sequence",
     "ugv_surround_rig",
     "write_benchmark_artifact",
+    "write_benchmark_artifacts_jsonl",
 ]

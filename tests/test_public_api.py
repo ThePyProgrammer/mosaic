@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from mosaic import (
     AgentQueryKind,
     BenchmarkArtifact,
@@ -5,6 +7,8 @@ from mosaic import (
     CameraRig,
     DeterministicSplatBackend,
     Embodiment,
+    EvaluationReadinessResult,
+    FailureClass,
     FrameId,
     FusionInput,
     GaussianSplat,
@@ -17,8 +21,15 @@ from mosaic import (
     SplatPosteriorView,
     Timestamp,
     TrackingState,
+    evaluation_ready_for_real_backend,
     quadruped_front_rig,
     synthetic_forward_sequence,
+    write_benchmark_artifacts_jsonl,
+)
+from mosaic.evaluation import (
+    FailureClass as EvaluationFailureClass,
+    evaluation_ready_for_real_backend as evaluation_ready,
+    write_benchmark_artifacts_jsonl as write_jsonl,
 )
 
 
@@ -52,6 +63,27 @@ def test_public_api_exports_evaluation_types() -> None:
     assert scenario.name == "synthetic-forward-1"
     assert BenchmarkArtifact.__name__ == "BenchmarkArtifact"
     assert RegressionGate(metric_name="splat_count", minimum=1.0).minimum == 1.0
+    assert FailureClass.LIFECYCLE.value == "lifecycle"
+    assert EvaluationFailureClass is FailureClass
+    assert EvaluationReadinessResult.__name__ == "EvaluationReadinessResult"
+    assert evaluation_ready is evaluation_ready_for_real_backend
+    assert write_jsonl is write_benchmark_artifacts_jsonl
+
+
+def test_readme_locks_real_backend_integration_block() -> None:
+    readme = Path("README.md").read_text()
+
+    assert "real 3DGS backend integration remains blocked until deterministic evaluation gates pass" in readme
+    assert "DeterministicSplatBackend" in readme
+    assert "metadata-only fake real backend" not in readme
+    assert "sample descriptor" not in readme
+    assert "cuda" not in readme.casefold()
+    assert "pytorch" not in readme.casefold()
+    assert "opencv" not in readme.casefold()
+    assert "ros" not in readme.casefold()
+    assert "habitat" not in readme.casefold()
+    assert "openai" not in readme.casefold()
+    assert "anthropic" not in readme.casefold()
 
 
 def test_public_api_exports_agent_types() -> None:
