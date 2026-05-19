@@ -3,10 +3,12 @@ import math
 import pytest
 
 from mosaic.core import FrameId
-from mosaic.fusion import FusionInput, FusionResult, FusionStatus
-from mosaic.fusion.protocol import (
+from mosaic.fusion import (
     FusionConflictSummary,
+    FusionInput,
     FusionProvenanceSummary,
+    FusionResult,
+    FusionStatus,
     FusionUncertaintySummary,
 )
 from mosaic.splats import GaussianSplat, SplatMap
@@ -218,3 +220,16 @@ def test_fusion_result_supports_compatibility_default_summaries() -> None:
     assert result.provenance.per_provenance_counts == {}
     assert result.uncertainty.model_label
     assert result.conflicts.total_candidate_count == 0
+
+
+def test_fusion_exports_summary_types_from_subpackage() -> None:
+    import mosaic.fusion as fusion
+
+    assert fusion.FusionProvenanceSummary is FusionProvenanceSummary
+    assert fusion.FusionUncertaintySummary is FusionUncertaintySummary
+    assert fusion.FusionConflictSummary is FusionConflictSummary
+    assert set(fusion.__all__) >= {
+        "FusionProvenanceSummary",
+        "FusionUncertaintySummary",
+        "FusionConflictSummary",
+    }

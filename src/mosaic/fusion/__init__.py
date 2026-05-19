@@ -1,10 +1,21 @@
-from mosaic.fusion.protocol import FusionInput, FusionResult, FusionStatus, SplatFusionStrategy
+from mosaic.fusion.protocol import (
+    FusionConflictSummary,
+    FusionInput,
+    FusionProvenanceSummary,
+    FusionResult,
+    FusionStatus,
+    FusionUncertaintySummary,
+    SplatFusionStrategy,
+)
 from mosaic.fusion.strategies import ProvenancePreservingFusion
 
 __all__ = [
+    "FusionConflictSummary",
     "FusionInput",
+    "FusionProvenanceSummary",
     "FusionResult",
     "FusionStatus",
+    "FusionUncertaintySummary",
     "ProvenancePreservingFusion",
     "SplatFusionStrategy",
 ]
