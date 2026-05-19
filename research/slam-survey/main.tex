@@ -55,53 +55,105 @@ Multi-robot Gaussian SLAM has emerged as a narrow but important variant of 3D Ga
 
 This survey focuses on systems that satisfy a functional target: multiple independently moving agents, online or incremental operation, Gaussian or Gaussian-like map state, a shared-map fusion mechanism, and explicit cross-agent alignment. That target is narrower than ordinary 3DGS reconstruction and broader than papers whose title contains the word ``SLAM.'' It includes RGB-D multi-agent Gaussian SLAM systems such as MAGiC-SLAM and GRAND-SLAM \citep{yugay2025magic_slam,thomas2025grand_slam}, consensus-oriented systems such as MAC-Ego3D \citep{xu2024mac_ego3d}, communication-efficient compact-map systems such as CoKo-SLAM and CoMA-SLAM \citep{li2026coko_slam,chen2026coma_slam}, heterogeneous semantic mapping systems such as HAMMER \citep{yu2025hammer}, and provisional monocular multi-agent systems such as MAGS-SLAM \citep{cao2026mags_slam}.
 
+\section{Setting the Stage}
 
-\section{Problem Statement and Target Class}
+Multi-robot SLAM is usually formulated as the joint estimation of robot trajectories and an environment representation from sensor measurements. Classical visual and visual-inertial systems express this through poses, landmarks, keyframes, and loop-closure factors; ORB-SLAM3 and Kimera-Multi are representative references for visual multi-map and distributed multi-robot evaluation practice \citep{campos2021orb_slam3,tian2023kimera_multi}. Gaussian SLAM changes the map variable. The shared state is not only a sparse feature graph or occupancy map, but a differentiable set of Gaussian primitives whose geometry, appearance, visibility, uncertainty, and provenance may all change during online collaboration.
 
-We define \targetclass{} as a class of systems in which multiple independently moving agents incrementally estimate local motion and map state while contributing to a shared Gaussian or Gaussian-like representation. Let the robot team be
+Let the set of agents be
 \[
-\mathcal{A}=\{1,\ldots,N\}, \qquad N\geq 2,
+\mathcal{A}=\{1,\ldots,N\}, \qquad N\geq2,
 \]
-where each agent $i\in\mathcal{A}$ has a local body or camera frame $\mathcal{F}_{i,t}$ at time $t$, a local trajectory estimate $\mathbf{T}_{i,t}\in SE(3)$, and a stream of observations
+and let $t\in\mathbb{N}$ index local update time. The paper uses $\mathcal{F}_0$ for a global or server frame and $\mathcal{F}_{i,t}$ for the current local camera, body, or active-submap frame of agent $i$. A rigid transform
+\[
+\mathbf{T}_{b\leftarrow a}\in SE(3)
+\]
+maps a point expressed in frame $\mathcal{F}_a$ into frame $\mathcal{F}_b$. Thus $\mathbf{T}_{0\leftarrow i,t}$ maps agent $i$'s local coordinates at time $t$ into the shared frame. A local tracker estimates either this transform directly or a local-frame trajectory
+\[
+\hat{\mathbf{X}}_{i,1:t}
+=\{\hat{\mathbf{T}}_{\ell_i\leftarrow i,1},\ldots,
+\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}\},
+\]
+where $\mathcal{F}_{\ell_i}$ is an agent-local reference frame that must later be aligned to $\mathcal{F}_0$.
+
+The observation history for agent $i$ is
 \[
 \mathcal{Z}_i^{1:t}=\{z_{i,1},\ldots,z_{i,t}\}.
 \]
-Each observation may contain RGB, RGB-D, monocular RGB, stereo, LiDAR-derived depth, inertial cues, local SLAM poses, or semantic features depending on the system. A local online mapping process produces a time-indexed Gaussian submap
+A single observation is method-dependent. For RGB-D systems one may write
 \[
-\mathcal{M}_{i,t}=\phi_i\!\left(\mathcal{Z}_i^{1:t},\mathbf{T}_{i,1:t}\right),
+z_{i,t}^{\mathrm{rgbd}}=(I_{i,t},D_{i,t},\mathbf{K}_i),
 \]
-where $\mathcal{M}_{i,t}$ may include 3D Gaussian splats, 2D Gaussian surfels, keyframes, descriptors, semantic embeddings, and provenance. The shared map is obtained through a fusion operator
+where $I_{i,t}:\Omega_i\rightarrow[0,1]^3$ is color, $D_{i,t}:\Omega_i\rightarrow\mathbb{R}_{+}$ is depth, and $\mathbf{K}_i$ contains intrinsics. Monocular systems omit $D_{i,t}$ and introduce an unknown or estimated scale $\lambda_{i,t}\in\mathbb{R}_{+}$. Heterogeneous systems may add local SLAM poses, LiDAR-derived depth, semantic embeddings, or device metadata,
+\[
+z_{i,t}^{\mathrm{het}}=(I_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},d_{i,t},e_{i,t},\xi_i),
+\]
+where $d_{i,t}$ denotes optional geometric support, $e_{i,t}$ an optional semantic descriptor, and $\xi_i$ a device or embodiment descriptor.
+
+A Gaussian primitive is written as
+\[
+g_k=(\boldsymbol{\mu}_k,\mathbf{R}_k,\mathbf{s}_k,o_k,\mathbf{c}_k,\mathbf{h}_k,\pi_k),
+\]
+where $\boldsymbol{\mu}_k\in\mathbb{R}^3$ is the mean, $\mathbf{R}_k\in SO(3)$ and $\mathbf{s}_k\in\mathbb{R}_{+}^{3}$ parameterize anisotropic shape, $o_k\in[0,1]$ is opacity, $\mathbf{c}_k$ denotes color or spherical-harmonic appearance parameters, $\mathbf{h}_k$ is an optional semantic or learned descriptor, and $\pi_k$ records provenance such as source agent, keyframe, or submap identity. A local map is a finite Gaussian or Gaussian-like set
+\[
+\mathcal{M}_{i,t}=\{g_{i,t}^{1},\ldots,g_{i,t}^{m_{i,t}}\},
+\]
+possibly partitioned into submaps $\mathcal{B}_{i}^{m}\subseteq\mathcal{M}_{i,t}$, keyframe supports $\mathcal{K}_{i,t}$, or Gaussian surfel sets $\mathcal{S}_{i,t}$. A local mapping function is therefore
+\[
+\phi_i:\bigl(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t}\bigr)
+\mapsto \mathcal{M}_{i,t},
+\]
+where $\mathcal{P}_{i,t}$ denotes method parameters such as insertion thresholds, photometric losses, depth weights, pruning rules, and keyframe policies.
+
+Online collaboration requires bounded communication. Let
+\[
+p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)
+\]
+be a packet selected under budget $b_i$. Depending on the method, $p_{i,t}$ may contain keyframes, descriptors, compacted Gaussians, submap summaries, loop-closure candidates, semantic embeddings, or local pose fragments. The active communication graph is $\mathcal{H}_t=(\mathcal{A},\mathcal{R}_t)$; $\mathcal{N}_t(i)=\{j:(i,j)\in\mathcal{R}_t\}$ is the neighbor set for distributed methods.
+
+Cross-agent alignment is represented by a constraint set
+\[
+\mathcal{C}_t=\{c_{ab}\},\qquad
+c_{ab}=(a,b,\Delta\mathbf{T}_{a\leftarrow b},\boldsymbol{\Omega}_{ab},\tau_{ab}),
+\]
+where $\Delta\mathbf{T}_{a\leftarrow b}\in SE(3)$ is a relative transform, $\boldsymbol{\Omega}_{ab}$ is an information matrix or confidence surrogate, and $\tau_{ab}$ records the time, keyframe, or submap support. Constraints may arise from image retrieval, rendered-depth registration, camera-depth registration, geometric verification, semantic correspondence, consensus factors, or inter-robot loop closure. A generic alignment operator is
+\[
+\alpha_t:\{p_{i,t_i}\}_{i\in\mathcal{A}}
+\mapsto \mathcal{C}_t.
+\]
+
+The shared map is the output of a fusion operator
 \[
 \mathcal{G}_t
-=\Psi_t\!\left(\{\mathcal{M}_{i,t_i}\}_{i=1}^{N},\mathcal{C}_t,\mathcal{P}_t\right),
+=\Psi_t\!\left(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{M}_{i,t_i}\}_{i\in\mathcal{A}},
+\mathcal{C}_t,
+\mathcal{P}_t\right),
 \]
-where $\mathcal{C}_t$ denotes cross-agent constraints such as frame alignments, inter-robot loop closures, consensus factors, or pose-graph edges, and $\mathcal{P}_t$ denotes policy variables such as communication budgets, keyframe selection, compaction, confidence thresholds, and semantic-code retention.
+where $\mathcal{P}_t$ contains global policies such as merge thresholds, update rates, consensus weights, redundancy tests, semantic-code retention, and communication schedules. Pose-graph methods instantiate $\Psi_t$ through an optimization over submap poses,
+\[
+\{\mathbf{P}_v^\star\}
+=\arg\min_{\{\mathbf{P}_v\}}
+\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t}
+\rho\!\left(\|r_e(\{\mathbf{P}_v\})\|_{\boldsymbol{\Omega}_e}^{2}\right),
+\]
+whereas consensus methods instantiate it through repeated local and inter-agent updates,
+\[
+\mathcal{M}_{i,t}^{(h+1)}
+=C_{\mathrm{inter}}\!\left(\mathcal{M}_{i,t}^{(h)},
+\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\};\lambda_{\mathrm{inter}}\right).
+\]
 
-A system is target-class when it satisfies five conditions: $N\geq2$ independently moving agents; online or incremental operation; Gaussian or Gaussian-like map state; shared-map semantics; and a cross-agent alignment mechanism. This definition excludes static multi-view 3DGS training, ordinary stereo, single-robot multi-camera rigs, and independent per-agent mapping without shared Gaussian-map semantics.
+Finally, reported performance should be read as a vector rather than a single score:
+\[
+\mathbf{q}=\bigl(\mathrm{ATE},\mathrm{PSNR},\mathrm{SSIM},\mathrm{LPIPS},L_D,
+\ell_{\mathrm{track}},\ell_{\mathrm{map}},\ell_{\mathrm{merge}},m_{\mathrm{GPU}},s_{\mathrm{pkt}},r_{\mathrm{net}},N\bigr).
+\]
+Here $L_D$ is a depth error, $\ell_{\mathrm{track}}$, $\ell_{\mathrm{map}}$, and $\ell_{\mathrm{merge}}$ are tracking, mapping, and merge latencies, $m_{\mathrm{GPU}}$ is peak memory, $s_{\mathrm{pkt}}$ is serialized update size, $r_{\mathrm{net}}$ is communication rate, and $N$ is agent count. Current papers report different projections of $\mathbf{q}$, which is why this survey emphasizes architecture rather than a universal ranking.
 
-\section{Background and Related Work}
+A system belongs to \targetclass{} when it satisfies five conditions: $N\geq2$ independently moving agents; online or incremental operation; Gaussian or Gaussian-like map state; shared-map semantics; and a cross-agent alignment mechanism. This excludes static multi-view 3DGS training, ordinary stereo, single-robot multi-camera rigs, and independent per-agent mapping without shared Gaussian-map semantics.
 
-Multi-robot SLAM predates Gaussian Splatting by decades and has mature precedents in feature-based, visual-inertial, and distributed mapping systems. ORB-SLAM3, for example, provides a strong open-source visual and visual-inertial multi-map baseline, but it is not a Gaussian-map system \citep{campos2021orb_slam3}. Kimera-Multi provides important multi-robot dataset and distributed-SLAM context for evaluating collaborative mapping systems \citep{tian2023kimera_multi}. Replica-derived datasets provide the indoor synthetic scenes from which several multi-agent Gaussian SLAM benchmarks are built \citep{straub2019replica,replica_multiagent_dataset}.
+\section{Existing Works}
 
-Gaussian representations change the collaborative SLAM formulation. In sparse or mesh-based systems, inter-robot fusion can often be described as keyframe exchange, loop closure, and pose-graph optimization. In Gaussian-map systems, the method must also specify how to transmit, align, merge, prune, deduplicate, and update dense differentiable primitives. A shared map may be a server-trained semantic Gaussian map, a set of aligned local submaps, a consensus-optimized Gaussian field, or a compact monocular submap product. The same terms---``online'', ``real time'', ``multi-agent'', and ``fusion''---therefore hide different system boundaries across papers.
-
-\section{Survey Method and Evidence Criteria}
-
-The survey synthesizes paper and project pages, public repositories, and extracted benchmark tables. No benchmark numbers in this paper are reproduced measurements. They are reported values from the cited papers, project pages, repositories, or prior survey extraction artifacts. To separate directly auditable implementations from paper-only claims, each system is assigned an evidence tier:
-
-\begin{itemize}[leftmargin=*]
-  \item \textbf{Public implementation evidence:} a repository was found and is relevant to the method, but the code may still be research-oriented and difficult to reproduce.
-  \item \textbf{Public with reproducibility caveats:} a repository exists, but licensing, environment assumptions, or provenance makes independent reproduction uncertain.
-  \item \textbf{Paper-only / project-page-only evidence:} the system is target-class by paper claims, but no auditable implementation was found.
-  \item \textbf{Provisional evidence:} the system is claimed or promised, but code, data, or final archival details remain incomplete.
-\end{itemize}
-
-This evidence model is intentionally conservative. It separates architectural evidence from implementation availability, and it treats relative communication reductions as method-specific paper claims unless absolute byte counts or bandwidth tables are available.
-
-
-\section{Candidate Systems}
-
-Each system below is summarized as a concrete dataflow: what runs on each robot, what crosses the network, what alignment object is estimated, and what becomes the shared Gaussian map. The algorithm boxes are evidence-bounded ordered process summaries rather than executable source code.
+The following systems are summarized as survey-level procedures over the notation above. The algorithm boxes are not executable source code; they identify the main mathematical objects each method estimates, communicates, aligns, and fuses.
 
 \subsection{MAGiC-SLAM}
 \label{sec:systems:magic-slam}
@@ -112,16 +164,20 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \caption{MAGiC-SLAM}
 \label{alg:magic-slam}
 \small
+\noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}_{i\in\mathcal{A}}$, local map states $\{\mathcal{M}_{i,t-1}\}$, keyframe sets $\{\mathcal{K}_{i,t}\}$.\\
+\textbf{Output:} Globally aligned Gaussian map $\mathcal{G}_t$ and optimized submap poses $\{\mathbf{P}_v\}$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textsc{Track}. \emph{Trigger:} RGB-D frame $z_{i,t}^{\mathrm{rgbd}}$. \emph{Update:} $\mathbf{T}_{i,t}\leftarrow f_{\theta}^{\mathrm{track}}(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1},\hat{\mathbf{T}}_{i,t})$. \emph{Emits:} pose $\mathbf{T}_{i,t}$.
-  \item \textsc{Local map}. \emph{Trigger:} accepted pose. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow u_{\theta}^{\mathrm{gs}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgbd}},\mathbf{T}_{i,t})$. \emph{Emits:} local submap $\mathcal{M}_{i,t}$.
-  \item \textsc{Upload}. \emph{Trigger:} selected keyframe/submap. \emph{Update:} $q_{i,t}\leftarrow\mu(\mathcal{K}_{i,t},\mathcal{M}_{i,t})$ and $X_t\leftarrow X_{t-1}\cup q_{i,t}$. \emph{Emits:} server packet $q_{i,t}$.
-  \item \textsc{Loop constraints}. \emph{Trigger:} packet-pair score $>\tau_{\mathrm{lc}}$. \emph{Update:} $\mathcal{C}_t\leftarrow\{(a,b,\Delta\mathbf{T}_{ab})\}$. \emph{Emits:} inter/intra-agent constraints.
-  \item \textsc{Pose graph}. \emph{Trigger:} changed constraint set. \emph{Update:} $\{\mathbf{P}_v\}\leftarrow\arg\min_{\mathbf{P}}\sum_{e\in\mathcal{E}_t\cup\mathcal{C}_t}\rho(\|r_e(\mathbf{P})\|^2)$. \emph{Emits:} optimized submap poses.
-  \item \textsc{Merge}. \emph{Trigger:} optimized poses. \emph{Update:} $\mathcal{G}_t\leftarrow\bigcup_{v\in\mathcal{V}_t}\mathbf{P}_v\mathcal{M}_v$. \emph{Emits:} global Gaussian map $\mathcal{G}_t$.
+  \item For each agent $i$, estimate the current pose $\hat{\mathbf{T}}_{0\leftarrow i,t}$ from the new RGB-D frame and the previous local Gaussian map.
+  \item Update the local submap $\mathcal{M}_{i,t}$ with accepted RGB-D observations and selected keyframes.
+  \item Select a bounded packet $p_{i,t}=\mu_i(\mathcal{K}_{i,t},\mathcal{M}_{i,t};b_i)$ and transmit it to the server.
+  \item Detect intra- and inter-agent loop closures and append verified relative-pose factors to $\mathcal{C}_t$.
+  \item Solve a robust pose-graph problem over submap poses,
+  \[
+  \{\mathbf{P}_v^\star\}=\arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}_t\cup\mathcal{C}_t}\rho\!\left(\|r_e(\{\mathbf{P}_v\})\|^2\right).
+  \]
+  \item Transform local submaps by the optimized poses and merge them into $\mathcal{G}_t=\Psi_t(\{\mathbf{P}_v^\star\mathcal{M}_v\},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
 \end{algorithm}
-
 
 \paragraph{Evidence and caveats.} Reported ReplicaMultiagent results include about $0.27\,\mathrm{cm}$ ATE RMSE, $34.26\,\mathrm{dB}$ PSNR, $1.12\,\mathrm{GiB}$ peak GPU memory, $54\,\mathrm{MB}$ submaps, and $167\,\mathrm{s}$ global merge time. These figures make MAGiC-SLAM a mature public research baseline, but they also show that global merging can dominate runtime.
 
@@ -134,15 +190,20 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \caption{MAC-Ego3D}
 \label{alg:mac-ego3d}
 \small
+\noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, local Gaussian maps $\{\mathcal{M}_{i,t-1}\}$, communication graph $\mathcal{H}_t$, consensus round $h$.\\
+\textbf{Output:} Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and an eventually consistent shared representation $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textsc{Track}. \emph{Trigger:} RGB-D frame $z_{i,t}^{\mathrm{rgbd}}$. \emph{Update:} $(\mathbf{T}_{i,t},\tilde{\mathcal{M}}_{i,t})\leftarrow f_\theta(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1})$. \emph{Emits:} pose and provisional Gaussians.
-  \item \textsc{Intra-agent consensus}. \emph{Trigger:} local primitive update. \emph{Update:} $\mathcal{M}_{i,t}^{\mathrm{loc}}\leftarrow C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$. \emph{Emits:} locally coherent map.
-  \item \textsc{Exchange gate}. \emph{Trigger:} $c_t=1$; otherwise skip to publish. \emph{Update:} $B_{i,t}\leftarrow\mu(\mathcal{M}_{i,t}^{\mathrm{loc}},h_{i,t})$. \emph{Emits:} consensus packet $B_{i,t}$.
-  \item \textsc{Inter-agent consensus}. \emph{Trigger:} neighbor packets from $\mathcal{N}_t(i)$. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow C_{\mathrm{inter}}(\mathcal{M}_{i,t}^{\mathrm{loc}},\{B_{j,t}\};\lambda_{\mathrm{inter}})$ and $h_{i,t}\leftarrow h_{i,t-1}+1$. \emph{Emits:} cross-agent refined map.
-  \item \textsc{Publish view}. \emph{Trigger:} local or inter-agent consensus done. \emph{Update:} $\mathcal{G}_t\leftarrow\{\mathcal{M}_{i,t}^{(h)}\}_{i,h}$. \emph{Emits:} eventually consistent shared model.
+  \item Each agent estimates its egomotion and provisional map update $(\hat{\mathbf{T}}_{0\leftarrow i,t},\tilde{\mathcal{M}}_{i,t})$ from the incoming RGB-D observation.
+  \item Apply intra-agent Gaussian consensus to obtain a locally coherent map $\mathcal{M}_{i,t}^{\mathrm{loc}}=C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$.
+  \item Select a consensus packet $p_{i,t}^{(h)}=\mu_i(\mathcal{M}_{i,t}^{\mathrm{loc}},h;b_i)$ containing the Gaussian state needed by neighboring agents.
+  \item Exchange packets with neighbors $j\in\mathcal{N}_t(i)$ under the current communication schedule.
+  \item Refine the local map using inter-agent consensus,
+  \[
+  \mathcal{M}_{i,t}^{(h+1)}=C_{\mathrm{inter}}\!\left(\mathcal{M}_{i,t}^{\mathrm{loc}},\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\};\lambda_{\mathrm{inter}}\right).
+  \]
+  \item Publish the current collection of consensus states as $\mathcal{G}_t=\{\mathcal{M}_{i,t}^{(h+1)}:i\in\mathcal{A}\}$.
 \end{enumerate}
 \end{algorithm}
-
 
 \paragraph{Evidence and caveats.} Extracted results report about $0.14\,\mathrm{cm}$ ATE RMSE on Multi-Agent Replica, $40.04\,\mathrm{dB}$ PSNR, $0.02\,\mathrm{s}$ tracking, and $0.05\,\mathrm{s}$ mapping. Communication is reported as intervals rather than bytes.
 
@@ -155,16 +216,21 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \caption{CoKo-SLAM}
 \label{alg:coko-slam}
 \small
+\noindent\textbf{Input:} RGB-D local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, budgets $\{b_i\}$, server map $\mathcal{G}_{t-1}$.\\
+\textbf{Output:} Compact globally optimized Gaussian map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textsc{Local map}. \emph{Trigger:} RGB-D segment. \emph{Update:} refresh $\mathbf{T}_{i,t}$, $\mathcal{K}_{i,t}$, and $\mathcal{M}_{i,t}$. \emph{Emits:} robot-side map/keyframe state.
-  \item \textsc{Compact}. \emph{Trigger:} upload window or keyframe event. \emph{Update:} $p_{i,t}\leftarrow\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)$ subject to $|p|\le b_i$. \emph{Emits:} compact packet.
-  \item \textsc{Associate}. \emph{Trigger:} server has at least two packets. \emph{Update:} $\mathcal{A}_t\leftarrow\{(p_a,p_b):\operatorname{desc}(p_a,p_b)>\tau_d\}$. \emph{Emits:} candidate cross-agent pairs.
-  \item \textsc{Verify and align}. \emph{Trigger:} candidate pair. \emph{Update:} $\Delta\mathbf{T}_{ab}\leftarrow\operatorname{align}_m(p_a,p_b)$ for $m\in\{\textsc{RenderedDepth},\textsc{CameraDepth}\}$. \emph{Emits:} verified transform.
-  \item \textsc{Prune}. \emph{Trigger:} aligned packet overlaps map. \emph{Update:} $\mathcal{R}_t\leftarrow\{g:\operatorname{overlap}(g)>\tau_o\}$. \emph{Emits:} redundant Gaussian set.
-  \item \textsc{Optimize and fuse}. \emph{Trigger:} constraints and prune set fixed. \emph{Update:} $\mathcal{G}_t\leftarrow\operatorname{opt}((\bigcup_i\Delta\mathbf{T}_i\bar{\mathcal{M}}_{i,t})\setminus\mathcal{R}_t)$. \emph{Emits:} compact aligned map.
+  \item Each agent updates its local pose, keyframe set, and Gaussian map from the current RGB-D segment.
+  \item Select a compact packet
+  \[
+  p_{i,t}=\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)
+  \quad\mathrm{s.t.}\quad |p|\leq b_i.
+  \]
+  \item On the server, score packet pairs and form candidate associations whose descriptor or rendered evidence exceeds a threshold.
+  \item Estimate relative transforms $\Delta\mathbf{T}_{a\leftarrow b}$ using rendered-depth or camera-depth registration, depending on the available packet contents.
+  \item Mark redundant primitives $\mathcal{R}_t=\{g\in\cup_i\mathcal{M}_{i,t}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
+  \item Optimize aligned packet poses, remove redundant Gaussians, and fuse the surviving primitives through $\Psi_t$.
 \end{enumerate}
 \end{algorithm}
-
 
 \paragraph{Evidence and caveats.} The paper reports $85$--$95\%$ lower transmitted data, but the extracted evidence did not include absolute bandwidth. The public repository supports architectural inspection, but the available evidence is not sufficient for an independent reproducibility claim.
 
@@ -177,15 +243,20 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \caption{CoMA-SLAM}
 \label{alg:coma-slam}
 \small
+\noindent\textbf{Input:} Agent observations $\{\mathcal{Z}_i^{1:t}\}$, Gaussian-surfel submaps $\{\mathcal{S}_{i,t-1}\}$, neighbor sets $\{\mathcal{N}_t(i)\}$.\\
+\textbf{Output:} Distributed globally consistent Gaussian-surfel map $\mathcal{G}^{\mathrm{surfel}}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textsc{Surfel submap}. \emph{Trigger:} observation $z_{i,t}$. \emph{Update:} $\mathcal{S}_{i,t}\leftarrow U_{\mathrm{surfel}}(\mathcal{S}_{i,t-1},z_{i,t},\mathbf{T}_{i,t})$. \emph{Emits:} local Gaussian-surfel submap.
-  \item \textsc{Loop detect}. \emph{Trigger:} new keyframe/submap. \emph{Update:} $\mathcal{L}_{i,t}\leftarrow\mathcal{L}_{i,t-1}\cup\{(k,\ell,\Delta\mathbf{T}_{k\ell}):\operatorname{loop}(k,\ell)>\tau_\ell\}$. \emph{Emits:} loop-factor set.
-  \item \textsc{Share}. \emph{Trigger:} peer $j\in\mathcal{N}_t(i)$ and budget $b_i$. \emph{Update:} $m_{i\rightarrow j,t}\leftarrow\mu(\mathcal{K}_{i,t},\mathcal{L}_{i,t},\mathcal{S}_{i,t};b_i)$. \emph{Emits:} compact distributed update.
-  \item \textsc{Distributed optimize}. \emph{Trigger:} peer loop factors received. \emph{Update:} $\mathcal{Q}_t\leftarrow\arg\min_{\mathcal{Q}}\sum_{(k,\ell)\in\cup_i\mathcal{L}_{i,t}}\rho(\|r_{k\ell}(\mathcal{Q})\|^2)$. \emph{Emits:} optimized keyframe/submap poses.
-  \item \textsc{Commit map}. \emph{Trigger:} distributed optimization converged. \emph{Update:} $\mathcal{G}_t^{\mathrm{surfel}}\leftarrow\bigcup_i\mathcal{Q}_t\mathcal{S}_{i,t}$. \emph{Emits:} shared Gaussian-surfel map.
+  \item Update each local Gaussian-surfel submap $\mathcal{S}_{i,t}$ from the current observation and local pose estimate.
+  \item Detect intra-agent and inter-agent loop candidates between keyframes or submaps.
+  \item Add verified loop factors $(k,\ell,\Delta\mathbf{T}_{k\leftarrow\ell})$ to the distributed constraint set $\mathcal{C}_t$.
+  \item Select compact distributed packets containing keyframes, loop factors, and surfel summaries; exchange them with neighbors.
+  \item Solve the distributed keyframe/submap optimization
+  \[
+  \mathcal{Q}_t^\star=\arg\min_{\mathcal{Q}}\sum_{(k,\ell)\in\mathcal{C}_t}\rho\!\left(\|r_{k\ell}(\mathcal{Q})\|^2\right).
+  \]
+  \item Commit the aligned surfel submaps as $\mathcal{G}^{\mathrm{surfel}}_t=\bigcup_i\mathcal{Q}_t^\star\mathcal{S}_{i,t}$.
 \end{enumerate}
 \end{algorithm}
-
 
 \paragraph{Evidence and caveats.} The AAAI evidence reports improved pose/rendering/geometric consistency and a $99.8\%$ communication-bandwidth reduction claim, but exact numeric tables were not extracted. The repository was public, but no top-level license was found.
 
@@ -198,15 +269,17 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \caption{HAMMER}
 \label{alg:hammer}
 \small
+\noindent\textbf{Input:} Heterogeneous packets $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$ and previous semantic map $\mathcal{G}_{t-1}$.\\
+\textbf{Output:} Shared metric-semantic Gaussian map $\mathcal{G}_t$ and bounded query views $v_t(q)$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textsc{Stream packet}. \emph{Trigger:} robot/device sends $u_{i,t}$. \emph{Update:} buffer observation, local pose, and embedding under device id $i$. \emph{Emits:} time-stamped device packet.
-  \item \textsc{Register}. \emph{Trigger:} new device or alignment check. \emph{Update:} $\mathbf{A}_{i,t}\leftarrow\arg\min_{\mathbf{A}\in SE(3)}D(\mathbf{A}\hat{\mathbf{T}}_{i,1:t}^{\mathrm{local}},\mathcal{G}_{t-1})$. \emph{Emits:} global-frame transform.
-  \item \textsc{Assimilate}. \emph{Trigger:} transform available. \emph{Update:} $\tilde{z}_{i,t}\leftarrow\mathbf{A}_{i,t}\hat{\mathbf{T}}_{i,t}^{\mathrm{local}}z_{i,t}$. \emph{Emits:} global-frame observation.
-  \item \textsc{Semantic update}. \emph{Trigger:} observation projects into map support. \emph{Update:} $(g_k,c_k,\pi_k)\leftarrow U_{\mathrm{sem}}((g_k,c_k,\pi_k),\tilde{z}_{i,t},e_{i,t},i,t)$. \emph{Emits:} updated metric-semantic Gaussians.
-  \item \textsc{Serve query}. \emph{Trigger:} downstream query $q$. \emph{Update:} $v_t(q)\leftarrow Q(\mathcal{G}_t,q)$. \emph{Emits:} geometry, semantic, or provenance view.
+  \item Buffer each packet by device id, local timestamp, local SLAM pose, modality, and optional semantic descriptor.
+  \item Estimate a global-frame alignment $\mathbf{A}_{0\leftarrow \ell_i}\in SE(3)$ for each local trajectory without assuming known initial relative poses.
+  \item Transform the packet into the shared frame, $\tilde{z}_{i,t}=\mathbf{A}_{0\leftarrow \ell_i}\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}z_{i,t}$.
+  \item Update the supported metric-semantic Gaussians $(g_k,\mathbf{h}_k,\pi_k)$ with geometry, appearance, semantic descriptors, and provenance from $\tilde{z}_{i,t}$.
+  \item Maintain the shared map as $\mathcal{G}_t=\Psi_t(\mathcal{G}_{t-1},\{\tilde{z}_{i,t}\},\mathcal{C}_t,\mathcal{P}_t)$.
+  \item For a downstream query $q$, return a bounded geometry, semantic, or provenance view $v_t(q)=Q(\mathcal{G}_t,q)$.
 \end{enumerate}
 \end{algorithm}
-
 
 \paragraph{Evidence and caveats.} Reported evidence includes Replica PSNR around $37.28\,\mathrm{dB}$, online updates around $15$--$38\,\mathrm{ms/frame}$, alignment around $36\,\mathrm{s}$ per new robot, and $30$--$35\,\mathrm{Mbps}$ per device in hardware tests. No public implementation was found.
 
@@ -219,16 +292,17 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \caption{GRAND-SLAM}
 \label{alg:grand-slam}
 \small
+\noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, active submaps $\{\mathcal{B}_{i}^{m}\}$, loop-candidate database.\\
+\textbf{Output:} Globally consistent large-scale Gaussian reconstruction $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textsc{Track}. \emph{Trigger:} RGB-D frame. \emph{Update:} update local pose inside active submap $\mathcal{B}_{i}^{m}$. \emph{Emits:} frame-to-submap pose.
-  \item \textsc{Spawn submap}. \emph{Trigger:} $\operatorname{drift/extent}>\tau_\kappa$. \emph{Update:} $\mathcal{B}_{i}^{m+1}\leftarrow\kappa(z_{i,t}^{\mathrm{rgbd}},\mathcal{B}_{i}^{m})$. \emph{Emits:} new Gaussian submap.
-  \item \textsc{Local optimize}. \emph{Trigger:} active submap has support frames. \emph{Update:} $\mathcal{M}_{i}^{m}\leftarrow\arg\min_{\mathcal{M}}\mathcal{L}_{\mathrm{photo/depth}}(\mathcal{M},z_{i,t}^{\mathrm{rgbd}},\mathbf{P}_{i}^{m})$. \emph{Emits:} locally optimized submap.
-  \item \textsc{Detect loops}. \emph{Trigger:} new submap/keyframe. \emph{Update:} $\mathcal{E}^{\mathrm{loop}}_t\leftarrow\mathcal{E}^{\mathrm{loop}}_{t-1}\cup L(\{\mathcal{B}_{i}^{m}\}_{i,m})$. \emph{Emits:} intra/inter-robot loop edges.
-  \item \textsc{Graph optimize}. \emph{Trigger:} pose graph changed. \emph{Update:} $\{\mathbf{P}_v\}\leftarrow\arg\min_{\mathbf{P}}\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{E}^{\mathrm{loop}}_t}\rho(\|r_e(\mathbf{P})\|^2)$. \emph{Emits:} consistent submap poses.
-  \item \textsc{Propagate}. \emph{Trigger:} optimized poses. \emph{Update:} $\mathcal{G}_t\leftarrow\bigcup_{v\in\mathcal{V}_t}\mathbf{P}_v\mathcal{M}_v$. \emph{Emits:} large-scale Gaussian reconstruction.
+  \item Track each new RGB-D frame against the active local Gaussian submap and estimate a frame-to-submap pose.
+  \item Spawn a new submap $\mathcal{B}_{i}^{m+1}$ when drift, extent, or support-frame criteria exceed the method threshold.
+  \item Optimize the active local Gaussian submap with photometric and depth evidence from its support frames.
+  \item Detect intra-robot and inter-robot loop closures between submaps or keyframes.
+  \item Add loop factors to $\mathcal{C}_t$ and solve a pose graph over submap poses.
+  \item Propagate the optimized submap poses to the Gaussian submaps and form $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{M}_v$.
 \end{enumerate}
 \end{algorithm}
-
 
 \paragraph{Evidence and caveats.} Extracted results include Multiagent Replica ATE around $0.25\,\mathrm{cm}$ and Kimera-Multi Outdoor six-agent evaluation over about $1.85\,\mathrm{km}$ with average ATE around $4.99\,\mathrm{m}$ \citep{tian2023kimera_multi}. No public code was found in the research pass.
 
@@ -241,171 +315,73 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \caption{MAGS-SLAM}
 \label{alg:mags-slam}
 \small
+\noindent\textbf{Input:} Monocular RGB streams $\{\mathcal{Z}_i^{1:t}\}$, local Gaussian submaps $\{\mathcal{M}_{i,t-1}\}$, compact-summary budget $b_i$.\\
+\textbf{Output:} Scale-aligned collaborative Gaussian map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textsc{Monocular track}. \emph{Trigger:} RGB frame. \emph{Update:} $(\hat{\mathbf{T}}_{i,t},\lambda_{i,t})\leftarrow f_{\theta}^{\mathrm{mono}}(z_{i,1:t}^{\mathrm{rgb}})$. \emph{Emits:} scale-hypothesized pose.
-  \item \textsc{Local Gaussian}. \emph{Trigger:} pose estimate. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow U_{\mathrm{rgb}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgb}},\hat{\mathbf{T}}_{i,t},\lambda_{i,t})$. \emph{Emits:} local monocular submap.
-  \item \textsc{Compress}. \emph{Trigger:} upload/association window. \emph{Update:} $p_{i,t}\leftarrow\arg\max_{p\subseteq\mathcal{M}_{i,t}}\operatorname{info}(p)$ subject to $|p|\le b_i$. \emph{Emits:} compact submap summary.
-  \item \textsc{Verify pair}. \emph{Trigger:} candidate summaries overlap. \emph{Update:} $\mathcal{A}_t\leftarrow\{(p_a,p_b):G(p_a,p_b)>\tau_g\land A(p_a,p_b)>\tau_a\}$. \emph{Emits:} verified pairs.
-  \item \textsc{Scale align}. \emph{Trigger:} verified association. \emph{Update:} $(\lambda_a,\lambda_b,\Delta\mathbf{T}_{ab})\leftarrow\operatorname{solve}(\mathcal{A}_t)$. \emph{Emits:} scale-aware transform.
-  \item \textsc{Occupancy fuse}. \emph{Trigger:} alignment and occupancy evidence. \emph{Update:} $\mathcal{G}_t\leftarrow F_{\mathrm{occ}}(\{\lambda_i\Delta\mathbf{T}_i\mathcal{M}_{i,t}\}_i,\mathcal{O}_{t-1})$. \emph{Emits:} fused monocular Gaussian map.
+  \item Estimate each agent's monocular pose trajectory and scale hypothesis $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\lambda_{i,t})$.
+  \item Update the local Gaussian submap from RGB observations under the current pose and scale hypothesis.
+  \item Select a compact submap summary $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ for collaboration.
+  \item Verify candidate cross-agent matches using geometric and appearance evidence.
+  \item Estimate scale-aware alignments $(\lambda_i,\Delta\mathbf{T}_{a\leftarrow b})$ for verified associations.
+  \item Fuse aligned submaps with occupancy evidence, $\mathcal{G}_t=F_{\mathrm{occ}}(\{\lambda_i\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\}_i,\mathcal{O}_{t-1})$.
 \end{enumerate}
 \end{algorithm}
 
-
 \paragraph{Evidence and caveats.} MAGS-SLAM is the leading claimed monocular multi-agent 3DGS SLAM direction in this set, but available evidence is project-page/arXiv-stage. Code and data were reported as release-upon-acceptance, so runtime and bandwidth claims remain provisional.
 
-\section{Architecture Taxonomy}
+\section{Overall Architecture Taxonomy}
 
-The synthesis treats multi-robot Gaussian SLAM as a factorization of four architectural responsibilities:
+The systems above can be compared by the factorization
 \[
-\underbrace{\phi_i}_{\text{local tracking/mapping}}
+\underbrace{\phi_i}_{\text{local tracking and mapping}}
 \quad + \quad
-\underbrace{\mu_i}_{\text{communication/update selection}}
+\underbrace{\mu_i}_{\text{update selection}}
 \quad + \quad
-\underbrace{\alpha}_{\text{cross-agent alignment}}
+\underbrace{\alpha_t}_{\text{cross-agent alignment}}
 \quad + \quad
-\underbrace{\Psi}_{\text{shared Gaussian fusion}}.
+\underbrace{\Psi_t}_{\text{shared Gaussian fusion}}.
 \]
-Here $\phi_i$ builds local map state from each agent's observations, $\mu_i$ selects what each agent communicates, $\alpha$ estimates transforms or constraints between local frames, and $\Psi$ fuses local states into $\mathcal{G}_t$. Existing systems differ less in whether they use Gaussians than in where these responsibilities live.
+The recurring question is not simply whether a method uses Gaussians. It is where the four responsibilities live, which variables cross the communication boundary, and which component absorbs drift, redundancy, and stale information.
 
-\begin{figure*}[t]
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tikzpicture}[
-    font=\small,
-    >=Latex,
-    node distance=7mm and 9mm,
-    agent/.style={draw, rounded corners, align=center, minimum width=21mm, minimum height=8mm, fill=blue!6},
-    local/.style={draw, rounded corners, align=center, minimum width=25mm, minimum height=8mm, fill=green!6},
-    fusion/.style={draw, rounded corners, align=center, minimum width=31mm, minimum height=9mm, fill=orange!10},
-    shared/.style={draw, rounded corners, align=center, minimum width=34mm, minimum height=10mm, fill=purple!8},
-    labelbox/.style={draw, rounded corners, align=center, fill=gray!8, inner sep=3pt},
-    flow/.style={->, thick},
-    weakflow/.style={->, dashed, thick}
-]
+\subsection{Central-Server Submap and Gaussian Fusion}
 
-\node[agent] (a1) {Agent $1$\\$\mathcal{Z}_1^{1:t}$};
-\node[agent, below=of a1] (a2) {Agent $2$\\$\mathcal{Z}_2^{1:t}$};
-\node[agent, below=of a2] (an) {Agent $N$\\$\mathcal{Z}_N^{1:t}$};
+Central-server systems place most of $\alpha_t$ and $\Psi_t$ on a shared mapper. MAGiC-SLAM transmits local submaps and loop-closure evidence to a server that optimizes submap poses before merging Gaussians. CoKo-SLAM keeps the same broad centralization but reduces $p_{i,t}$ through keyframe-optimized compact packets and redundant-Gaussian pruning. HAMMER also uses a server, but its packet stream is heterogeneous and semantic: the server aligns local SLAM outputs into a global frame and updates a metric-semantic Gaussian map.
 
-\node[local, right=of a1] (m1) {Local map\\$\mathcal{M}_{1,t}$};
-\node[local, right=of a2] (m2) {Local map\\$\mathcal{M}_{2,t}$};
-\node[local, right=of an] (mn) {Local map\\$\mathcal{M}_{N,t}$};
+The advantage of this pattern is a coherent global optimization point. Server-side fusion can compare packets across agents, remove duplicate primitives, and maintain a single $\mathcal{G}_t$. The cost is that merge latency, memory, bandwidth, and single-server availability become first-order variables. MAGiC-SLAM's reported global merge time illustrates this cost, while HAMMER's hardware results are unusually explicit about per-device Mbps streams. Available ablation evidence is mostly about loop closure, alignment, compaction, or baseline comparisons rather than a complete systems ablation over bandwidth and agent count.
 
-\draw[flow] (a1) -- node[above] {$\phi_1$} (m1);
-\draw[flow] (a2) -- node[above] {$\phi_2$} (m2);
-\draw[flow] (an) -- node[above] {$\phi_N$} (mn);
+\subsection{Distributed Gaussian Consensus}
 
-\node[labelbox, right=13mm of m2] (comm) {Update selection $\mu_i$\\keyframes, compact Gaussians,\\submaps, descriptors, poses};
-\draw[flow] (m1.east) -- (comm.west);
-\draw[flow] (m2.east) -- (comm.west);
-\draw[flow] (mn.east) -- (comm.west);
+Distributed Gaussian consensus keeps each agent's local state active and uses peer updates to move local maps toward consistency. MAC-Ego3D expresses this pattern most directly: intra-agent consensus regularizes each $\mathcal{M}_{i,t}$, while inter-agent consensus uses packets from $\mathcal{N}_t(i)$ to refine cross-agent map agreement. CoMA-SLAM follows a related distributed idea with Gaussian surfel submaps, loop factors, and distributed keyframe optimization.
 
-\node[fusion, right=15mm of comm, yshift=20mm] (central) {Central server fusion\\MAGiC, CoKo, HAMMER};
-\node[fusion, right=15mm of comm, yshift=7mm] (consensus) {Distributed consensus\\MAC-Ego3D, CoMA};
-\node[fusion, right=15mm of comm, yshift=-7mm] (submap) {Submap + pose graph\\GRAND-SLAM};
-\node[fusion, right=15mm of comm, yshift=-20mm] (mono) {Compact monocular\\MAGS-SLAM};
+This pattern reduces dependence on a single fusion server and can naturally support asynchronous collaboration. Its hard problems are convergence, conflict resolution, duplicate primitive handling, stale packets, and communication scheduling. Reported evidence supports strong tracking/rendering for MAC-Ego3D and large relative communication reductions for CoMA-SLAM, but byte-level communication, stale-update, and failure-mode ablations remain sparse in the available evidence.
 
-\draw[flow] (comm.east) -- (central.west);
-\draw[flow] (comm.east) -- (consensus.west);
-\draw[flow] (comm.east) -- (submap.west);
-\draw[flow] (comm.east) -- (mono.west);
+\subsection{Submap-Plus-Pose-Graph Consistency}
 
-\node[labelbox, right=16mm of consensus] (align) {Cross-agent alignment $\alpha$\\frame alignment, loop closure,\\consensus factors, pose graph};
-\node[shared, right=15mm of align] (global) {Shared Gaussian map\\$\mathcal{G}_t=\Psi_t(\{\mathcal{M}_{i,t_i}\},\mathcal{C}_t,\mathcal{P}_t)$};
+Submap-plus-pose-graph systems treat dense Gaussian maps as local products whose global consistency is controlled by a graph over submap poses. GRAND-SLAM is the clearest example: local RGB-D Gaussian submaps are optimized independently, loop closures add factors to $\mathcal{C}_t$, and pose-graph optimization updates the transforms that place submaps into the shared frame. MAGiC-SLAM also uses this pattern inside a centralized architecture, but GRAND-SLAM makes the submap consistency layer the main comparison unit.
 
-\draw[flow] (central.east) -- (align.west);
-\draw[flow] (consensus.east) -- (align.west);
-\draw[flow] (submap.east) -- (align.west);
-\draw[flow] (mono.east) -- (align.west);
-\draw[flow] (align) -- (global);
+The strength of this pattern is that it reuses a mature SLAM abstraction: dense maps can remain local while global corrections act through $\mathbf{P}_v^\star$. The main risk is that a corrected pose graph does not by itself remove duplicate or inconsistent Gaussian primitives. A useful ablation surface is loop closure: GRAND-SLAM reports weaker results without loop closure, which supports the claim that cross-agent consistency factors, not only local photometric mapping, drive the large-scale result.
 
-\node[labelbox, below=8mm of global] (sem) {Optional semantic posterior\\open-vocabulary codes, provenance, uncertainty};
-\draw[weakflow] (global) -- (sem);
+\subsection{Compact Communication and Monocular Submap Fusion}
 
-\node[draw, rounded corners, fit=(a1)(a2)(an), inner sep=4pt, label=above:{Local robot streams}] {};
-\node[draw, rounded corners, fit=(central)(consensus)(submap)(mono), inner sep=4pt, label=above:{Fusion pattern taxonomy}] {};
-\end{tikzpicture}%
-}
-\caption{Taxonomy of multi-robot online Gaussian SLAM fusion patterns. Each agent converts local observations $\mathcal{Z}_i^{1:t}$ into a local Gaussian submap $\mathcal{M}_{i,t}$; an update-selection policy $\mu_i$ chooses bounded communication units; cross-agent alignment $\alpha$ supplies frame, loop-closure, consensus, or pose-graph constraints; and a fusion operator $\Psi_t$ produces the shared Gaussian map $\mathcal{G}_t$.}
-\label{fig:multi_robot_gaussian_slam_taxonomy}
-\end{figure*}
+Compact communication appears in both RGB-D and monocular systems, but it becomes structurally central for monocular collaboration. CoKo-SLAM uses compaction to reduce transmitted Gaussian/keyframe state while preserving enough information for server-side loop closure and pruning. MAGS-SLAM goes further: each agent has only RGB observations, so $\mu_i$ must produce compact submap summaries that support both cross-agent verification and scale-aware alignment.
 
-\Cref{tab:architecture_taxonomy} summarizes the main fusion patterns. Central-server designs put $\alpha$ and $\Psi$ on a central mapper that receives local observations, poses, keyframes, or compacted Gaussian state. Distributed designs push alignment and fusion into repeated inter-agent updates. Submap/pose-graph systems preserve local submap autonomy and impose global consistency through constraints. Monocular compact-submap systems prioritize communication selection because RGB-only agents face scale ambiguity. Heterogeneous semantic systems extend $\mathcal{G}_t$ beyond geometry and radiance to include semantic codes.
+The tradeoff is between informativeness and bandwidth. Small packets help online operation, but if $p_{i,t}$ omits the wrong geometry, appearance, or occupancy evidence, $\alpha_t$ cannot reliably recover the transform. Monocular systems add scale ambiguity, so the alignment problem includes both rigid transform and scale hypotheses. CoKo-SLAM reports large relative transmission reductions; MAGS-SLAM is important architecturally but its code/data and quantitative communication evidence remain provisional in the sources used here.
 
-\begin{table*}[t]
-\centering
-\small
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.12}
-\caption{Architecture taxonomy for multi-robot online Gaussian SLAM systems.}
-\label{tab:architecture_taxonomy}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabularx}{1.08\textwidth}{p{0.17\textwidth} p{0.18\textwidth} Y Y Y}
-\toprule
-\textbf{Pattern} & \textbf{Representative systems} & \textbf{Fusion unit} & \textbf{Alignment mechanism} & \textbf{Open issues} \\
-\midrule
-Central server fusion & MAGiC-SLAM, CoKo-SLAM, HAMMER & Observations, local poses, keyframes, compacted Gaussians, local maps, semantic embeddings & Server-side frame alignment, loop closure, rendered-depth or camera-depth registration, global optimization & Server bottleneck, network dependence, delayed global merge, privacy/data-volume pressure, single point of failure \\
-Distributed Gaussian consensus & MAC-Ego3D, CoMA-SLAM & Local Gaussian splat or Gaussian-surfel representations and consensus/submap updates & Intra-agent and inter-agent consensus, distributed keyframe optimization, asynchronous alignment & Convergence analysis, stale updates, duplicate primitives, communication scheduling, conflict resolution \\
-Submap + pose graph & GRAND-SLAM & Local Gaussian submaps and inter/intra-robot loop-closure constraints & Pose-graph optimization over submap constraints & Reliable loop detection, synchronizing dense Gaussian updates after graph changes, outdoor drift \\
-Monocular compact-submap fusion & MAGS-SLAM & Local monocular Gaussian submaps and compact summaries & Geometry- and appearance-aware loop verification, occupancy-aware fusion, scale handling & Monocular scale ambiguity, lower geometric observability, provisional code/data status \\
-Heterogeneous semantic map & HAMMER & Asynchronous robot streams, local SLAM poses, perception outputs, semantic embeddings & Global frame alignment without prior relative poses; shared metric-semantic 3DGS training & Semantic uncertainty, provenance, exact sensor interfaces, code availability \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\end{table*}
+\subsection{Heterogeneous Semantic Shared Gaussian Mapping}
 
-\section{Benchmark Synthesis}
+HAMMER expands the shared map from geometry and radiance to metric-semantic scene memory. In the notation above, the Gaussian descriptor $\mathbf{h}_k$ and provenance $\pi_k$ are not auxiliary bookkeeping; they are part of what makes $\mathcal{G}_t$ useful to heterogeneous robots and downstream queries. The alignment operator $\alpha_t$ must reconcile device-specific local SLAM outputs, sensor modalities, and asynchronous packet timing before semantic Gaussian updates are meaningful.
 
-\begin{table*}[t]
-\centering
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\caption{Reported benchmark evidence for target-class systems. Values are paper/project-page reports or survey extractions, not reproduced measurements. Dashes indicate that no supported number was available in the research outputs used for this survey.}
-\label{tab:multi_robot_gaussian_slam_benchmarks}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabularx}{1.1\textwidth}{p{0.12\textwidth} p{0.18\textwidth} p{0.14\textwidth} Y Y Y}
-\toprule
-\textbf{System} & \textbf{Datasets / environments} & \textbf{Agents / modality} & \textbf{Reported accuracy or rendering metrics} & \textbf{Runtime / memory evidence} & \textbf{Communication evidence} \\
-\midrule
-GRAND-SLAM & Multiagent Replica; Kimera-Multi Outdoor & 2 RGB-D indoor; 6 RGB-D outdoor & Replica ATE $0.25\,\mathrm{cm}$; PSNR $41.35\,\mathrm{dB}$; Kimera ATE $4.99\,\mathrm{m}$ over $1.85\,\mathrm{km}$ & $2\times$ RTX 3090 reported; no extracted runtime/memory/map-size table & No extracted bandwidth/message-size table \\
-MAC-Ego3D & Multi-Agent Replica; 7-Scenes & 2 RGB-D agents in extracted tables & Replica ATE $0.14\,\mathrm{cm}$; PSNR $40.04\,\mathrm{dB}$; 7-Scenes ATE $5.70\,\mathrm{cm}$ & Tracking $0.02\,\mathrm{s/frame}$; mapping $0.05\,\mathrm{s/frame}$; RGB-D rendering around $0.005\,\mathrm{s/frame}$ & $T_{\mathrm{comm}}=150$ on Replica and $60$ on 7-Scenes; no bytes reported \\
-MAGiC-SLAM & ReplicaMultiagent; AriaMultiagent & 2 RGB-D Replica; 3 Aria agents & Replica ATE $0.27\,\mathrm{cm}$; Aria ATE $0.90\,\mathrm{cm}$; Replica PSNR $34.26\,\mathrm{dB}$ & Mapping $0.71\,\mathrm{s/agent}$; tracking $0.69\,\mathrm{s/agent}$; merging $167\,\mathrm{s}$; peak GPU $1.12\,\mathrm{GiB}$; submap $54\,\mathrm{MB}$ & Sends features/submaps to server; no extracted bandwidth \\
-HAMMER & ReplicaMultiAgent; real Home/Basement deployments & 2 synthetic robots; 2 Aria glasses plus 1--2 ground robots in hardware examples & Replica PSNR $37.28\,\mathrm{dB}$; SSIM $0.95$; LPIPS $0.09$; Depth L1 $1.47\,\mathrm{cm}$ & Replica time $8\,\mathrm{min}$; online updates $15$--$38\,\mathrm{ms/frame}$; alignment about $36\,\mathrm{s}$ per new robot & $30$--$35\,\mathrm{Mbps/device}$; depth $25$--$30\,\mathrm{Mbps}$; compressed color about $2\,\mathrm{Mbps}$ \\
-CoKo-SLAM & ReplicaMultiagent; AriaMultiagent; configs include TUM RGB-D & Multi-agent RGB-D & No supported numeric metric table extracted; preserved fidelity under compaction is reported & No supported runtime/memory table extracted; reproducibility caveats noted & Reports $85$--$95\%$ lower transmitted data; no absolute bandwidth extracted \\
-CoMA-SLAM & Synthetic and real tests; ReplicaMultiagent/AriaMultiagent configs & Distributed multi-agent; 2D Gaussian surfels & No supported numeric pose/rendering table extracted; improved pose/rendering/geometric consistency reported & Public implementation-looking repository exists, but no supported runtime/memory/map-size number extracted & Reports $99.8\%$ lower communication bandwidth; no absolute bandwidth extracted \\
-MAGS-SLAM & ReplicaMultiAgent Plus; ReplicaMultiAgent; ETH3D; Tanks and Temples; 7-Scenes Fire & Claimed monocular RGB multi-agent & No supported numeric benchmark table extracted from available outputs & Code/data promised; no supported runtime/memory table extracted & Compact summaries claimed; no supported communication numbers extracted \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\end{table*}
+This pattern is attractive because robot teams rarely have identical sensors or roles. A shared map that contains semantics, source provenance, and queryable local evidence can support navigation, inspection, and human-robot interaction more directly than a purely photometric reconstruction. The open ablation surface is correspondingly broader: papers need to isolate the value of semantic descriptors, frame-alignment design, device heterogeneity, and communication choices rather than reporting only rendering quality or depth error.
 
-The benchmark evidence for online multi-robot Gaussian SLAM is promising but not yet comparable in the way mature visual-SLAM benchmarks are comparable. The strongest common benchmark surface is the Replica-derived multi-agent family: GRAND-SLAM, MAC-Ego3D, MAGiC-SLAM, and HAMMER all report variants of ATE, PSNR, SSIM, LPIPS, and depth error on Multiagent Replica or ReplicaMultiAgent. That overlap is useful, but it should not be mistaken for a fully standardized benchmark. The papers differ in dataset splits, sensor assumptions, baselines, runtime accounting, and whether the reported time includes tracking, mapping, global merging, rendering, alignment, or full end-to-end operation.
+\section{Discussion and Conclusion}
 
-Accuracy and rendering quality are much more consistently reported than systems metrics. MAC-Ego3D reports per-frame tracking and mapping time; MAGiC-SLAM reports tracking/mapping time, global merge time, peak GPU memory, and submap disk size; HAMMER reports online update latency, alignment time, and per-device bandwidth; GRAND-SLAM reports strong large-scale outdoor accuracy evidence and hardware, but the extracted outputs did not contain a runtime, memory, or bandwidth table. Communication evidence is the biggest benchmark gap. HAMMER is the clearest system-level exception, while CoKo-SLAM and CoMA-SLAM report relative communication reductions without absolute byte counts or bandwidth tables.
+The main lesson from current multi-robot Gaussian SLAM is that architecture matters more than a single metric row. Local tracking and mapping $\phi_i$, update selection $\mu_i$, cross-agent alignment $\alpha_t$, and shared fusion $\Psi_t$ are separable responsibilities with different failure modes. A paper can report strong PSNR or ATE while still leaving open whether it scales in bandwidth, memory, merge latency, stale updates, or heterogeneous deployments.
 
-Scaling evidence is also incomplete. Most Replica-style comparisons are two-agent indoor evaluations. GRAND-SLAM provides stronger multi-agent scaling evidence by reporting six agents over $1.85\,\mathrm{km}$ on Kimera-Multi Outdoor, while MAGiC-SLAM includes a three-agent AriaMultiagent setup and HAMMER reports heterogeneous hardware deployments up to four devices. These are important signals, but they are not a systematic scaling study over agent count, map size, trajectory length, update rate, and network load.
+A useful next step for the field is standardized systems reporting. Alongside ATE, PSNR, SSIM, LPIPS, and depth error, papers should report serialized packet size, communication rate, per-update latency, global merge latency, peak memory, map size, agent count, trajectory length, and behavior under delayed or dropped messages. These quantities should be separated by component: tracking should not be conflated with mapping, mapping should not be conflated with global alignment, and global alignment should not be conflated with final rendering quality.
 
-\section{Discussion}
+The architecture taxonomy also suggests a modular research path. Central-server methods should be stress-tested for merge bottlenecks and server failure; distributed consensus methods should be evaluated under asynchronous and stale communication; submap-plus-pose-graph methods should report how dense Gaussian primitives are reconciled after graph corrections; compact-submap methods should expose the information lost by compression; semantic shared-map methods should report provenance and uncertainty, not only photometric fidelity.
 
-The surveyed systems indicate that multi-robot Gaussian SLAM is best compared by decomposition rather than by a single headline metric. Local mapping, update selection, cross-agent alignment, and shared-map fusion have different timing, communication, and failure modes. A method that performs well under central-server fusion may therefore be difficult to compare directly with a distributed-consensus or monocular compact-submap method unless the evaluation reports the same operational quantities.
-
-The most important missing measurements are system-level rather than purely geometric. ATE, PSNR, SSIM, LPIPS, and depth error describe trajectory and rendering quality, but they do not reveal whether the method can scale with agent count, map size, trajectory length, update frequency, or bandwidth limits. Future evaluations should report serialized update size, peak memory, per-update latency, global merge latency, alignment latency, stale-update behavior, and failure behavior under delayed or dropped communication.
-
-The semantic and monocular systems also broaden the scope of the problem. HAMMER suggests that shared Gaussian maps can act as metric-semantic scene memories rather than only renderable geometry, while MAGS-SLAM highlights the unresolved difficulty of RGB-only collaboration under scale ambiguity. These directions make provenance, uncertainty, and communication policy central parts of the research problem rather than peripheral engineering details.
-
-\section{Limitations}
-
-This survey is constrained by the state of a fast-moving 2024--2026 literature. Some systems are available as public repositories, but public availability does not imply reproducibility, clear licensing, or easy reuse. Some systems are target-class by paper claims, but not auditable as code. Communication numbers are especially uneven: relative reductions from CoKo-SLAM or CoMA-SLAM are not interchangeable with HAMMER's reported Mbps streams, and communication intervals such as $T_{\mathrm{comm}}$ are not byte counts. Runtime numbers are also not directly comparable because papers measure tracking, mapping, rendering, map merging, and inter-robot alignment differently.
-
-The survey intentionally does not rank systems by a single score. The appropriate comparison depends on the research objective: public-code experimentation, distributed-fusion design, heterogeneous semantic mapping, monocular collaboration, or outdoor large-scale consistency. The evidence is strong enough to identify recurring architectural axes, but not strong enough to support a universal ranking without additional reproduction work.
-
-\section{Conclusion}
-
-Multi-robot online Gaussian SLAM is no longer speculative: several systems now demonstrate shared Gaussian maps across multiple agents, and public research code exists for important RGB-D, consensus, compact-keyframe, and Gaussian-surfel variants. The field is still immature as a systems discipline. Benchmark tables emphasize pose and rendering quality, while the operational quantities that matter for robots---bandwidth, memory, latency, merge cost, scale, and fault tolerance---remain inconsistently reported.
-
-MAGiC-SLAM and MAC-Ego3D are the strongest public implementation baselines in the surveyed set; CoKo-SLAM and CoMA-SLAM are important communication-efficient directions with reproducibility caveats; HAMMER, GRAND-SLAM, and MAGS-SLAM are key paper-only references for heterogeneous semantics, large-scale consistency, and monocular collaboration. Across these systems, the stable research axes are local mapping, update selection, cross-agent alignment, shared-map fusion, provenance, uncertainty, and the operational cost of maintaining a shared Gaussian representation online.
+Multi-robot online Gaussian SLAM is therefore no longer speculative, but it remains immature as a systems discipline. MAGiC-SLAM and MAC-Ego3D are strong public baselines for centralized and consensus-oriented designs; CoKo-SLAM and CoMA-SLAM highlight communication-efficient directions with reproducibility caveats; HAMMER, GRAND-SLAM, and MAGS-SLAM expand the design space toward heterogeneous semantics, large-scale consistency, and monocular collaboration. Future progress will likely come from treating these patterns as composable architectural choices and evaluating each choice against the operational constraints of shared robotic mapping.
 
 \bibliography{references}
 

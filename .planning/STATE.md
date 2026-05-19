@@ -101,6 +101,7 @@ None yet.
 | 2026-05-19 | simplify-algorithm-blocks | Renamed survey algorithm captions to method names only and converted them to plain ordered lists without state trackers; verified citations and Tectonic PDF build. |
 | 2026-05-19 | paper-style-survey-format | Reframed the SLAM survey as a neutral academic paper instead of a Mosaic/developer brief; verified citations and Tectonic PDF build. |
 | 2026-05-19 | remove-repo-footnote-periods | Removed trailing full stops from repository URL footnotes; verified Tectonic PDF build. |
+| 2026-05-19 | rewrite-slam-survey-notation | Rebuilt the SLAM survey around formal shared notation, conventional algorithm pseudocode, prose taxonomy subsections, and a verified Tectonic PDF build. |
 
 ### Blockers/Concerns
 
