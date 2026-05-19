@@ -94,6 +94,7 @@ None yet.
 | 2026-05-19 | formalize-survey-algorithms | Replaced prose-like method algorithms with formal staged process specs using inputs, state variables, stage trackers, transitions, and outputs; verified citations and Tectonic PDF build. |
 | 2026-05-19 | clean-github-footnote-labels | Removed method-specific `code repository:` labels from GitHub footnotes while preserving repository URLs; verified a Tectonic PDF build. |
 | 2026-05-19 | convert-algorithms-to-sequential-flows | Replaced state-inventory algorithms with numbered sequential flows using trigger, update, and emitted-artifact fields; verified citations and Tectonic PDF build. |
+| 2026-05-19 | remove-survey-claims-paragraph | Removed the standalone introduction paragraph beginning `The survey makes three claims`; verified citations and a Tectonic PDF build. |
 | 2026-05-19 | remove-method-flow-figures | Removed figures 1 through 7 from the survey candidate-system section while preserving sequential algorithms and later taxonomy visuals; verified citations and Tectonic PDF build. |
 
 ### Blockers/Concerns
