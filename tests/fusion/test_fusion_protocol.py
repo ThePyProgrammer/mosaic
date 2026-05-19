@@ -3,12 +3,10 @@ import math
 import pytest
 
 from mosaic.core import FrameId
-from mosaic.fusion import (
+from mosaic.fusion import FusionInput, FusionResult, FusionStatus
+from mosaic.fusion.protocol import (
     FusionConflictSummary,
-    FusionInput,
     FusionProvenanceSummary,
-    FusionResult,
-    FusionStatus,
     FusionUncertaintySummary,
 )
 from mosaic.splats import GaussianSplat, SplatMap
