@@ -104,6 +104,7 @@ None yet.
 | 2026-05-19 | rewrite-slam-survey-notation | Rebuilt the SLAM survey around formal shared notation, conventional algorithm pseudocode, prose taxonomy subsections, and a verified Tectonic PDF build. |
 | 2026-05-19 | taxonomy-algorithm-nodes | Added five taxonomy-level algorithm boxes explaining how each architecture pattern works; verified Tectonic PDF build and 183 passing tests. |
 | 2026-05-19 | map-terminology-normalization | Enforced agent-local map, Gaussian submap, Gaussian-surfel submap, shared map, and server-side shared map terminology; verified Tectonic PDF build and 183 passing tests. |
+| 2026-05-19 | restandardize-research-slam-survey-main | Reworked the SLAM survey around local/global terminology for maps, tracking, alignment, and fusion; verified Tectonic PDF build and 183 passing tests. |
 
 ### Blockers/Concerns
 
@@ -122,6 +123,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-19T09:45:48.683Z
-Stopped at: context exhaustion at 76% (2026-05-19)
+Last session: 2026-05-19T10:07:05Z
+Stopped at: Session resumed; next action is Phase 05 execution starting with 05-01
 Resume file: None
