@@ -10,7 +10,14 @@ from mosaic.core import (
     Timestamp,
     Translation3,
 )
-from mosaic.slam import DeterministicSplatBackend, TrackingState
+from mosaic.slam import (
+    DeterministicSplatBackend,
+    SplatSlamBackend,
+    TrackingState,
+    assert_backend_deterministic_replay,
+    assert_backend_lifecycle_contract,
+    default_backend_registry,
+)
 
 
 def _observation(seconds: float = 1.0) -> MultiViewObservation:
@@ -32,6 +39,18 @@ def _observation(seconds: float = 1.0) -> MultiViewObservation:
             ),
         ),
     )
+
+
+def _registered_deterministic_backend() -> SplatSlamBackend:
+    return default_backend_registry().create("deterministic-splat")
+
+
+def test_deterministic_backend_satisfies_shared_lifecycle_contract() -> None:
+    assert_backend_lifecycle_contract(_registered_deterministic_backend)
+
+
+def test_deterministic_backend_satisfies_shared_deterministic_replay_contract() -> None:
+    assert_backend_deterministic_replay(_registered_deterministic_backend)
 
 
 def test_deterministic_backend_processes_observation_into_splat_update() -> None:
