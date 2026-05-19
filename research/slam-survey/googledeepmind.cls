@@ -131,8 +131,12 @@
 % You may wish to add the "p" option to use the proportional font instead of
 % the monospaced one, which might look nicer in cases where you do not need
 % aligned columns
-\RequirePackage[scaled=1.1]{zlmtt}
-\urlstyle{same}
+\ifPDFTeX
+  \RequirePackage[scaled=1.1]{zlmtt}
+\else
+  \setmonofont{lmmono10-regular.otf}[Scale=1.1]
+\fi
+\renewcommand\UrlFont{\ttfamily}
 
 %%======== Margins and column spacing ========
 \RequirePackage[left=2.2cm,%
