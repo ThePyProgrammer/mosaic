@@ -17,6 +17,7 @@ def metric_result_from_artifact(artifact: object) -> MetricResult:
         name=cast(str, payload["name"]),
         value=cast(float, payload["value"]),
         unit=cast(str, payload["unit"]),
+        family=cast(str, payload.get("family", "general")),
     )
 
 
