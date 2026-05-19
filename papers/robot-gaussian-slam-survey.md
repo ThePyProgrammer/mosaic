@@ -33,4 +33,4 @@ main_lines=343 bib_entries=20 used_citations=17
 
 ## Sources
 
-Direct source URLs are included in the `Sources Appendix` section of `research/slam-survey/main.tex` and as BibTeX `url` fields in `research/slam-survey/references.bib`.
+Canonical paper, project, and dataset URLs are kept in BibTeX `url` fields in `research/slam-survey/references.bib`; public implementation repository URLs are cited as footnotes in `research/slam-survey/main.tex`.
