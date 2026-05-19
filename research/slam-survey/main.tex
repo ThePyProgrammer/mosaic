@@ -102,7 +102,7 @@ This evidence model is intentionally conservative. It separates architecture evi
 
 \section{Candidate Systems}
 
-Each system below is summarized as a concrete dataflow: what runs on each robot, what crosses the network, what alignment object is estimated, and what becomes the shared Gaussian map. The algorithm boxes are architecture-level state machines reconstructed from cited papers and project evidence. They formalize variables, stages, and transitions without pretending to expose exact unpublished implementation code.
+Each system below is summarized as a concrete dataflow: what runs on each robot, what crosses the network, what alignment object is estimated, and what becomes the shared Gaussian map. The algorithm boxes are evidence-bounded sequential flows: each numbered stage advances a tracker, states its trigger, applies a named update, and emits the artifact consumed by the next stage.
 
 \subsection{MAGiC-SLAM}
 \label{sec:systems:magic-slam}
@@ -110,26 +110,18 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} MAGiC-SLAM is a server-mediated RGB-D pipeline: agents track locally, build local Gaussian submaps, send features/submaps to a server, and the server uses loop closure plus pose-graph optimization before merging submaps \citep{yugay2025magic_slam}.\footnote{\url{https://github.com/VladimirYugay/MAGiC-SLAM}.} The important contract is not raw image fusion; it is \emph{submap plus loop constraint} fusion.
 
 \begin{algorithm}[H]
-\caption{MAGiC-SLAM as a server-mediated stage machine}
+\caption{MAGiC-SLAM sequential server-fusion flow}
 \label{alg:magic-slam}
 \small
-\begin{description}[leftmargin=1.85cm,style=nextline]
-  \item[Inputs] Agent streams $\{z_{i,t}^{\mathrm{rgbd}}\}_{i=1}^{N}$; local odometry estimates $\hat{\mathbf{T}}_{i,t}$; server loop-closure threshold $\tau_{\mathrm{lc}}$.
-  \item[State] Per-agent state $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})$ with keyframes $\mathcal{K}_{i,t}$ and local Gaussian submap $\mathcal{M}_{i,t}$; server state $X_t=(\mathcal{V}_t,\mathcal{E}_t,\mathcal{C}_t,\mathcal{G}_t)$ containing submap vertices, odometry edges, loop constraints, and the merged map.
-  \item[Stage trackers] Agent stage $s_{i,t}\in\{\textsc{Track},\textsc{Map},\textsc{Upload}\}$; server stage $S_t\in\{\textsc{Match},\textsc{Constrain},\textsc{Optimize},\textsc{Merge}\}$.
-  \item[Transitions]
-  \[
-  \begin{aligned}
-  \textsc{Track}:\;&\mathbf{T}_{i,t}\leftarrow f_{\theta}^{\mathrm{track}}(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1},\hat{\mathbf{T}}_{i,t}),\\
-  \textsc{Map}:\;&\mathcal{M}_{i,t}\leftarrow u_{\theta}^{\mathrm{gs}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgbd}},\mathbf{T}_{i,t}),\\
-  \textsc{Upload}:\;&q_{i,t}\leftarrow \mu(\mathcal{K}_{i,t},\mathcal{M}_{i,t})\quad\text{and}\quad X_t\leftarrow X_{t-1}\cup q_{i,t},\\
-  \textsc{Constrain}:\;&\mathcal{C}_t\leftarrow\{(a,b,\Delta\mathbf{T}_{ab}):\operatorname{score}(q_a,q_b)>\tau_{\mathrm{lc}}\},\\
-  \textsc{Optimize}:\;&\{\mathbf{P}_{v}\}_{v\in\mathcal{V}_t}\leftarrow\arg\min_{\mathbf{P}}\sum_{e\in\mathcal{E}_t\cup\mathcal{C}_t}\rho(\|r_e(\mathbf{P})\|^2),\\
-  \textsc{Merge}:\;&\mathcal{G}_t\leftarrow \bigcup_{v\in\mathcal{V}_t}\mathbf{P}_{v}\,\mathcal{M}_{v}.
-  \end{aligned}
-  \]
-  \item[Output] Globally aligned Gaussian map $\mathcal{G}_t$ plus optimized submap poses $\{\mathbf{P}_{v}\}$.
-\end{description}
+\textbf{State:} agent $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})$; server $X_t=(\mathcal{V}_t,\mathcal{E}_t,\mathcal{C}_t,\mathcal{G}_t)$; stage tracker $s=0\rightarrow5$.
+\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+  \item \textsc{Track}. \emph{Trigger:} RGB-D frame $z_{i,t}^{\mathrm{rgbd}}$. \emph{Update:} $\mathbf{T}_{i,t}\leftarrow f_{\theta}^{\mathrm{track}}(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1},\hat{\mathbf{T}}_{i,t})$. \emph{Emits:} pose $\mathbf{T}_{i,t}$.
+  \item \textsc{Local map}. \emph{Trigger:} accepted pose. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow u_{\theta}^{\mathrm{gs}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgbd}},\mathbf{T}_{i,t})$. \emph{Emits:} local submap $\mathcal{M}_{i,t}$.
+  \item \textsc{Upload}. \emph{Trigger:} selected keyframe/submap. \emph{Update:} $q_{i,t}\leftarrow\mu(\mathcal{K}_{i,t},\mathcal{M}_{i,t})$ and $X_t\leftarrow X_{t-1}\cup q_{i,t}$. \emph{Emits:} server packet $q_{i,t}$.
+  \item \textsc{Loop constraints}. \emph{Trigger:} packet-pair score $>\tau_{\mathrm{lc}}$. \emph{Update:} $\mathcal{C}_t\leftarrow\{(a,b,\Delta\mathbf{T}_{ab})\}$. \emph{Emits:} inter/intra-agent constraints.
+  \item \textsc{Pose graph}. \emph{Trigger:} changed constraint set. \emph{Update:} $\{\mathbf{P}_v\}\leftarrow\arg\min_{\mathbf{P}}\sum_{e\in\mathcal{E}_t\cup\mathcal{C}_t}\rho(\|r_e(\mathbf{P})\|^2)$. \emph{Emits:} optimized submap poses.
+  \item \textsc{Merge}. \emph{Trigger:} optimized poses. \emph{Update:} $\mathcal{G}_t\leftarrow\bigcup_{v\in\mathcal{V}_t}\mathbf{P}_v\mathcal{M}_v$. \emph{Emits:} global Gaussian map $\mathcal{G}_t$.
+\end{enumerate}
 \end{algorithm}
 
 \begin{figure}[H]
@@ -157,26 +149,17 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} MAC-Ego3D replaces a single authoritative merge step with Gaussian consensus. Each RGB-D agent maintains a local Gaussian map; nearby Gaussians are regularized within an agent, and asynchronous inter-agent consensus aligns and refines the shared structure \citep{xu2024mac_ego3d}.\footnote{\url{https://github.com/Xiaohao-Xu/MAC-Ego3D}.} The key object is the repeated consensus update, not a one-shot server merge.
 
 \begin{algorithm}[H]
-\caption{MAC-Ego3D as asynchronous Gaussian-consensus dynamics}
+\caption{MAC-Ego3D sequential consensus flow}
 \label{alg:mac-ego3d}
 \small
-\begin{description}[leftmargin=1.85cm,style=nextline]
-  \item[Inputs] RGB-D streams $z_{i,t}^{\mathrm{rgbd}}$; communication interval $T_{\mathrm{comm}}$; neighbor graph $\mathcal{N}_t$ over active agents.
-  \item[State] Agent state $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{M}_{i,t},h_{i,t})$ where $h_{i,t}$ is the latest consensus epoch; shared state is an eventually consistent collection $\mathcal{G}_t=\{\mathcal{M}_{i,t}^{(h)}\}_{i,h}$.
-  \item[Stage trackers] $s_{i,t}\in\{\textsc{Track},\textsc{LocalConsensus},\textsc{Exchange},\textsc{InterConsensus}\}$ and communication gate $c_t=\mathbb{1}[t\bmod T_{\mathrm{comm}}=0]$.
-  \item[Transitions]
-  \[
-  \begin{aligned}
-  \textsc{Track}:\;&(\mathbf{T}_{i,t},\tilde{\mathcal{M}}_{i,t})\leftarrow f_{\theta}(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1}),\\
-  \textsc{LocalConsensus}:\;&\mathcal{M}_{i,t}^{\mathrm{loc}}\leftarrow C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}}),\\
-  \textsc{Exchange}:\;&B_{i,t}\leftarrow c_t\,\mu(\mathcal{M}_{i,t}^{\mathrm{loc}},h_{i,t}),\\
-  \textsc{InterConsensus}:\;&\mathcal{M}_{i,t}\leftarrow C_{\mathrm{inter}}\!\left(\mathcal{M}_{i,t}^{\mathrm{loc}},\{B_{j,t}:j\in\mathcal{N}_t(i)\};\lambda_{\mathrm{inter}}\right),\\
-  &h_{i,t}\leftarrow h_{i,t-1}+c_t.
-  \end{aligned}
-  \]
-  \item[Invariant] Between communication ticks, mapping remains local: $c_t=0\Rightarrow\mathcal{M}_{i,t}$ changes only through tracking and intra-agent consensus.
-  \item[Output] Asynchronously refined global Gaussian model assembled from locally consistent maps and inter-agent consensus updates.
-\end{description}
+\textbf{State:} agent $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{M}_{i,t},h_{i,t})$; communication gate $c_t=\mathbb{1}[t\bmod T_{\mathrm{comm}}=0]$; stage tracker $s=0\rightarrow4$.
+\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+  \item \textsc{Track}. \emph{Trigger:} RGB-D frame $z_{i,t}^{\mathrm{rgbd}}$. \emph{Update:} $(\mathbf{T}_{i,t},\tilde{\mathcal{M}}_{i,t})\leftarrow f_\theta(z_{i,t}^{\mathrm{rgbd}},\mathcal{M}_{i,t-1})$. \emph{Emits:} pose and provisional Gaussians.
+  \item \textsc{Intra-agent consensus}. \emph{Trigger:} local primitive update. \emph{Update:} $\mathcal{M}_{i,t}^{\mathrm{loc}}\leftarrow C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$. \emph{Emits:} locally coherent map.
+  \item \textsc{Exchange gate}. \emph{Trigger:} $c_t=1$; otherwise skip to publish. \emph{Update:} $B_{i,t}\leftarrow\mu(\mathcal{M}_{i,t}^{\mathrm{loc}},h_{i,t})$. \emph{Emits:} consensus packet $B_{i,t}$.
+  \item \textsc{Inter-agent consensus}. \emph{Trigger:} neighbor packets from $\mathcal{N}_t(i)$. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow C_{\mathrm{inter}}(\mathcal{M}_{i,t}^{\mathrm{loc}},\{B_{j,t}\};\lambda_{\mathrm{inter}})$ and $h_{i,t}\leftarrow h_{i,t-1}+1$. \emph{Emits:} cross-agent refined map.
+  \item \textsc{Publish view}. \emph{Trigger:} local or inter-agent consensus done. \emph{Update:} $\mathcal{G}_t\leftarrow\{\mathcal{M}_{i,t}^{(h)}\}_{i,h}$. \emph{Emits:} eventually consistent shared model.
+\end{enumerate}
 \end{algorithm}
 
 \begin{figure}[H]
@@ -206,25 +189,18 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} CoKo-SLAM keeps the server pattern but changes what is transmitted: compact keyframe-optimized Gaussian/keyframe state instead of dense raw streams \citep{li2026coko_slam}.\footnote{\url{https://github.com/lemonci/coko-slam}.} The server uses compact map information, loop closure without an initial relative-pose guess, redundant-Gaussian pruning, and global optimization.
 
 \begin{algorithm}[H]
-\caption{CoKo-SLAM as compact keyframe-optimized fusion}
+\caption{CoKo-SLAM sequential compact-server flow}
 \label{alg:coko-slam}
 \small
-\begin{description}[leftmargin=1.85cm,style=nextline]
-  \item[Inputs] Robot RGB-D streams $z_{i,t}^{\mathrm{rgbd}}$; local maps $\mathcal{M}_{i,t}$; upload budget $b_i$; loop-verification mode $m\in\{\textsc{RenderedDepth},\textsc{CameraDepth}\}$.
-  \item[State] Local state $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})$; compact packet $p_{i,t}=(\bar{\mathcal{K}}_{i,t},\bar{\mathcal{M}}_{i,t},d_{i,t})$; server state $Y_t=(\bar{\mathcal{V}}_t,\bar{\mathcal{E}}_t,\mathcal{R}_t,\mathcal{G}_t)$ with compact vertices, constraints, redundancy set, and global map.
-  \item[Stage trackers] $s_{i,t}\in\{\textsc{LocalMap},\textsc{Select},\textsc{Transmit}\}$; server stage $S_t\in\{\textsc{Associate},\textsc{Verify},\textsc{Prune},\textsc{Optimize}\}$.
-  \item[Transitions]
-  \[
-  \begin{aligned}
-  \textsc{Select}:\;&p_{i,t}\leftarrow\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)\quad\text{s.t.}\quad |p|\le b_i,\\
-  \textsc{Associate}:\;&\mathcal{A}_t\leftarrow\{(p_a,p_b):\operatorname{desc}(p_a,p_b)>\tau_d\},\\
-  \textsc{Verify}:\;&\Delta\mathbf{T}_{ab}\leftarrow\operatorname{align}_m(p_a,p_b),\quad (a,b)\in\mathcal{A}_t,\\
-  \textsc{Prune}:\;&\mathcal{R}_t\leftarrow\{g\in\bar{\mathcal{M}}_{a}\cup\bar{\mathcal{M}}_{b}:\operatorname{overlap}(g)>\tau_o\},\\
-  \textsc{Optimize}:\;&\mathcal{G}_t\leftarrow\operatorname{opt}\!\left(\left(\bigcup_i\Delta\mathbf{T}_i\bar{\mathcal{M}}_{i,t}\right)\setminus\mathcal{R}_t\right).
-  \end{aligned}
-  \]
-  \item[Output] A compact globally aligned Gaussian map and retained compact keyframe/map packets for later association.
-\end{description}
+\textbf{State:} local $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})$; packet $p_{i,t}=(\bar{\mathcal{K}}_{i,t},\bar{\mathcal{M}}_{i,t},d_{i,t})$; server $Y_t=(\mathcal{A}_t,\mathcal{R}_t,\mathcal{G}_t)$; stage tracker $s=0\rightarrow5$.
+\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+  \item \textsc{Local map}. \emph{Trigger:} RGB-D segment. \emph{Update:} refresh $\mathbf{T}_{i,t}$, $\mathcal{K}_{i,t}$, and $\mathcal{M}_{i,t}$. \emph{Emits:} robot-side map/keyframe state.
+  \item \textsc{Compact}. \emph{Trigger:} upload window or keyframe event. \emph{Update:} $p_{i,t}\leftarrow\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)$ subject to $|p|\le b_i$. \emph{Emits:} compact packet.
+  \item \textsc{Associate}. \emph{Trigger:} server has at least two packets. \emph{Update:} $\mathcal{A}_t\leftarrow\{(p_a,p_b):\operatorname{desc}(p_a,p_b)>\tau_d\}$. \emph{Emits:} candidate cross-agent pairs.
+  \item \textsc{Verify and align}. \emph{Trigger:} candidate pair. \emph{Update:} $\Delta\mathbf{T}_{ab}\leftarrow\operatorname{align}_m(p_a,p_b)$ for $m\in\{\textsc{RenderedDepth},\textsc{CameraDepth}\}$. \emph{Emits:} verified transform.
+  \item \textsc{Prune}. \emph{Trigger:} aligned packet overlaps map. \emph{Update:} $\mathcal{R}_t\leftarrow\{g:\operatorname{overlap}(g)>\tau_o\}$. \emph{Emits:} redundant Gaussian set.
+  \item \textsc{Optimize and fuse}. \emph{Trigger:} constraints and prune set fixed. \emph{Update:} $\mathcal{G}_t\leftarrow\operatorname{opt}((\bigcup_i\Delta\mathbf{T}_i\bar{\mathcal{M}}_{i,t})\setminus\mathcal{R}_t)$. \emph{Emits:} compact aligned map.
+\end{enumerate}
 \end{algorithm}
 
 \begin{figure}[H]
@@ -252,26 +228,17 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} CoMA-SLAM is a distributed multi-agent Gaussian-surfel system: agents maintain submap-centric updates, close intra/inter-agent loops, and run distributed keyframe optimization \citep{chen2026coma_slam}.\footnote{\url{https://github.com/npu-chenlin/CoMA-SLAM}.} Its representation is 2D Gaussian surfels rather than conventional 3D radiance splats, so it belongs in a broad Gaussian-map survey with that caveat.
 
 \begin{algorithm}[H]
-\caption{CoMA-SLAM as distributed Gaussian-surfel optimization}
+\caption{CoMA-SLAM sequential distributed-surfel flow}
 \label{alg:coma-slam}
 \small
-\begin{description}[leftmargin=1.85cm,style=nextline]
-  \item[Inputs] Multi-agent observations $z_{i,t}$; local Gaussian-surfel submaps $\mathcal{S}_{i,t}$; peer graph $\mathcal{N}_t$; communication budget $b_i$.
-  \item[State] Agent state $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{S}_{i,t},\mathcal{K}_{i,t},\mathcal{L}_{i,t})$ where $\mathcal{L}_{i,t}$ stores accepted intra/inter-agent loop factors; distributed estimate $\mathcal{Q}_t=\{\mathbf{T}_{k}:k\in\cup_i\mathcal{K}_{i,t}\}$.
-  \item[Stage trackers] $s_{i,t}\in\{\textsc{Submap},\textsc{LoopDetect},\textsc{Share},\textsc{DistOptimize},\textsc{Commit}\}$.
-  \item[Transitions]
-  \[
-  \begin{aligned}
-  \textsc{Submap}:\;&\mathcal{S}_{i,t}\leftarrow U_{\mathrm{surfel}}(\mathcal{S}_{i,t-1},z_{i,t},\mathbf{T}_{i,t}),\\
-  \textsc{LoopDetect}:\;&\mathcal{L}_{i,t}\leftarrow\mathcal{L}_{i,t-1}\cup\{(k,\ell,\Delta\mathbf{T}_{k\ell}):\operatorname{loop}(k,\ell)>\tau_{\ell}\},\\
-  \textsc{Share}:\;&m_{i\rightarrow j,t}\leftarrow\mu(\mathcal{K}_{i,t},\mathcal{L}_{i,t},\mathcal{S}_{i,t};b_i),\quad j\in\mathcal{N}_t(i),\\
-  \textsc{DistOptimize}:\;&\mathcal{Q}_t\leftarrow\arg\min_{\mathcal{Q}}\sum_{(k,\ell)\in\cup_i\mathcal{L}_{i,t}}\rho(\|r_{k\ell}(\mathcal{Q})\|^2),\\
-  \textsc{Commit}:\;&\mathcal{G}_t^{\mathrm{surfel}}\leftarrow\bigcup_i\mathcal{Q}_t\mathcal{S}_{i,t}.
-  \end{aligned}
-  \]
-  \item[Invariant] The fusion unit is a Gaussian surfel submap/update, not a raw RGB-D frame stream.
-  \item[Output] Distributed geometrically consistent Gaussian-surfel map with accepted loop factors and optimized keyframe poses.
-\end{description}
+\textbf{State:} peer $x_{i,t}=(\mathbf{T}_{i,t},\mathcal{S}_{i,t},\mathcal{K}_{i,t},\mathcal{L}_{i,t})$; peer graph $\mathcal{N}_t$; stage tracker $s=0\rightarrow4$.
+\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+  \item \textsc{Surfel submap}. \emph{Trigger:} observation $z_{i,t}$. \emph{Update:} $\mathcal{S}_{i,t}\leftarrow U_{\mathrm{surfel}}(\mathcal{S}_{i,t-1},z_{i,t},\mathbf{T}_{i,t})$. \emph{Emits:} local Gaussian-surfel submap.
+  \item \textsc{Loop detect}. \emph{Trigger:} new keyframe/submap. \emph{Update:} $\mathcal{L}_{i,t}\leftarrow\mathcal{L}_{i,t-1}\cup\{(k,\ell,\Delta\mathbf{T}_{k\ell}):\operatorname{loop}(k,\ell)>\tau_\ell\}$. \emph{Emits:} loop-factor set.
+  \item \textsc{Share}. \emph{Trigger:} peer $j\in\mathcal{N}_t(i)$ and budget $b_i$. \emph{Update:} $m_{i\rightarrow j,t}\leftarrow\mu(\mathcal{K}_{i,t},\mathcal{L}_{i,t},\mathcal{S}_{i,t};b_i)$. \emph{Emits:} compact distributed update.
+  \item \textsc{Distributed optimize}. \emph{Trigger:} peer loop factors received. \emph{Update:} $\mathcal{Q}_t\leftarrow\arg\min_{\mathcal{Q}}\sum_{(k,\ell)\in\cup_i\mathcal{L}_{i,t}}\rho(\|r_{k\ell}(\mathcal{Q})\|^2)$. \emph{Emits:} optimized keyframe/submap poses.
+  \item \textsc{Commit map}. \emph{Trigger:} distributed optimization converged. \emph{Update:} $\mathcal{G}_t^{\mathrm{surfel}}\leftarrow\bigcup_i\mathcal{Q}_t\mathcal{S}_{i,t}$. \emph{Emits:} shared Gaussian-surfel map.
+\end{enumerate}
 \end{algorithm}
 
 \begin{figure}[H]
@@ -297,24 +264,17 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} HAMMER is a server-side heterogeneous semantic mapper. Robots/devices stream local SLAM poses and visual/perception outputs; the server estimates global frame alignment without prior relative poses and trains or updates a shared metric-semantic 3D Gaussian map \citep{yu2025hammer,yu2025hammer_project}. The distinctive output is not just geometry, but a semantic Gaussian map usable by downstream agents.
 
 \begin{algorithm}[H]
-\caption{HAMMER as heterogeneous semantic-map assimilation}
+\caption{HAMMER sequential heterogeneous-semantic flow}
 \label{alg:hammer}
 \small
-\begin{description}[leftmargin=1.85cm,style=nextline]
-  \item[Inputs] Heterogeneous robot/device packets $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{i,t}^{\mathrm{local}},e_{i,t})$ containing visual observations, local SLAM pose, and semantic/perception embeddings; no required prior inter-robot transform.
-  \item[State] Per-device local frame $\mathcal{F}_i$; server transform estimate $\mathbf{A}_{i,t}:\mathcal{F}_i\rightarrow\mathcal{F}_G$; metric-semantic Gaussian map $\mathcal{G}_t=\{(g_k,c_k,\pi_k)\}_{k=1}^{K_t}$ with geometry/radiance $g_k$, semantic code $c_k$, and provenance $\pi_k$.
-  \item[Stage trackers] Device stage $s_{i,t}\in\{\textsc{Stream},\textsc{LocalPose}\}$; server stage $S_t\in\{\textsc{Register},\textsc{Assimilate},\textsc{SemanticUpdate},\textsc{Serve}\}$.
-  \item[Transitions]
-  \[
-  \begin{aligned}
-  \textsc{Register}:\;&\mathbf{A}_{i,t}\leftarrow\arg\min_{\mathbf{A}\in SE(3)}D\!\left(\mathbf{A}\,\hat{\mathbf{T}}_{i,1:t}^{\mathrm{local}},\mathcal{G}_{t-1}\right),\\
-  \textsc{Assimilate}:\;&\tilde{z}_{i,t}\leftarrow\mathbf{A}_{i,t}\hat{\mathbf{T}}_{i,t}^{\mathrm{local}}z_{i,t},\\
-  \textsc{SemanticUpdate}:\;&(g_k,c_k,\pi_k)\leftarrow U_{\mathrm{sem}}((g_k,c_k,\pi_k),\tilde{z}_{i,t},e_{i,t},i,t),\\
-  \textsc{Serve}:\;&v_t(q)\leftarrow Q(\mathcal{G}_t,q),\quad q\in\{\text{geometry, semantics, provenance}\}.
-  \end{aligned}
-  \]
-  \item[Output] Shared metric-semantic Gaussian map with device-frame registrations, semantic codes, and provenance suitable for downstream robot or agent queries.
-\end{description}
+\textbf{State:} device packet $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{i,t}^{\mathrm{local}},e_{i,t})$; transform $\mathbf{A}_{i,t}:\mathcal{F}_i\rightarrow\mathcal{F}_G$; semantic Gaussians $(g_k,c_k,\pi_k)$; stage tracker $s=0\rightarrow4$.
+\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+  \item \textsc{Stream packet}. \emph{Trigger:} robot/device sends $u_{i,t}$. \emph{Update:} buffer observation, local pose, and embedding under device id $i$. \emph{Emits:} time-stamped device packet.
+  \item \textsc{Register}. \emph{Trigger:} new device or alignment check. \emph{Update:} $\mathbf{A}_{i,t}\leftarrow\arg\min_{\mathbf{A}\in SE(3)}D(\mathbf{A}\hat{\mathbf{T}}_{i,1:t}^{\mathrm{local}},\mathcal{G}_{t-1})$. \emph{Emits:} global-frame transform.
+  \item \textsc{Assimilate}. \emph{Trigger:} transform available. \emph{Update:} $\tilde{z}_{i,t}\leftarrow\mathbf{A}_{i,t}\hat{\mathbf{T}}_{i,t}^{\mathrm{local}}z_{i,t}$. \emph{Emits:} global-frame observation.
+  \item \textsc{Semantic update}. \emph{Trigger:} observation projects into map support. \emph{Update:} $(g_k,c_k,\pi_k)\leftarrow U_{\mathrm{sem}}((g_k,c_k,\pi_k),\tilde{z}_{i,t},e_{i,t},i,t)$. \emph{Emits:} updated metric-semantic Gaussians.
+  \item \textsc{Serve query}. \emph{Trigger:} downstream query $q$. \emph{Update:} $v_t(q)\leftarrow Q(\mathcal{G}_t,q)$. \emph{Emits:} geometry, semantic, or provenance view.
+\end{enumerate}
 \end{algorithm}
 
 \begin{figure}[H]
@@ -342,25 +302,18 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} GRAND-SLAM is best treated as local Gaussian submaps plus a global consistency layer. Agents optimize local RGB-D Gaussian submaps; inter- and intra-robot loop closures create constraints; pose-graph optimization updates global consistency \citep{thomas2025grand_slam,thomas2025grand_slam_arxiv}. Do not describe it as CoKo-style centralized rendered-depth fusion unless a source explicitly supports that.
 
 \begin{algorithm}[H]
-\caption{GRAND-SLAM as submap-pose-graph refinement}
+\caption{GRAND-SLAM sequential submap-pose-graph flow}
 \label{alg:grand-slam}
 \small
-\begin{description}[leftmargin=1.85cm,style=nextline]
-  \item[Inputs] RGB-D agent streams $z_{i,t}^{\mathrm{rgbd}}$; local Gaussian submap creation policy $\kappa$; intra/inter-robot loop detector $L$.
-  \item[State] Agent submaps $\mathcal{B}_{i}^m=(\mathcal{M}_{i}^m,\mathbf{P}_{i}^m)$; global pose graph $\mathcal{H}_t=(\mathcal{V}_t,\mathcal{E}^{\mathrm{odom}}_t,\mathcal{E}^{\mathrm{loop}}_t)$; consistent reconstruction $\mathcal{G}_t$.
-  \item[Stage trackers] $s_{i,t}\in\{\textsc{Track},\textsc{SpawnSubmap},\textsc{LocalOptimize}\}$; graph stage $S_t\in\{\textsc{DetectLoops},\textsc{GraphOptimize},\textsc{Propagate}\}$.
-  \item[Transitions]
-  \[
-  \begin{aligned}
-  \textsc{SpawnSubmap}:\;&\mathcal{B}_{i}^{m+1}\leftarrow\kappa(z_{i,t}^{\mathrm{rgbd}},\mathcal{B}_{i}^{m})\quad\text{when}\quad \operatorname{drift/extent}>\tau_\kappa,\\
-  \textsc{LocalOptimize}:\;&\mathcal{M}_{i}^{m}\leftarrow\arg\min_{\mathcal{M}}\mathcal{L}_{\mathrm{photo/depth}}(\mathcal{M},z_{i,t}^{\mathrm{rgbd}},\mathbf{P}_{i}^{m}),\\
-  \textsc{DetectLoops}:\;&\mathcal{E}^{\mathrm{loop}}_t\leftarrow\mathcal{E}^{\mathrm{loop}}_{t-1}\cup L(\{\mathcal{B}_{i}^{m}\}_{i,m}),\\
-  \textsc{GraphOptimize}:\;&\{\mathbf{P}_{v}\}\leftarrow\arg\min_{\mathbf{P}}\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{E}^{\mathrm{loop}}_t}\rho(\|r_e(\mathbf{P})\|^2),\\
-  \textsc{Propagate}:\;&\mathcal{G}_t\leftarrow\bigcup_{v\in\mathcal{V}_t}\mathbf{P}_{v}\mathcal{M}_{v}.
-  \end{aligned}
-  \]
-  \item[Output] Large-scale globally consistent Gaussian reconstruction derived from locally optimized submaps and graph-optimized submap poses.
-\end{description}
+\textbf{State:} submap $\mathcal{B}_{i}^{m}=(\mathcal{M}_{i}^{m},\mathbf{P}_{i}^{m})$; pose graph $\mathcal{H}_t=(\mathcal{V}_t,\mathcal{E}^{\mathrm{odom}}_t,\mathcal{E}^{\mathrm{loop}}_t)$; stage tracker $s=0\rightarrow5$.
+\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+  \item \textsc{Track}. \emph{Trigger:} RGB-D frame. \emph{Update:} update local pose inside active submap $\mathcal{B}_{i}^{m}$. \emph{Emits:} frame-to-submap pose.
+  \item \textsc{Spawn submap}. \emph{Trigger:} $\operatorname{drift/extent}>\tau_\kappa$. \emph{Update:} $\mathcal{B}_{i}^{m+1}\leftarrow\kappa(z_{i,t}^{\mathrm{rgbd}},\mathcal{B}_{i}^{m})$. \emph{Emits:} new Gaussian submap.
+  \item \textsc{Local optimize}. \emph{Trigger:} active submap has support frames. \emph{Update:} $\mathcal{M}_{i}^{m}\leftarrow\arg\min_{\mathcal{M}}\mathcal{L}_{\mathrm{photo/depth}}(\mathcal{M},z_{i,t}^{\mathrm{rgbd}},\mathbf{P}_{i}^{m})$. \emph{Emits:} locally optimized submap.
+  \item \textsc{Detect loops}. \emph{Trigger:} new submap/keyframe. \emph{Update:} $\mathcal{E}^{\mathrm{loop}}_t\leftarrow\mathcal{E}^{\mathrm{loop}}_{t-1}\cup L(\{\mathcal{B}_{i}^{m}\}_{i,m})$. \emph{Emits:} intra/inter-robot loop edges.
+  \item \textsc{Graph optimize}. \emph{Trigger:} pose graph changed. \emph{Update:} $\{\mathbf{P}_v\}\leftarrow\arg\min_{\mathbf{P}}\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{E}^{\mathrm{loop}}_t}\rho(\|r_e(\mathbf{P})\|^2)$. \emph{Emits:} consistent submap poses.
+  \item \textsc{Propagate}. \emph{Trigger:} optimized poses. \emph{Update:} $\mathcal{G}_t\leftarrow\bigcup_{v\in\mathcal{V}_t}\mathbf{P}_v\mathcal{M}_v$. \emph{Emits:} large-scale Gaussian reconstruction.
+\end{enumerate}
 \end{algorithm}
 
 \begin{figure}[H]
@@ -388,26 +341,18 @@ Each system below is summarized as a concrete dataflow: what runs on each robot,
 \textbf{Mechanics.} MAGS-SLAM is the RGB-only outlier: each monocular agent builds local Gaussian submaps, transmits compact summaries, verifies cross-agent associations with geometry and appearance, and fuses via occupancy-aware Gaussian fusion \citep{cao2026mags_slam,cao2026mags_slam_project}. The core problem is scale-aware collaboration without active depth.
 
 \begin{algorithm}[H]
-\caption{MAGS-SLAM as monocular compact-submap fusion}
+\caption{MAGS-SLAM sequential monocular-fusion flow}
 \label{alg:mags-slam}
 \small
-\begin{description}[leftmargin=1.85cm,style=nextline]
-  \item[Inputs] Monocular RGB streams $z_{i,t}^{\mathrm{rgb}}$; compact-submap budget $b_i$; association thresholds $(\tau_g,\tau_a)$ for geometry and appearance.
-  \item[State] Local monocular state $x_{i,t}=(\hat{\mathbf{T}}_{i,t},\lambda_{i,t},\mathcal{M}_{i,t})$ with trajectory up to unknown/estimated scale $\lambda_{i,t}$; compact summary $p_{i,t}=\mu(\mathcal{M}_{i,t};b_i)$; global state $Z_t=(\mathcal{A}_t,\Lambda_t,\mathcal{O}_t,\mathcal{G}_t)$ for associations, scale/alignment estimates, occupancy evidence, and fused map.
-  \item[Stage trackers] Agent stage $s_{i,t}\in\{\textsc{MonoTrack},\textsc{LocalGaussian},\textsc{Compress}\}$; fusion stage $S_t\in\{\textsc{Propose},\textsc{Verify},\textsc{ScaleAlign},\textsc{OccupancyFuse}\}$.
-  \item[Transitions]
-  \[
-  \begin{aligned}
-  \textsc{MonoTrack}:\;&(\hat{\mathbf{T}}_{i,t},\lambda_{i,t})\leftarrow f_{\theta}^{\mathrm{mono}}(z_{i,1:t}^{\mathrm{rgb}}),\\
-  \textsc{LocalGaussian}:\;&\mathcal{M}_{i,t}\leftarrow U_{\mathrm{rgb}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgb}},\hat{\mathbf{T}}_{i,t},\lambda_{i,t}),\\
-  \textsc{Compress}:\;&p_{i,t}\leftarrow\arg\max_{p\subseteq\mathcal{M}_{i,t}}\operatorname{info}(p)\quad\text{s.t.}\quad |p|\le b_i,\\
-  \textsc{Verify}:\;&\mathcal{A}_t\leftarrow\{(p_a,p_b):G(p_a,p_b)>\tau_g\land A(p_a,p_b)>\tau_a\},\\
-  \textsc{ScaleAlign}:\;&(\lambda_a,\lambda_b,\Delta\mathbf{T}_{ab})\leftarrow\operatorname{solve}(\mathcal{A}_t),\\
-  \textsc{OccupancyFuse}:\;&\mathcal{G}_t\leftarrow F_{\mathrm{occ}}(\{\lambda_i\Delta\mathbf{T}_i\mathcal{M}_{i,t}\}_i,\mathcal{O}_{t-1}).
-  \end{aligned}
-  \]
-  \item[Output] RGB-only collaborative Gaussian reconstruction with explicit scale/alignment estimates and occupancy-aware fused primitives.
-\end{description}
+\textbf{State:} local $x_{i,t}=(\hat{\mathbf{T}}_{i,t},\lambda_{i,t},\mathcal{M}_{i,t})$; fusion $Z_t=(\mathcal{A}_t,\Lambda_t,\mathcal{O}_t,\mathcal{G}_t)$; stage tracker $s=0\rightarrow5$.
+\begin{enumerate}[leftmargin=*,label=\textbf{s=\arabic*},nosep]
+  \item \textsc{Monocular track}. \emph{Trigger:} RGB frame. \emph{Update:} $(\hat{\mathbf{T}}_{i,t},\lambda_{i,t})\leftarrow f_{\theta}^{\mathrm{mono}}(z_{i,1:t}^{\mathrm{rgb}})$. \emph{Emits:} scale-hypothesized pose.
+  \item \textsc{Local Gaussian}. \emph{Trigger:} pose estimate. \emph{Update:} $\mathcal{M}_{i,t}\leftarrow U_{\mathrm{rgb}}(\mathcal{M}_{i,t-1},z_{i,t}^{\mathrm{rgb}},\hat{\mathbf{T}}_{i,t},\lambda_{i,t})$. \emph{Emits:} local monocular submap.
+  \item \textsc{Compress}. \emph{Trigger:} upload/association window. \emph{Update:} $p_{i,t}\leftarrow\arg\max_{p\subseteq\mathcal{M}_{i,t}}\operatorname{info}(p)$ subject to $|p|\le b_i$. \emph{Emits:} compact submap summary.
+  \item \textsc{Verify pair}. \emph{Trigger:} candidate summaries overlap. \emph{Update:} $\mathcal{A}_t\leftarrow\{(p_a,p_b):G(p_a,p_b)>\tau_g\land A(p_a,p_b)>\tau_a\}$. \emph{Emits:} verified pairs.
+  \item \textsc{Scale align}. \emph{Trigger:} verified association. \emph{Update:} $(\lambda_a,\lambda_b,\Delta\mathbf{T}_{ab})\leftarrow\operatorname{solve}(\mathcal{A}_t)$. \emph{Emits:} scale-aware transform.
+  \item \textsc{Occupancy fuse}. \emph{Trigger:} alignment and occupancy evidence. \emph{Update:} $\mathcal{G}_t\leftarrow F_{\mathrm{occ}}(\{\lambda_i\Delta\mathbf{T}_i\mathcal{M}_{i,t}\}_i,\mathcal{O}_{t-1})$. \emph{Emits:} fused monocular Gaussian map.
+\end{enumerate}
 \end{algorithm}
 
 \begin{figure}[H]
