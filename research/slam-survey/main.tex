@@ -97,7 +97,7 @@ where $\boldsymbol{\mu}_k\in\mathbb{R}^3$ is the mean, $\mathbf{R}_k\in SO(3)$ a
 \[
 \mathcal{M}_{i,t}=\{g_{i,t}^{1},\ldots,g_{i,t}^{m_{i,t}}\},
 \]
-possibly partitioned into Gaussian submaps $\mathcal{B}_{i}^{m}\subseteq\mathcal{M}_{i,t}$, keyframe supports $\mathcal{K}_{i,t}$, or Gaussian-surfel submaps $\mathcal{S}_{i,t}$. A local mapping function is therefore
+possibly partitioned into Gaussian submaps $\mathcal{B}_{i}^{m}\subseteq\mathcal{M}_{i,t}$, keyframe supports $\mathcal{K}_{i,t}$, or Gaussian-surfel submaps $\mathcal{S}_{i,t}$. A local tracking operator $\tau_i$ estimates $\hat{\mathbf{X}}_{i,1:t}$ from observations and prior local state. A local mapping function is therefore
 \[
 \phi_i:\bigl(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t}\bigr)
 \mapsto \mathcal{M}_{i,t},
@@ -381,7 +381,7 @@ The systems above can be compared by the factorization
 \quad + \quad
 \underbrace{\Psi_t}_{\text{global Gaussian fusion}}.
 \]
-The recurring question is not simply whether a method uses Gaussians. It is where the four responsibilities live, which variables cross the communication boundary, and which component absorbs drift, redundancy, and stale information.
+The recurring question is not simply whether a method uses Gaussians. It is where the five responsibilities live, which variables cross the communication boundary, and which component absorbs drift, redundancy, and stale information.
 
 \subsection{Central-Server Submap and Gaussian Fusion}
 
@@ -399,8 +399,8 @@ Central-server systems place most of $\alpha_t$ and $\Psi_t$ on a global mapper.
   \item Estimate cross-agent constraints
   $\mathcal{C}_t=\alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ by loop closure, rendered-depth alignment, camera-depth alignment, or heterogeneous registration.
   \item Optimize global-frame Gaussian-submap or device transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$ from $\mathcal{C}_t$ and odometry factors.
-  \item Remove or downweight discarded redundant primitives
-  $\mathcal{D}_t=\{g:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
+  \item Mark redundant primitives for exclusion,
+  $\mathcal{D}_t=\{g\in\cup_i\mathcal{M}_{i,t_i}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
   \item Define surviving aligned primitive sets $\mathcal{U}_{i,t_i}=\{g\in\mathcal{M}_{i,t_i}:g\notin\mathcal{D}_t\}$.
   \item Fuse aligned nonredundant geometry, appearance, and optional semantics into
   $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{U}_{i,t_i}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
@@ -450,7 +450,7 @@ Submap-plus-pose-graph systems treat dense Gaussian maps as local products whose
   $\mathcal{B}_{i}^{m}\leftarrow\arg\min_{\mathcal{B}}\sum_{z\in\mathcal{K}_{i,t}^{m}}
   \mathcal{L}_{\mathrm{rgbd}}(z,\mathrm{render}(\mathcal{B}))$.
   \item Verify intra-agent and inter-agent loop closures and add relative-pose constraints to $\mathcal{C}_t$.
-  \item Build the pose graph $(\mathcal{N}_t^{\mathrm{pg}},\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t)$ over Gaussian-submap poses.
+  \item Build the pose graph $(\mathcal{V}_t^{\mathrm{pg}},\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t)$ over Gaussian-submap poses.
   \item Solve
   \[
   \{\mathbf{P}_v^\star\}=\arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t}
