@@ -175,9 +175,9 @@ The following systems are summarized as survey-level procedures over the notatio
   =\arg\min_{\mathbf{T}\in SE(3)}
   \mathcal{L}_{\mathrm{rgbd}}\!\left(z_{i,t},\mathrm{render}(\mathcal{M}_{i,t-1},\mathbf{T})\right).
   \]
-  \item Update the local map and active Gaussian submap,
-  $\mathcal{M}_{i,t},\mathcal{B}_{i}^{m}\leftarrow
-  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  \item Update the local map with the survey-level mapping operator,
+  $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$,
+  and refresh the active Gaussian submap $\mathcal{B}_{i}^{m}\subseteq\mathcal{M}_{i,t}$ under the method's submap policy.
   \item Select and send $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ to the server.
   \item Form loop constraints $\mathcal{C}_t\leftarrow\mathcal{C}_{t-1}\cup
   \alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ from verified intra- and inter-agent matches.
@@ -203,9 +203,9 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, local Gaussian maps $\{\mathcal{M}_{i,t-1}\}$, communication graph $\mathcal{H}_t$, consensus round $h$.\\
 \textbf{Output:} Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and an eventually consistent global map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate local motion and a provisional local map,
-  $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\tilde{\mathcal{M}}_{i,t})\leftarrow
-  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t-1},\mathcal{P}_{i,t})$.
+  \item Estimate local motion $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}$ and extend $\hat{\mathbf{X}}_{i,1:t}$ from RGB-D tracking.
+  \item Form the provisional local map
+  $\tilde{\mathcal{M}}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
   \item Regularize nearby local Gaussians by intra-agent consensus,
   $\mathcal{M}_{i,t}^{\mathrm{loc}}=C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$.
   \item Select $p_{i,t}^{(h)}=\mu_i(\mathcal{M}_{i,t}^{\mathrm{loc}},\hat{\mathbf{X}}_{i,1:t},h;b_i)$ for neighbor exchange.
@@ -232,9 +232,9 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} RGB-D local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, budgets $\{b_i\}$, previous global map $\mathcal{G}_{t-1}$.\\
 \textbf{Output:} Compact globally optimized Gaussian map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Update local pose, keyframes, and local map,
-  $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})\leftarrow
-  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t-1},\mathcal{P}_{i,t})$.
+  \item Estimate the local pose $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}$, extend $\hat{\mathbf{X}}_{i,1:t}$, and update keyframes $\mathcal{K}_{i,t}$.
+  \item Update the local map
+  $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
   \item Select a compact packet
   \[
   p_{i,t}=\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)
@@ -245,8 +245,9 @@ The following systems are summarized as survey-level procedures over the notatio
   $\Delta\mathbf{T}_{a\leftarrow b}=\arg\min_{\mathbf{T}\in SE(3)}
   \mathcal{L}_{\mathrm{reg}}(p_{a,t},p_{b,t},\mathbf{T})$ for accepted packet pairs.
   \item Mark redundant primitives $\mathcal{R}_t=\{g\in\cup_i\mathcal{M}_{i,t}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
+  \item Define surviving primitive sets $\mathcal{U}_{i,t}=\{g\in\mathcal{M}_{i,t}:g\notin\mathcal{R}_t\}$.
   \item Fuse compact aligned evidence as
-  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\}\setminus\mathcal{R}_t,\mathcal{C}_t,\mathcal{P}_t)$.
+  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t}\mathcal{U}_{i,t}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
 \end{algorithm}
 
@@ -265,10 +266,11 @@ The following systems are summarized as survey-level procedures over the notatio
 \textbf{Output:} Distributed globally consistent Gaussian-surfel map $\mathcal{G}^{\mathrm{surfel}}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
   \item Update the Gaussian-surfel submap
-  $\mathcal{S}_{i,t}\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  $\mathcal{S}_{i,t}\subseteq\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
   \item Generate intra-agent and inter-agent loop candidates between keyframes or Gaussian-surfel submaps.
-  \item Verify candidates and update
-  $\mathcal{C}_t\leftarrow\mathcal{C}_{t-1}\cup\{(k,\ell,\Delta\mathbf{T}_{k\leftarrow\ell},\boldsymbol{\Omega}_{k\ell},\tau_{k\ell})\}$.
+  \item Verify candidates $\mathcal{V}_t$ and update
+  $\mathcal{C}_t\leftarrow\mathcal{C}_{t-1}\cup
+  \{(k,\ell,\Delta\mathbf{T}_{k\leftarrow\ell},\boldsymbol{\Omega}_{k\ell},\tau_{k\ell}):(k,\ell)\in\mathcal{V}_t\}$.
   \item Exchange $p_{i,t}=\mu_i(\mathcal{S}_{i,t},\mathcal{K}_{i,t},\mathcal{C}_t;b_i)$ with neighbors $\mathcal{N}_t(i)$.
   \item Solve the distributed keyframe/submap optimization
   \[
@@ -293,7 +295,7 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} Heterogeneous packets $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$ and previous semantic map $\mathcal{G}_{t-1}$.\\
 \textbf{Output:} Metric-semantic global Gaussian map $\mathcal{G}_t$ and bounded query views $v_t(q)$.\\
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Normalize each packet as $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i,\pi_{i,t})$.
+  \item Normalize each packet as $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$.
   \item Estimate device-to-global alignment
   $\mathbf{A}_{0\leftarrow\ell_i}=\arg\min_{\mathbf{A}\in SE(3)}
   \mathcal{L}_{\mathrm{align}}(\{u_{i,\tau}\}_{\tau\leq t},\mathcal{G}_{t-1},\mathbf{A})$.
@@ -348,16 +350,15 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} Monocular RGB streams $\{\mathcal{Z}_i^{1:t}\}$, local maps $\{\mathcal{M}_{i,t-1}\}$, Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, compact-summary budget $b_i$.\\
 \textbf{Output:} Scale-aligned collaborative global Gaussian map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate monocular pose and scale
-  $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\lambda_{i,t})\leftarrow
-  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t-1},\mathcal{P}_{i,t})$.
-  \item Update the active Gaussian submap
-  $\mathcal{B}_{i}^{m}\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\lambda_{i,t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  \item Estimate monocular pose $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}$ and scale $\lambda_{i,t}\in\mathbb{R}_{+}$, then extend $\hat{\mathbf{X}}_{i,1:t}$.
+  \item Update the local map
+  $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$,
+  and refresh the active Gaussian submap $\mathcal{B}_{i}^{m}\subseteq\mathcal{M}_{i,t}$.
   \item Select a compact summary
   $p_{i,t}=\mu_i(\mathcal{B}_{i}^{m},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$.
   \item Retain cross-agent candidates whose geometric, appearance, and occupancy evidence passes verification.
   \item Estimate scale-aware alignment
-  $(\lambda_i^\star,\Delta\mathbf{T}_{a\leftarrow b}^\star)=\arg\min_{\lambda,\mathbf{T}}
+  $(\lambda_i^\star,\Delta\mathbf{T}_{a\leftarrow b}^\star)=\arg\min_{\lambda\in\mathbb{R}_{+},\mathbf{T}\in SE(3)}
   \mathcal{L}_{\mathrm{mono}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$.
   \item Fuse aligned Gaussian submaps with occupancy evidence,
   $\mathcal{G}_t=F_{\mathrm{occ}}(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{B}_{i}^{m}\}_i,\mathcal{O}_{t-1})$.
@@ -398,8 +399,9 @@ Central-server systems place most of $\alpha_t$ and $\Psi_t$ on a global mapper.
   \item Optimize global-frame Gaussian-submap or device transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$ from $\mathcal{C}_t$ and odometry factors.
   \item Remove or downweight redundant primitives
   $\mathcal{R}_t=\{g:\operatorname{support}(g)\cap\operatorname{support}(\mathcal{G}_{t-1})>\tau_o\}$.
+  \item Define surviving aligned primitive sets $\mathcal{U}_{i,t_i}=\{g\in\mathcal{M}_{i,t_i}:g\notin\mathcal{R}_t\}$.
   \item Fuse aligned nonredundant geometry, appearance, and optional semantics into
-  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{M}_{i,t_i}\}\setminus\mathcal{R}_t,\mathcal{C}_t,\mathcal{P}_t)$.
+  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{U}_{i,t_i}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
 \end{algorithm}
 
@@ -469,13 +471,13 @@ Compact communication appears in both RGB-D and monocular systems, but it become
 \noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, optional scale hypotheses $\{\lambda_{i,t}\}$, packet budgets $\{b_i\}$.\\
 \textbf{Output:} Bandwidth-limited global map $\mathcal{G}_t$ and verified cross-agent alignments.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate local poses and monocular scale hypotheses
-  $(\hat{\mathbf{X}}_{i,1:t},\lambda_{i,t})\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\mathcal{P}_{i,t})$.
+  \item Estimate local poses $\hat{\mathbf{X}}_{i,1:t}$ and monocular scale hypotheses $\lambda_{i,t}\in\mathbb{R}_{+}$.
+  \item Update local maps $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
   \item Score candidate keyframes, Gaussian submaps, descriptors, and primitives by $\operatorname{info}(\cdot)$ under budget $b_i$.
   \item Select $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ rather than dense observations.
   \item Verify packet pairs with geometry, appearance, rendered depth, camera depth, or occupancy residuals.
   \item Estimate rigid or scale-aware transforms
-  $(\lambda^\star,\Delta\mathbf{T}^\star)=\arg\min_{\lambda,\mathbf{T}}\mathcal{L}_{\mathrm{align}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$.
+  $(\lambda^\star,\Delta\mathbf{T}^\star)=\arg\min_{\lambda\in\mathbb{R}_{+},\mathbf{T}\in SE(3)}\mathcal{L}_{\mathrm{align}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$.
   \item Fuse accepted nonredundant evidence into
   $\mathcal{G}_t=\Psi_t(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
