@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Coordinate and Artifact Hardening** - Make pose, frame, covariance, timestamp, and versioned artifact semantics explicit and tested. (completed 2026-05-18)
 - [x] **Phase 3: Backend Registry and Contracts** - Define backend metadata, availability checks, and lifecycle contract coverage without heavy dependency leakage. (completed 2026-05-19)
 - [x] **Phase 4: Fusion Diagnostics and Semantics Hardening** - Extend the initial fusion seam with explicit uncertainty/conflict diagnostics and anti-occupancy-grid tests. (completed 2026-05-19)
-- [ ] **Phase 5: Evaluation Metric and Failure Gate Hardening** - Extend the initial evaluation harness with richer metrics, failure classification, and regression gates before real backend integration.
+- [x] **Phase 5: Evaluation Metric and Failure Gate Hardening** - Extend the initial evaluation harness with richer metrics, failure classification, and regression gates before real backend integration. (completed 2026-05-19)
 - [ ] **Phase 6: Agent Posterior View Hardening** - Extend the landed SplatPosteriorView with richer bounded posterior summaries, uncertainty semantics, and determinism coverage.
 - [ ] **Phase 7: Representation Memories and Tools** - Add ARNA-informed memory contracts and deterministic tool families for agent-friendly representation access.
 - [ ] **Phase 8: Documentation and Release Readiness** - Document implemented APIs, deferred integrations, examples, contributor policy, and release boundaries.
@@ -142,19 +142,19 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Add typed metric families and deterministic evaluation metric constructors.
+- [x] 05-01-PLAN.md — Add typed metric families and deterministic evaluation metric constructors.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02-PLAN.md — Enrich benchmark artifacts with scenario summaries, diagnostics mirrors, and JSONL output.
+- [x] 05-02-PLAN.md — Enrich benchmark artifacts with scenario summaries, diagnostics mirrors, and JSONL output.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-03-PLAN.md — Add gate-derived failure taxonomy and evaluation-readiness helper.
+- [x] 05-03-PLAN.md — Add gate-derived failure taxonomy and evaluation-readiness helper.
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 05-04-PLAN.md — Publish Phase 5 exports and machine-check the real-backend integration block.
+- [x] 05-04-PLAN.md — Publish Phase 5 exports and machine-check the real-backend integration block.
 
 ### Phase 6: Agent Posterior View Hardening
 
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 2. Coordinate and Artifact Hardening | 4/4 | Complete   | 2026-05-18 |
 | 3. Backend Registry and Contracts | 4/4 | Complete   | 2026-05-19 |
 | 4. Fusion Diagnostics and Semantics Hardening | 3/3 | Complete   | 2026-05-19 |
-| 5. Evaluation Metric and Failure Gate Hardening | 0/4 | Not started | - |
+| 5. Evaluation Metric and Failure Gate Hardening | 4/4 | Complete   | 2026-05-19 |
 | 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
 | 7. Representation Memories and Tools | 0/TBD | Not started | - |
 | 8. Documentation and Release Readiness | 0/TBD | Not started | - |

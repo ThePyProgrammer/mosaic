@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import cast
 
 from mosaic.artifacts.schema import ArtifactDict, make_artifact, require_artifact
-from mosaic.evaluation import BenchmarkArtifact, MetricResult, RegressionResult
-from mosaic.evaluation.runner import ArtifactValue, MetricDict
+from mosaic.evaluation import BenchmarkArtifact, FailureClass, MetricResult, RegressionResult
+from mosaic.evaluation.runner import ArtifactValue, GateResultMapping, MetricDict, ScenarioSummaryValue
 
 
 def metric_result_to_artifact(metric: MetricResult) -> ArtifactDict:
@@ -17,18 +17,14 @@ def metric_result_from_artifact(artifact: object) -> MetricResult:
         name=cast(str, payload["name"]),
         value=cast(float, payload["value"]),
         unit=cast(str, payload["unit"]),
+        family=cast(str, payload.get("family", "general")),
     )
 
 
 def regression_result_to_artifact(result: RegressionResult) -> ArtifactDict:
     return make_artifact(
         "mosaic.regression_result",
-        {
-            "metric_name": result.metric_name,
-            "passed": result.passed,
-            "observed": result.observed,
-            "threshold": result.threshold,
-        },
+        result.as_dict(),
     )
 
 
@@ -39,6 +35,7 @@ def regression_result_from_artifact(artifact: object) -> RegressionResult:
         passed=cast(bool, payload["passed"]),
         observed=cast(float | None, payload["observed"]),
         threshold=cast(float, payload["threshold"]),
+        failure_class=FailureClass(cast(str, payload.get("failure_class", FailureClass.MAP_FUSION.value))),
     )
 
 
@@ -56,4 +53,6 @@ def benchmark_artifact_from_artifact(artifact: object) -> BenchmarkArtifact:
         backend_metadata=cast(dict[str, ArtifactValue], payload["backend_metadata"]),
         diagnostics=cast(dict[str, ArtifactValue], payload["diagnostics"]),
         failure_classification=cast(str, payload["failure_classification"]),
+        scenario_summary=cast(dict[str, ScenarioSummaryValue], payload.get("scenario_summary", {})),
+        gate_results=cast(list[GateResultMapping], payload.get("gate_results", [])),
     )
