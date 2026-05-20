@@ -169,15 +169,23 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}_{i\in\mathcal{A}}$, local maps $\{\mathcal{M}_{i,t-1}\}$, Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, keyframe sets $\{\mathcal{K}_{i,t}\}$.\\
 \textbf{Output:} Global Gaussian map $\mathcal{G}_t$ and optimized Gaussian-submap poses $\{\mathbf{P}_v\}$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item For each agent $i$, perform local tracking by estimating $\hat{\mathbf{T}}_{0\leftarrow i,t}$ from the new RGB-D frame and the previous local Gaussian map.
-  \item Apply local fusion to update the local map $\mathcal{M}_{i,t}$ and its active Gaussian submap with accepted RGB-D observations and selected keyframes.
-  \item Select a bounded packet $p_{i,t}=\mu_i(\mathcal{K}_{i,t},\mathcal{M}_{i,t};b_i)$ and transmit it to the server.
-  \item Detect intra- and inter-agent loop closures and append verified relative-pose factors to $\mathcal{C}_t$.
-  \item Solve a robust pose-graph problem over Gaussian-submap poses,
+  \item Estimate the local tracking transform by photometric--depth registration against the previous local Gaussian state,
+  \[
+  \hat{\mathbf{T}}_{\ell_i\leftarrow i,t}
+  =\arg\min_{\mathbf{T}\in SE(3)}
+  \mathcal{L}_{\mathrm{rgbd}}\!\left(z_{i,t},\mathrm{render}(\mathcal{M}_{i,t-1},\mathbf{T})\right).
+  \]
+  \item Update the local map and active Gaussian submap,
+  $\mathcal{M}_{i,t},\mathcal{B}_{i}^{m}\leftarrow
+  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  \item Select and send $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ to the server.
+  \item Form loop constraints $\mathcal{C}_t\leftarrow\mathcal{C}_{t-1}\cup
+  \alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ from verified intra- and inter-agent matches.
+  \item Optimize Gaussian-submap poses,
   \[
   \{\mathbf{P}_v^\star\}=\arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}_t\cup\mathcal{C}_t}\rho\!\left(\|r_e(\{\mathbf{P}_v\})\|^2\right).
   \]
-  \item Transform Gaussian submaps by the optimized poses and merge them into $\mathcal{G}_t=\Psi_t(\{\mathbf{P}_v^\star\mathcal{B}_v\},\mathcal{C}_t,\mathcal{P}_t)$.
+  \item Merge optimized Gaussian submaps into $\mathcal{G}_t=\Psi_t(\{\mathbf{P}_v^\star\mathcal{B}_v\},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
 \end{algorithm}
 
@@ -195,15 +203,18 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, local Gaussian maps $\{\mathcal{M}_{i,t-1}\}$, communication graph $\mathcal{H}_t$, consensus round $h$.\\
 \textbf{Output:} Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and an eventually consistent global map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Each agent performs local tracking and produces a provisional local map update $(\hat{\mathbf{T}}_{0\leftarrow i,t},\tilde{\mathcal{M}}_{i,t})$ from the incoming RGB-D observation.
-  \item Apply local Gaussian consensus to obtain a coherent local map $\mathcal{M}_{i,t}^{\mathrm{loc}}=C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$.
-  \item Select a consensus packet $p_{i,t}^{(h)}=\mu_i(\mathcal{M}_{i,t}^{\mathrm{loc}},h;b_i)$ containing the Gaussian state needed by neighboring agents.
-  \item Exchange packets with neighbors $j\in\mathcal{N}_t(i)$ under the current communication schedule.
-  \item Refine the local map using global consensus,
+  \item Estimate local motion and a provisional local map,
+  $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\tilde{\mathcal{M}}_{i,t})\leftarrow
+  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t-1},\mathcal{P}_{i,t})$.
+  \item Regularize nearby local Gaussians by intra-agent consensus,
+  $\mathcal{M}_{i,t}^{\mathrm{loc}}=C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$.
+  \item Select $p_{i,t}^{(h)}=\mu_i(\mathcal{M}_{i,t}^{\mathrm{loc}},\hat{\mathbf{X}}_{i,1:t},h;b_i)$ for neighbor exchange.
+  \item Receive $\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$ over $\mathcal{H}_t$.
+  \item Apply inter-agent Gaussian consensus,
   \[
   \mathcal{M}_{i,t}^{(h+1)}=C_{\mathrm{inter}}\!\left(\mathcal{M}_{i,t}^{\mathrm{loc}},\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\};\lambda_{\mathrm{inter}}\right).
   \]
-  \item Publish the current collection of consensus states as $\mathcal{G}_t=\{\mathcal{M}_{i,t}^{(h+1)}:i\in\mathcal{A}\}$.
+  \item Define the distributed global state as $\mathcal{G}_t=\{\mathcal{M}_{i,t}^{(h+1)}:i\in\mathcal{A}\}$.
 \end{enumerate}
 \end{algorithm}
 
@@ -221,16 +232,21 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} RGB-D local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, budgets $\{b_i\}$, previous global map $\mathcal{G}_{t-1}$.\\
 \textbf{Output:} Compact globally optimized Gaussian map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Each agent performs local tracking and local fusion to update its pose, keyframe set, and local Gaussian map from the current RGB-D segment.
+  \item Update local pose, keyframes, and local map,
+  $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\mathcal{K}_{i,t},\mathcal{M}_{i,t})\leftarrow
+  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t-1},\mathcal{P}_{i,t})$.
   \item Select a compact packet
   \[
   p_{i,t}=\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)
   \quad\mathrm{s.t.}\quad |p|\leq b_i.
   \]
-  \item On the server, score packet pairs and form candidate associations whose descriptor or rendered evidence exceeds a threshold.
-  \item Estimate relative transforms $\Delta\mathbf{T}_{a\leftarrow b}$ using rendered-depth or camera-depth registration, depending on the available packet contents.
+  \item Score packet pairs and retain candidate associations with descriptor, rendered-depth, or camera-depth support above threshold $\tau_a$.
+  \item Estimate relative transforms
+  $\Delta\mathbf{T}_{a\leftarrow b}=\arg\min_{\mathbf{T}\in SE(3)}
+  \mathcal{L}_{\mathrm{reg}}(p_{a,t},p_{b,t},\mathbf{T})$ for accepted packet pairs.
   \item Mark redundant primitives $\mathcal{R}_t=\{g\in\cup_i\mathcal{M}_{i,t}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
-  \item Optimize aligned packet poses, remove redundant Gaussians, and fuse the surviving primitives through $\Psi_t$.
+  \item Fuse compact aligned evidence as
+  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\}\setminus\mathcal{R}_t,\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
 \end{algorithm}
 
@@ -248,15 +264,18 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} Agent observations $\{\mathcal{Z}_i^{1:t}\}$, Gaussian-surfel submaps $\{\mathcal{S}_{i,t-1}\}$, neighbor sets $\{\mathcal{N}_t(i)\}$.\\
 \textbf{Output:} Distributed globally consistent Gaussian-surfel map $\mathcal{G}^{\mathrm{surfel}}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Update each Gaussian-surfel submap $\mathcal{S}_{i,t}$ from the current observation and local pose estimate.
-  \item Detect intra-agent and inter-agent loop candidates between keyframes or submaps.
-  \item Add verified loop factors $(k,\ell,\Delta\mathbf{T}_{k\leftarrow\ell})$ to the distributed constraint set $\mathcal{C}_t$.
-  \item Select compact distributed packets containing keyframes, loop factors, and surfel summaries; exchange them with neighbors.
+  \item Update the Gaussian-surfel submap
+  $\mathcal{S}_{i,t}\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  \item Generate intra-agent and inter-agent loop candidates between keyframes or Gaussian-surfel submaps.
+  \item Verify candidates and update
+  $\mathcal{C}_t\leftarrow\mathcal{C}_{t-1}\cup\{(k,\ell,\Delta\mathbf{T}_{k\leftarrow\ell},\boldsymbol{\Omega}_{k\ell},\tau_{k\ell})\}$.
+  \item Exchange $p_{i,t}=\mu_i(\mathcal{S}_{i,t},\mathcal{K}_{i,t},\mathcal{C}_t;b_i)$ with neighbors $\mathcal{N}_t(i)$.
   \item Solve the distributed keyframe/submap optimization
   \[
   \mathcal{Q}_t^\star=\arg\min_{\mathcal{Q}}\sum_{(k,\ell)\in\mathcal{C}_t}\rho\!\left(\|r_{k\ell}(\mathcal{Q})\|^2\right).
   \]
-  \item Commit the aligned surfel submaps as $\mathcal{G}^{\mathrm{surfel}}_t=\bigcup_i\mathcal{Q}_t^\star\mathcal{S}_{i,t}$.
+  \item Place aligned Gaussian-surfel submaps in the global state,
+  $\mathcal{G}^{\mathrm{surfel}}_t=\bigcup_i\mathcal{Q}_t^\star\mathcal{S}_{i,t}$.
 \end{enumerate}
 \end{algorithm}
 
@@ -274,12 +293,16 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} Heterogeneous packets $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$ and previous semantic map $\mathcal{G}_{t-1}$.\\
 \textbf{Output:} Metric-semantic global Gaussian map $\mathcal{G}_t$ and bounded query views $v_t(q)$.\\
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Buffer each packet by device id, local timestamp, local SLAM pose, modality, and optional semantic descriptor.
-  \item Estimate a global-frame alignment $\mathbf{A}_{0\leftarrow \ell_i}\in SE(3)$ for each local trajectory without assuming known initial relative poses.
-  \item Transform the packet into the global frame, $\tilde{z}_{i,t}=\mathbf{A}_{0\leftarrow \ell_i}\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}z_{i,t}$.
-  \item Update the supported metric-semantic Gaussians $(g_k,\mathbf{h}_k,\pi_k)$ with geometry, appearance, semantic descriptors, and provenance from $\tilde{z}_{i,t}$.
-  \item Maintain the global map as $\mathcal{G}_t=\Psi_t(\mathcal{G}_{t-1},\{\tilde{z}_{i,t}\},\mathcal{C}_t,\mathcal{P}_t)$.
-  \item For a downstream query $q$, return a bounded geometry, semantic, or provenance view $v_t(q)=Q(\mathcal{G}_t,q)$.
+  \item Normalize each packet as $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i,\pi_{i,t})$.
+  \item Estimate device-to-global alignment
+  $\mathbf{A}_{0\leftarrow\ell_i}=\arg\min_{\mathbf{A}\in SE(3)}
+  \mathcal{L}_{\mathrm{align}}(\{u_{i,\tau}\}_{\tau\leq t},\mathcal{G}_{t-1},\mathbf{A})$.
+  \item Transform observations into the global frame,
+  $\tilde{z}_{i,t}=\mathbf{A}_{0\leftarrow\ell_i}\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}z_{i,t}$.
+  \item Associate $\tilde{z}_{i,t}$ with supported primitives $g_k$ or initialize new metric-semantic Gaussians.
+  \item Update $(g_k,\mathbf{h}_k,\pi_k)$ and compute
+  $\mathcal{G}_t=\Psi_t(\mathcal{G}_{t-1},\{\tilde{z}_{i,t}\},\mathcal{C}_t,\mathcal{P}_t)$.
+  \item Answer a bounded query view $v_t(q)=Q(\mathcal{G}_t,q)$ over geometry, semantics, or provenance.
 \end{enumerate}
 \end{algorithm}
 
@@ -297,12 +320,17 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, active Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, loop-candidate database.\\
 \textbf{Output:} Globally consistent Gaussian reconstruction $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Track each new RGB-D frame against the active Gaussian submap and estimate a frame-to-submap pose.
-  \item Spawn a new Gaussian submap $\mathcal{B}_{i}^{m+1}$ when drift, extent, or support-frame criteria exceed the method threshold.
-  \item Optimize the active Gaussian submap with photometric and depth evidence from its support frames.
-  \item Detect intra-robot and inter-robot loop closures between submaps or keyframes.
-  \item Add loop factors to $\mathcal{C}_t$ and solve a pose graph over submap poses.
-  \item Propagate the optimized submap poses to the Gaussian submaps and form $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{M}_v$.
+  \item Estimate frame-to-submap pose
+  $\hat{\mathbf{T}}_{\mathcal{B}_i^m\leftarrow i,t}=\arg\min_{\mathbf{T}\in SE(3)}
+  \mathcal{L}_{\mathrm{rgbd}}(z_{i,t},\mathrm{render}(\mathcal{B}_{i}^{m},\mathbf{T}))$.
+  \item Spawn $\mathcal{B}_{i}^{m+1}$ when drift, spatial extent, or support-frame count exceeds the submap threshold.
+  \item Optimize the active Gaussian submap
+  $\mathcal{B}_{i}^{m}\leftarrow\arg\min_{\mathcal{B}}\sum_{z\in\mathcal{K}_{i,t}^{m}}
+  \mathcal{L}_{\mathrm{rgbd}}(z,\mathrm{render}(\mathcal{B}))$.
+  \item Detect and verify intra-robot and inter-robot loop closures between Gaussian submaps or keyframes.
+  \item Solve the submap pose graph with $\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t$ to obtain $\{\mathbf{P}_v^\star\}$.
+  \item Compose the globally consistent reconstruction
+  $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$.
 \end{enumerate}
 \end{algorithm}
 
@@ -320,12 +348,19 @@ The following systems are summarized as survey-level procedures over the notatio
 \noindent\textbf{Input:} Monocular RGB streams $\{\mathcal{Z}_i^{1:t}\}$, local maps $\{\mathcal{M}_{i,t-1}\}$, Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, compact-summary budget $b_i$.\\
 \textbf{Output:} Scale-aligned collaborative global Gaussian map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate each agent's monocular pose trajectory and scale hypothesis $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\lambda_{i,t})$.
-  \item Update the active Gaussian submap from RGB observations under the current pose and scale hypothesis.
-  \item Select a compact submap summary $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ for collaboration.
-  \item Verify candidate cross-agent matches using geometric and appearance evidence.
-  \item Estimate scale-aware alignments $(\lambda_i,\Delta\mathbf{T}_{a\leftarrow b})$ for verified associations.
-  \item Fuse aligned submaps with occupancy evidence, $\mathcal{G}_t=F_{\mathrm{occ}}(\{\lambda_i\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\}_i,\mathcal{O}_{t-1})$.
+  \item Estimate monocular pose and scale
+  $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\lambda_{i,t})\leftarrow
+  \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t-1},\mathcal{P}_{i,t})$.
+  \item Update the active Gaussian submap
+  $\mathcal{B}_{i}^{m}\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\lambda_{i,t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  \item Select a compact summary
+  $p_{i,t}=\mu_i(\mathcal{B}_{i}^{m},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$.
+  \item Retain cross-agent candidates whose geometric, appearance, and occupancy evidence passes verification.
+  \item Estimate scale-aware alignment
+  $(\lambda_i^\star,\Delta\mathbf{T}_{a\leftarrow b}^\star)=\arg\min_{\lambda,\mathbf{T}}
+  \mathcal{L}_{\mathrm{mono}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$.
+  \item Fuse aligned Gaussian submaps with occupancy evidence,
+  $\mathcal{G}_t=F_{\mathrm{occ}}(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{B}_{i}^{m}\}_i,\mathcal{O}_{t-1})$.
 \end{enumerate}
 \end{algorithm}
 
@@ -356,12 +391,15 @@ Central-server systems place most of $\alpha_t$ and $\Psi_t$ on a global mapper.
 \noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}\}$, local trajectories $\{\hat{\mathbf{X}}_{i,1:t}\}$, packets $\{p_{i,t}\}$, previous server-side global map $\mathcal{G}_{t-1}$.\\
 \textbf{Output:} Server-side global Gaussian map $\mathcal{G}_t$ and global-frame agent transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Each agent applies $\phi_i$ locally and sends a bounded packet $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ to the server.
-  \item The server buffers packets by agent, local frame, timestamp, modality, and optional semantic descriptor.
-  \item Estimate cross-agent constraints $\mathcal{C}_t=\alpha_t(\{p_{i,t_i}\})$ using loop closure, rendered-depth alignment, camera-depth alignment, or heterogeneous frame registration.
-  \item Optimize global-frame Gaussian-submap or device transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$ from $\mathcal{C}_t$ and any odometry factors.
-  \item Remove or downweight redundant primitives whose support overlaps the current server-side global map above the merge threshold.
-  \item Fuse aligned geometry, appearance, and optional semantic descriptors into $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{M}_{i,t_i}\},\mathcal{C}_t,\mathcal{P}_t)$.
+  \item Compute local updates $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  \item Transmit bounded packets $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ to the server.
+  \item Estimate cross-agent constraints
+  $\mathcal{C}_t=\alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ by loop closure, rendered-depth alignment, camera-depth alignment, or heterogeneous registration.
+  \item Optimize global-frame Gaussian-submap or device transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$ from $\mathcal{C}_t$ and odometry factors.
+  \item Remove or downweight redundant primitives
+  $\mathcal{R}_t=\{g:\operatorname{support}(g)\cap\operatorname{support}(\mathcal{G}_{t-1})>\tau_o\}$.
+  \item Fuse aligned nonredundant geometry, appearance, and optional semantics into
+  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{M}_{i,t_i}\}\setminus\mathcal{R}_t,\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
 \end{algorithm}
 
@@ -378,12 +416,15 @@ Distributed Gaussian consensus keeps every $\mathcal{M}_{i,t}$ active and uses p
 \noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}^{(h)}\}$, communication graph $\mathcal{H}_t$, neighbor packets $\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$.\\
 \textbf{Output:} Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and distributed global state $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Each agent updates its local Gaussian map or Gaussian-surfel submap from the newest observation and local tracking state.
-  \item Apply an intra-agent coherence step to regularize nearby primitives, surfels, or keyframe-supported submaps.
-  \item Select a consensus packet $p_{i,t}^{(h)}$ containing the local state, descriptors, or loop factors allowed by budget $b_i$.
-  \item Exchange packets with neighbors $\mathcal{N}_t(i)$ according to the asynchronous communication schedule.
-  \item Estimate pairwise alignments or consensus factors from received packets and append them to the local view of $\mathcal{C}_t$.
-  \item Compute $\mathcal{M}_{i,t}^{(h+1)}=C_{\mathrm{inter}}(\mathcal{M}_{i,t}^{(h)},\{p_{j,t}^{(h)}\};\lambda_{\mathrm{inter}})$ and publish the current distributed state.
+  \item Update local Gaussian or Gaussian-surfel state
+  $\mathcal{M}_{i,t}^{(h)}\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
+  \item Regularize local primitives or submaps by
+  $\bar{\mathcal{M}}_{i,t}^{(h)}=C_{\mathrm{intra}}(\mathcal{M}_{i,t}^{(h)};\lambda_{\mathrm{intra}})$.
+  \item Select $p_{i,t}^{(h)}=\mu_i(\bar{\mathcal{M}}_{i,t}^{(h)},\mathcal{C}_t,h;b_i)$.
+  \item Exchange packets with neighbors $\mathcal{N}_t(i)$ under the asynchronous schedule on $\mathcal{H}_t$.
+  \item Estimate pairwise alignments or consensus factors and update the local constraint view $\mathcal{C}_{i,t}$.
+  \item Compute
+  $\mathcal{M}_{i,t}^{(h+1)}=C_{\mathrm{inter}}(\bar{\mathcal{M}}_{i,t}^{(h)},\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\};\lambda_{\mathrm{inter}})$.
 \end{enumerate}
 \end{algorithm}
 
@@ -400,12 +441,18 @@ Submap-plus-pose-graph systems treat dense Gaussian maps as local products whose
 \noindent\textbf{Input:} Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, odometry factors $\mathcal{E}^{\mathrm{odom}}_t$, loop candidates, previous Gaussian-submap poses $\{\mathbf{P}_v\}$.\\
 \textbf{Output:} Globally consistent Gaussian-submap placement and global map $\mathcal{G}_t$.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Track incoming observations against the active Gaussian submap and decide whether to extend it or spawn a new Gaussian-submap node.
-  \item Optimize each active Gaussian submap using its support frames while preserving the submap as the dense unit of fusion.
-  \item Detect intra-agent and inter-agent loop closures between keyframes or Gaussian submaps and verify their relative transforms.
-  \item Build a graph with odometry edges $\mathcal{E}^{\mathrm{odom}}_t$ and cross-agent constraints $\mathcal{C}_t$.
-  \item Solve for optimized submap poses $\{\mathbf{P}_v^\star\}$ by robust pose-graph optimization.
-  \item Place each Gaussian submap in the global frame and reconcile overlaps to obtain $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$.
+  \item Estimate observation-to-submap poses and create a new Gaussian-submap node when drift or support exceeds threshold.
+  \item Optimize each active Gaussian submap
+  $\mathcal{B}_{i}^{m}\leftarrow\arg\min_{\mathcal{B}}\sum_{z\in\mathcal{K}_{i,t}^{m}}
+  \mathcal{L}_{\mathrm{rgbd}}(z,\mathrm{render}(\mathcal{B}))$.
+  \item Verify intra-agent and inter-agent loop closures and add relative-pose constraints to $\mathcal{C}_t$.
+  \item Build the pose graph $(\mathcal{V}_t,\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t)$ over Gaussian-submap poses.
+  \item Solve
+  \[
+  \{\mathbf{P}_v^\star\}=\arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t}
+  \rho\!\left(\|r_e(\{\mathbf{P}_v\})\|_{\boldsymbol{\Omega}_e}^{2}\right).
+  \]
+  \item Compose $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$ after overlap reconciliation.
 \end{enumerate}
 \end{algorithm}
 
@@ -422,12 +469,15 @@ Compact communication appears in both RGB-D and monocular systems, but it become
 \noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, optional scale hypotheses $\{\lambda_{i,t}\}$, packet budgets $\{b_i\}$.\\
 \textbf{Output:} Bandwidth-limited global map $\mathcal{G}_t$ and verified cross-agent alignments.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate local poses and, for monocular agents, maintain scale hypotheses $\lambda_{i,t}$.
-  \item Score keyframes, submaps, descriptors, and Gaussians by their expected alignment or reconstruction value.
-  \item Select compact summaries $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ instead of transmitting dense observations.
-  \item Verify packet pairs using geometry, appearance, rendered depth, camera depth, or occupancy evidence.
-  \item Estimate rigid or scale-aware transforms for accepted associations and reject unsupported pairs.
-  \item Fuse only the aligned, nonredundant submap evidence into $\mathcal{G}_t$, preserving the communication budget as an explicit constraint.
+  \item Estimate local poses and monocular scale hypotheses
+  $(\hat{\mathbf{X}}_{i,1:t},\lambda_{i,t})\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\mathcal{P}_{i,t})$.
+  \item Score candidate keyframes, Gaussian submaps, descriptors, and primitives by $\operatorname{info}(\cdot)$ under budget $b_i$.
+  \item Select $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ rather than dense observations.
+  \item Verify packet pairs with geometry, appearance, rendered depth, camera depth, or occupancy residuals.
+  \item Estimate rigid or scale-aware transforms
+  $(\lambda^\star,\Delta\mathbf{T}^\star)=\arg\min_{\lambda,\mathbf{T}}\mathcal{L}_{\mathrm{align}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$.
+  \item Fuse accepted nonredundant evidence into
+  $\mathcal{G}_t=\Psi_t(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
 \end{algorithm}
 
@@ -444,12 +494,14 @@ HAMMER expands the global map from geometry and radiance to metric-semantic scen
 \noindent\textbf{Input:} Heterogeneous streams $\{z_{i,t}^{\mathrm{het}}\}$, local SLAM poses $\{\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}\}$, semantic descriptors $\{e_{i,t}\}$, previous semantic map $\mathcal{G}_{t-1}$.\\
 \textbf{Output:} Metric-semantic global map $\mathcal{G}_t$ with provenance-aware query views.
 \begin{enumerate}[leftmargin=*,nosep]
-  \item Normalize device packets into a common record containing modality, local pose, geometry support, semantic descriptor, and provenance.
-  \item Estimate or refine each device-to-global alignment $\mathbf{A}_{0\leftarrow\ell_i}$ from local SLAM trajectories and map evidence.
-  \item Transform observations into $\mathcal{F}_0$ and associate them with supported Gaussian primitives or new primitive candidates.
-  \item Update geometry, appearance, semantic descriptor $\mathbf{h}_k$, and provenance $\pi_k$ for affected primitives.
-  \item Prune, merge, or retain conflicting primitive evidence according to uncertainty, source support, and semantic consistency.
-  \item Return bounded query views $v_t(q)=Q(\mathcal{G}_t,q)$ rather than exposing the full raw Gaussian state.
+  \item Encode heterogeneous observations as $z_{i,t}^{\mathrm{het}}=(I_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},d_{i,t},e_{i,t},\xi_i)$.
+  \item Estimate device-to-global alignments
+  $\mathbf{A}_{0\leftarrow\ell_i}=\arg\min_{\mathbf{A}\in SE(3)}
+  \mathcal{L}_{\mathrm{het}}(\{z_{i,\tau}^{\mathrm{het}}\}_{\tau\leq t},\mathcal{G}_{t-1},\mathbf{A})$.
+  \item Transform observations into $\mathcal{F}_0$ and associate them with supported primitives or new candidates.
+  \item Update $(\boldsymbol{\mu}_k,\mathbf{R}_k,\mathbf{s}_k,o_k,\mathbf{c}_k,\mathbf{h}_k,\pi_k)$ for associated primitives.
+  \item Prune, merge, or retain conflicting primitive evidence by uncertainty, source support, and semantic consistency.
+  \item Return bounded views $v_t(q)=Q(\mathcal{G}_t,q)$ over $\mathcal{G}_t$.
 \end{enumerate}
 \end{algorithm}
 
