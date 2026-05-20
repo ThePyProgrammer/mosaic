@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: ready_to_plan
 stopped_at: Phase 05 complete (4/4) — ready to discuss Phase 6
-last_updated: 2026-05-20T12:18:35Z
-last_activity: 2026-05-20 -- Extracted SLAM survey method diagrams
+last_updated: 2026-05-20T13:00:30Z
+last_activity: 2026-05-20 -- Converted SLAM survey algorithms into concise pseudocode
 progress:
   total_phases: 8
   completed_phases: 5
@@ -28,7 +28,7 @@ See: /home/prannayag/pragnition/robotics/mosaic/.planning/PROJECT.md (updated 20
 Phase: 6
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-05-19
+Last activity: 2026-05-20
 
 Progress: [----------] 0%
 
@@ -107,6 +107,7 @@ None yet.
 | 2026-05-19 | map-terminology-normalization | Enforced agent-local map, Gaussian submap, Gaussian-surfel submap, shared map, and server-side shared map terminology; verified Tectonic PDF build and 183 passing tests. |
 | 2026-05-19 | restandardize-research-slam-survey-main | Reworked the SLAM survey around local/global terminology for maps, tracking, alignment, and fusion; verified Tectonic PDF build and 183 passing tests. |
 | 2026-05-20 | extract-arxiv-tex-sources-for-papers-rep | Extracted seven main method diagrams into `research/slam-survey/diagrams/`, with CoMA-SLAM cropped from the AAAI PDF because no arXiv source was found. |
+| 2026-05-20 | formalize-slam-survey-pseudocode | Converted 12 SLAM survey algorithm blocks into concise pseudocode/equation steps with shared notation and verified Tectonic build. |
 
 ### Blockers/Concerns
 
