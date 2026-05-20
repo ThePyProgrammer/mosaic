@@ -244,8 +244,8 @@ The following systems are summarized as survey-level procedures over the notatio
   \item Estimate relative transforms
   $\Delta\mathbf{T}_{a\leftarrow b}=\arg\min_{\mathbf{T}\in SE(3)}
   \mathcal{L}_{\mathrm{reg}}(p_{a,t},p_{b,t},\mathbf{T})$ for accepted packet pairs.
-  \item Mark redundant primitives $\mathcal{R}_t=\{g\in\cup_i\mathcal{M}_{i,t}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
-  \item Define surviving primitive sets $\mathcal{U}_{i,t}=\{g\in\mathcal{M}_{i,t}:g\notin\mathcal{R}_t\}$.
+  \item Mark discarded redundant primitives $\mathcal{D}_t=\{g\in\cup_i\mathcal{M}_{i,t}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
+  \item Define surviving primitive sets $\mathcal{U}_{i,t}=\{g\in\mathcal{M}_{i,t}:g\notin\mathcal{D}_t\}$.
   \item Fuse compact aligned evidence as
   $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t}\mathcal{U}_{i,t}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
@@ -397,9 +397,9 @@ Central-server systems place most of $\alpha_t$ and $\Psi_t$ on a global mapper.
   \item Estimate cross-agent constraints
   $\mathcal{C}_t=\alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ by loop closure, rendered-depth alignment, camera-depth alignment, or heterogeneous registration.
   \item Optimize global-frame Gaussian-submap or device transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$ from $\mathcal{C}_t$ and odometry factors.
-  \item Remove or downweight redundant primitives
-  $\mathcal{R}_t=\{g:\operatorname{support}(g)\cap\operatorname{support}(\mathcal{G}_{t-1})>\tau_o\}$.
-  \item Define surviving aligned primitive sets $\mathcal{U}_{i,t_i}=\{g\in\mathcal{M}_{i,t_i}:g\notin\mathcal{R}_t\}$.
+  \item Remove or downweight discarded redundant primitives
+  $\mathcal{D}_t=\{g:\operatorname{support}(g)\cap\operatorname{support}(\mathcal{G}_{t-1})>\tau_o\}$.
+  \item Define surviving aligned primitive sets $\mathcal{U}_{i,t_i}=\{g\in\mathcal{M}_{i,t_i}:g\notin\mathcal{D}_t\}$.
   \item Fuse aligned nonredundant geometry, appearance, and optional semantics into
   $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{U}_{i,t_i}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
 \end{enumerate}
