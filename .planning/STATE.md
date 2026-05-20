@@ -5,7 +5,7 @@ milestone_name: milestone
 status: ready_to_plan
 stopped_at: Phase 05 complete (4/4) — ready to discuss Phase 6
 last_updated: 2026-05-20T12:18:35Z
-last_activity: 2026-05-20 -- Phase 05 branch merged into main
+last_activity: 2026-05-20 -- Extracted SLAM survey method diagrams
 progress:
   total_phases: 8
   completed_phases: 5
@@ -106,6 +106,7 @@ None yet.
 | 2026-05-19 | taxonomy-algorithm-nodes | Added five taxonomy-level algorithm boxes explaining how each architecture pattern works; verified Tectonic PDF build and 183 passing tests. |
 | 2026-05-19 | map-terminology-normalization | Enforced agent-local map, Gaussian submap, Gaussian-surfel submap, shared map, and server-side shared map terminology; verified Tectonic PDF build and 183 passing tests. |
 | 2026-05-19 | restandardize-research-slam-survey-main | Reworked the SLAM survey around local/global terminology for maps, tracking, alignment, and fusion; verified Tectonic PDF build and 183 passing tests. |
+| 2026-05-20 | extract-arxiv-tex-sources-for-papers-rep | Extracted seven main method diagrams into `research/slam-survey/diagrams/`, with CoMA-SLAM cropped from the AAAI PDF because no arXiv source was found. |
 
 ### Blockers/Concerns
 
