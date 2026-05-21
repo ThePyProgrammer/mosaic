@@ -12,6 +12,9 @@ from mosaic.agents.memory import (
     MemoryNote,
     NoteId,
     QueryFamily,
+    Commitment,
+    CommitmentId,
+    CommitmentStatus,
     Relation,
     RelationKind,
     RepresentationMemory,
@@ -143,6 +146,80 @@ def test_frontier_traversability_query_returns_bounded_metadata() -> None:
     assert result.items[0].status is ClaimStatus.ACTIVE
 
 
+def test_task_allocation_scenario_detects_shared_resource_conflicts() -> None:
+    memory = _task_allocation_memory()
+
+    result = memory.list_coordination_commitments(max_results=5)
+
+    assert result.total_matches == 2
+    assert result.truncated is False
+    assert [row.commitment_id for row in result.items] == [
+        CommitmentId("commitment-robot-a-frontier"),
+        CommitmentId("commitment-robot-b-frontier"),
+    ]
+    assert [row.status for row in result.items] == [
+        CommitmentStatus.CONFLICTED,
+        CommitmentStatus.CONFLICTED,
+    ]
+    assert [row.actor_id for row in result.items] == [EntityId("robot-a"), EntityId("robot-b")]
+    assert {row.target_id for row in result.items} == {EntityId("frontier:north")}
+    assert [row.conflict_ids for row in result.items] == [
+        (CommitmentId("commitment-robot-b-frontier"),),
+        (CommitmentId("commitment-robot-a-frontier"),),
+    ]
+    assert [row.claim_ids for row in result.items] == [
+        (ClaimId("claim-frontier-reserved-a"),),
+        (ClaimId("claim-frontier-reserved-b"),),
+    ]
+
+
+def test_navigation_frontier_ablation_blocks_frontier_query_capability() -> None:
+    result = RepresentationMemory.empty(frame=FrameId("map")).query_navigation_frontiers(max_results=5)
+
+    assert result.total_matches == 0
+    assert result.truncated is False
+    assert result.items == ()
+
+
+def test_perception_hazard_ablation_blocks_scene_graph_capability() -> None:
+    result = RepresentationMemory.empty(frame=FrameId("map")).find_perception_matches(
+        kind=EntityKind.HAZARD,
+        max_results=5,
+    )
+
+    assert result.total_matches == 0
+    assert result.truncated is False
+    assert result.items == ()
+
+
+def test_belief_conflict_ablation_blocks_claim_inspection_capability() -> None:
+    result = RepresentationMemory.empty(frame=FrameId("map")).inspect_belief(
+        status=ClaimStatus.CONFLICTED,
+        max_results=5,
+    )
+
+    assert result.total_matches == 0
+    assert result.truncated is False
+    assert result.items == ()
+
+
+def test_memory_context_ablation_blocks_context_summary_capability() -> None:
+    result = RepresentationMemory.empty(frame=FrameId("map")).summarize_context(max_notes=5)
+
+    assert result.total_matches == 0
+    assert result.truncated is False
+    assert result.items == ()
+
+
+def test_coordination_commitment_ablation_blocks_commitment_capability() -> None:
+    result = RepresentationMemory.empty(frame=FrameId("map")).list_coordination_commitments(max_results=5)
+
+    assert result.total_matches == 0
+    assert result.truncated is False
+    assert result.items == ()
+
+
+
 def _blocked_path_memory() -> RepresentationMemory:
     blocked_claim = _claim(
         claim_id=ClaimId("claim-blocked-a"),
@@ -247,6 +324,77 @@ def _search_frontier_memory() -> RepresentationMemory:
         .with_relation(relation)
         .with_note(note)
     )
+
+
+def _task_allocation_memory() -> RepresentationMemory:
+    reserved_a = _claim(
+        claim_id=ClaimId("claim-frontier-reserved-a"),
+        subject="frontier:north",
+        predicate="reserved_by",
+        value="robot-a",
+        source=_source(SourceId("coordinator-a"), QueryFamily.COORDINATION),
+        confidence=0.9,
+        status=ClaimStatus.CONFLICTED,
+        valid_until=Timestamp(6_000_000_000),
+        evidence=(
+            _evidence(
+                EvidenceId("evidence-reservation-a"),
+                uri="mosaic://scenario/task-allocation/robot-a",
+            ),
+        ),
+        conflicts_with=(ClaimId("claim-frontier-reserved-b"),),
+    )
+    reserved_b = _claim(
+        claim_id=ClaimId("claim-frontier-reserved-b"),
+        subject="frontier:north",
+        predicate="reserved_by",
+        value="robot-b",
+        source=_source(SourceId("coordinator-b"), QueryFamily.COORDINATION),
+        confidence=0.85,
+        status=ClaimStatus.CONFLICTED,
+        valid_until=Timestamp(6_000_000_000),
+        evidence=(
+            _evidence(
+                EvidenceId("evidence-reservation-b"),
+                uri="mosaic://scenario/task-allocation/robot-b",
+            ),
+        ),
+        conflicts_with=(ClaimId("claim-frontier-reserved-a"),),
+    )
+    commitment_a = Commitment(
+        commitment_id=CommitmentId("commitment-robot-a-frontier"),
+        status=CommitmentStatus.CONFLICTED,
+        actor_id=EntityId("robot-a"),
+        target_id=EntityId("frontier:north"),
+        description="robot-a reserves frontier:north for inspection",
+        confidence=0.9,
+        valid_from=Timestamp(2_000_000_000),
+        valid_until=Timestamp(6_000_000_000),
+        claim_ids=(reserved_a.claim_id,),
+        conflict_ids=(CommitmentId("commitment-robot-b-frontier"),),
+        metadata={"resource": "frontier:north", "assignment": "inspect"},
+    )
+    commitment_b = Commitment(
+        commitment_id=CommitmentId("commitment-robot-b-frontier"),
+        status=CommitmentStatus.CONFLICTED,
+        actor_id=EntityId("robot-b"),
+        target_id=EntityId("frontier:north"),
+        description="robot-b reserves frontier:north for inspection",
+        confidence=0.85,
+        valid_from=Timestamp(3_000_000_000),
+        valid_until=Timestamp(5_000_000_000),
+        claim_ids=(reserved_b.claim_id,),
+        conflict_ids=(CommitmentId("commitment-robot-a-frontier"),),
+        metadata={"resource": "frontier:north", "assignment": "inspect"},
+    )
+    return (
+        RepresentationMemory.empty(frame=FrameId("map"))
+        .with_claim(reserved_a)
+        .with_claim(reserved_b)
+        .with_commitment(commitment_a)
+        .with_commitment(commitment_b)
+    )
+
 
 
 def _claim(
