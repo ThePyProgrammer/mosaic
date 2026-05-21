@@ -386,14 +386,16 @@ assert view.provenance() == view.provenance()
 | A4 | Empty-map uncertainty returns zero statistics instead of raising. | Uncertainty Summary Contract Proposal | If empty maps should be invalid for uncertainty, tests and docs differ. |
 | A5 | Exact tests should include no-match, under-limit, exactly-at-limit, and over-limit cases. | Planning Implications | Low risk; more tests than minimum may be unnecessary. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the new uncertainty summary type be root-exported from `mosaic` or only package-exported from `mosaic.agents`?**
+   - RESOLVED: Root-export `PosteriorUncertaintySummary` because existing stable agent contracts are root-exported and Plan 06-03 tests the root API.
    - What we know: Existing agent types are root-exported. [VERIFIED: src/mosaic/__init__.py:1-8; src/mosaic/__init__.py:56-112]
    - What's unclear: Whether every Phase 6 type should be root-level stable API immediately. [ASSUMED]
    - Recommendation: Root-export the uncertainty summary only if README examples import it from `mosaic`; always export it from `mosaic.agents`. [ASSUMED]
 
 2. **What exact default should `LocalRadiusQuery.max_results` use?**
+   - RESOLVED: Use `LocalRadiusQuery.max_results = 32` as the safe positive default.
    - What we know: The limit must be request-bound and prevent default raw full-map dumps. [VERIFIED: .planning/phases/06-agent-posterior-view-hardening/06-CONTEXT.md:24-28]
    - What's unclear: The locked context does not specify a numeric default. [VERIFIED: .planning/phases/06-agent-posterior-view-hardening/06-CONTEXT.md:24-28]
    - Recommendation: Use `32` as a small ergonomic default unless the planner chooses a required argument. [ASSUMED]

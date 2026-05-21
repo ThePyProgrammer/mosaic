@@ -167,7 +167,16 @@ Plans:
   2. User can run determinism tests showing repeated local, summary, uncertainty, and provenance queries against fixed snapshots return stable results.
   3. User can inspect documented boundaries between landed `SplatPosteriorView` local/summary/provenance behavior and richer future representation-memory queries.
 
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Add bounded local query results and descriptive uncertainty summaries.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-02-PLAN.md — Add exact repeated-query determinism coverage for all posterior view query families.
+- [ ] 06-03-PLAN.md — Publish Phase 6 exports and README boundary language.
 
 ### Phase 7: Representation Memories and Tools
 
@@ -208,7 +217,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3. Backend Registry and Contracts | 4/4 | Complete   | 2026-05-19 |
 | 4. Fusion Diagnostics and Semantics Hardening | 3/3 | Complete   | 2026-05-19 |
 | 5. Evaluation Metric and Failure Gate Hardening | 4/4 | Complete   | 2026-05-19 |
-| 6. Agent Posterior View Hardening | 0/TBD | Not started | landed local/summary/provenance view exists |
+| 6. Agent Posterior View Hardening | 0/3 | Planned | landed local/summary/provenance view exists |
 | 7. Representation Memories and Tools | 0/TBD | Not started | - |
 | 8. Documentation and Release Readiness | 0/TBD | Not started | - |
 
