@@ -20,13 +20,13 @@ Mosaic must provide stable typed representation contracts that let robotic SLAM 
 - ✓ Coordinate-frame direction, timestamp precision, pose transforms, camera optical-frame projection, and covariance tuple semantics are explicit and tested — validated in Phase 02
 - ✓ Versioned artifact envelopes and round-trip serializers exist for core values, observations, splat maps, backend updates, and evaluation outputs — validated in Phase 02
 - ✓ Posterior-aware splat-map fusion diagnostics preserve provenance, report uncertainty/conflict summaries, and avoid occupancy-grid union assumptions — validated in Phase 04
+- ✓ Agent posterior query views expose bounded deterministic local geometry, uncertainty, summary, and aggregate provenance APIs without provider/runtime coupling — validated in Phase 06
 
 ### Active
 
 - [ ] Stabilize and merge the `splat-slam-foundation` worktree as the baseline library foundation.
 - [ ] Add backend registry, capability metadata, availability checks, and contract-test parametrization while keeping heavy backends isolated.
 - [ ] Add deterministic evaluation scenarios, metrics, benchmark artifact writing, and regression gates before integrating real 3DGS backends.
-- [ ] Add a thin agent posterior query seam over splat-map snapshots.
 - [ ] Add the first ARNA-informed agent-friendly representation layer: spatial/raster memory, scene graph memory, textual memory, belief/provenance memory, commitment memory, and deterministic tool APIs.
 - [ ] Document the public API, fake-backend boundary, test command, and contribution path in README guidance.
 
@@ -86,4 +86,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-19 after Phase 04 completion*
+*Last updated: 2026-05-21 after Phase 06 completion*
