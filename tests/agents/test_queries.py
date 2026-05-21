@@ -4,6 +4,7 @@ from mosaic.agents import (
     AgentQueryKind,
     LocalRadiusQuery,
     PosteriorSummary,
+    PosteriorUncertaintySummary,
     ProvenanceSummary,
     SplatPosteriorView,
     SplatQueryResult,
@@ -27,10 +28,52 @@ def test_local_radius_query_defaults_to_local_geometry_kind() -> None:
     assert query.center == (1.0, 2.0, 3.0)
 
 
+def test_local_radius_query_defaults_to_bounded_results() -> None:
+    query = LocalRadiusQuery(center=(1.0, 2.0, 3.0), radius=2.5)
+
+    assert query.max_results == 32
+
+
+def test_local_radius_query_rejects_non_positive_max_results() -> None:
+    with pytest.raises(ValueError, match="max_results must be positive"):
+        LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=1.0, max_results=0)
+    with pytest.raises(ValueError, match="max_results must be positive"):
+        LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=1.0, max_results=-1)
+
+
+def test_agent_query_kind_includes_uncertainty() -> None:
+    assert AgentQueryKind.UNCERTAINTY.value == "uncertainty"
+
+
 def test_splat_query_result_reports_count() -> None:
     result = SplatQueryResult(query_kind=AgentQueryKind.LOCAL_GEOMETRY, splat_ids=(0, 2, 4))
 
     assert result.count == 3
+    assert result.total_matches == 3
+    assert result.truncated is False
+
+
+def test_splat_query_result_validates_total_matches_and_truncation() -> None:
+    with pytest.raises(ValueError, match="total_matches must cover returned splat_ids"):
+        SplatQueryResult(
+            query_kind=AgentQueryKind.LOCAL_GEOMETRY,
+            splat_ids=(0, 1),
+            total_matches=1,
+        )
+    with pytest.raises(ValueError, match="truncated must equal"):
+        SplatQueryResult(
+            query_kind=AgentQueryKind.LOCAL_GEOMETRY,
+            splat_ids=(0, 1),
+            total_matches=3,
+            truncated=False,
+        )
+    with pytest.raises(ValueError, match="truncated must equal"):
+        SplatQueryResult(
+            query_kind=AgentQueryKind.LOCAL_GEOMETRY,
+            splat_ids=(0, 1),
+            total_matches=2,
+            truncated=True,
+        )
 
 
 def test_posterior_summary_rejects_negative_counts() -> None:
@@ -45,6 +88,50 @@ def test_posterior_summary_rejects_mean_opacity_outside_unit_interval() -> None:
         PosteriorSummary(splat_count=1, provenance_count=1, mean_opacity=-0.1)
     with pytest.raises(ValueError, match="between 0 and 1"):
         PosteriorSummary(splat_count=1, provenance_count=1, mean_opacity=1.1)
+
+
+def test_posterior_uncertainty_summary_validates_descriptive_statistics() -> None:
+    summary = PosteriorUncertaintySummary(
+        splat_count=3,
+        mean_covariance_diagonal=(0.2, 0.2, 0.2),
+        max_covariance_diagonal=(0.3, 0.3, 0.3),
+        mean_opacity=0.583333,
+        min_opacity=0.25,
+        max_opacity=1.0,
+    )
+
+    assert summary.semantics == "descriptive_only"
+
+
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"splat_count": -1}, "splat_count must be non-negative"),
+        ({"semantics": "calibrated"}, "semantics must be descriptive_only"),
+        ({"mean_covariance_diagonal": (0.1, 0.2)}, "three values"),
+        ({"max_covariance_diagonal": (0.1, 0.2)}, "three values"),
+        ({"mean_covariance_diagonal": (-0.1, 0.0, 0.0)}, "non-negative"),
+        ({"max_covariance_diagonal": (0.1, -0.2, 0.0)}, "non-negative"),
+        ({"mean_opacity": -0.1}, "between 0 and 1"),
+        ({"min_opacity": -0.1}, "between 0 and 1"),
+        ({"max_opacity": 1.1}, "between 0 and 1"),
+    ],
+)
+def test_posterior_uncertainty_summary_rejects_invalid_values(
+    kwargs: dict[str, object], message: str
+) -> None:
+    values: dict[str, object] = {
+        "splat_count": 3,
+        "mean_covariance_diagonal": (0.2, 0.2, 0.2),
+        "max_covariance_diagonal": (0.3, 0.3, 0.3),
+        "mean_opacity": 0.583333,
+        "min_opacity": 0.25,
+        "max_opacity": 1.0,
+    }
+    values.update(kwargs)
+
+    with pytest.raises(ValueError, match=message):
+        PosteriorUncertaintySummary(**values)  # type: ignore[arg-type]
 
 
 def test_provenance_summary_rejects_blank_sources_and_negative_counts() -> None:
@@ -70,6 +157,7 @@ def test_agents_exports_public_query_and_result_types() -> None:
     assert agents.AgentQueryKind is AgentQueryKind
     assert agents.LocalRadiusQuery is LocalRadiusQuery
     assert agents.PosteriorSummary is PosteriorSummary
+    assert agents.PosteriorUncertaintySummary is PosteriorUncertaintySummary
     assert agents.ProvenanceSummary is ProvenanceSummary
     assert agents.SplatPosteriorView is SplatPosteriorView
     assert agents.SplatQueryResult is SplatQueryResult
@@ -77,6 +165,7 @@ def test_agents_exports_public_query_and_result_types() -> None:
         "AgentQueryKind",
         "LocalRadiusQuery",
         "PosteriorSummary",
+        "PosteriorUncertaintySummary",
         "ProvenanceSummary",
         "SplatPosteriorView",
         "SplatQueryResult",
