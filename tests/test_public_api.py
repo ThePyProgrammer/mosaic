@@ -5,27 +5,53 @@ from mosaic import (
     BenchmarkArtifact,
     CameraIntrinsics,
     CameraRig,
+    ClaimStatus,
     DeterministicSplatBackend,
     Embodiment,
+    EntityKind,
     EvaluationReadinessResult,
+    EvidenceReference,
     FailureClass,
     FrameId,
     FusionInput,
     GaussianSplat,
     InMemorySequence,
     LocalRadiusQuery,
+    MemoryQueryResult,
     PlatformRegistry,
     PosteriorUncertaintySummary,
     ProvenancePreservingFusion,
+    QueryFamily,
     RegressionGate,
+    RepresentationMemory,
     SplatMap,
     SplatPosteriorView,
     Timestamp,
     TrackingState,
     evaluation_ready_for_real_backend,
+    mark_stale_claims,
     quadruped_front_rig,
     synthetic_forward_sequence,
     write_benchmark_artifacts_jsonl,
+)
+from mosaic.agents import (
+    BeliefProvenanceMemory,
+    CellState,
+    Claim,
+    ClaimStatus as AgentClaimStatus,
+    CommitmentMemory,
+    CommitmentStatus,
+    EntityKind as AgentEntityKind,
+    EvidenceKind,
+    EvidenceReference as AgentEvidenceReference,
+    MemoryQueryResult as AgentMemoryQueryResult,
+    QueryFamily as AgentQueryFamily,
+    RelationKind,
+    RepresentationMemory as AgentRepresentationMemory,
+    SceneGraphMemory,
+    SpatialRasterMemory,
+    TextMemory,
+    mark_stale_claims as agent_mark_stale_claims,
 )
 from mosaic.evaluation import (
     FailureClass as EvaluationFailureClass,
@@ -97,6 +123,61 @@ def test_public_api_exports_agent_types() -> None:
     assert view.query_local(query).count == 0
     assert uncertainty.semantics == "descriptive_only"
     assert PosteriorUncertaintySummary.__name__ == "PosteriorUncertaintySummary"
+
+
+def test_public_api_exports_representation_memory_from_agents() -> None:
+    agent_exports = (
+        AgentRepresentationMemory,
+        SpatialRasterMemory,
+        SceneGraphMemory,
+        TextMemory,
+        BeliefProvenanceMemory,
+        CommitmentMemory,
+        Claim,
+        AgentClaimStatus,
+        AgentEntityKind,
+        RelationKind,
+        EvidenceKind,
+        AgentQueryFamily,
+        CellState,
+        CommitmentStatus,
+        AgentEvidenceReference,
+        AgentMemoryQueryResult,
+        agent_mark_stale_claims,
+    )
+
+    assert all(export is not None for export in agent_exports)
+    assert AgentRepresentationMemory is RepresentationMemory
+    assert AgentQueryFamily.PERCEPTION.value == "perception"
+    assert AgentClaimStatus.CONFLICTED.value == "conflicted"
+    assert AgentEntityKind.FRONTIER.value == "frontier"
+    assert AgentMemoryQueryResult.__name__ == "MemoryQueryResult"
+
+
+def test_root_public_api_exports_selected_representation_symbols() -> None:
+    root_exports = (
+        RepresentationMemory,
+        QueryFamily,
+        ClaimStatus,
+        EntityKind,
+        EvidenceReference,
+        MemoryQueryResult,
+        mark_stale_claims,
+    )
+
+    assert all(export is not None for export in root_exports)
+    assert RepresentationMemory is AgentRepresentationMemory
+    assert QueryFamily is AgentQueryFamily
+    assert ClaimStatus is AgentClaimStatus
+    assert EntityKind is AgentEntityKind
+    assert EvidenceReference is AgentEvidenceReference
+    assert MemoryQueryResult is AgentMemoryQueryResult
+
+
+def test_root_public_api_version_remains_stable() -> None:
+    import mosaic
+
+    assert mosaic.__version__ == "0.1.0"
 
 
 def test_readme_locks_bounded_posterior_view_boundary() -> None:
