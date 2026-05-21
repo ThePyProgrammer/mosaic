@@ -20,6 +20,32 @@ ROOT = Path(__file__).resolve().parents[1]
 API_DOC = ROOT / "docs" / "API.md"
 EXAMPLES_DOC = ROOT / "docs" / "EXAMPLES.md"
 PYPROJECT = ROOT / "pyproject.toml"
+README = ROOT / "README.md"
+CONTRIBUTING = ROOT / "CONTRIBUTING.md"
+
+PUBLIC_DOCS = (README, API_DOC, EXAMPLES_DOC, CONTRIBUTING)
+DEFERRED_INSTALL_TERMS = (
+    "torch",
+    "opencv",
+    "ros",
+    "habitat",
+    "openai",
+    "anthropic",
+    "websocket",
+    "cuda",
+    "native",
+    "llm",
+    "lvlm",
+    "real 3dgs",
+)
+FORBIDDEN_PLACEHOLDER_EXTRAS = (
+    "cuda =",
+    "ros =",
+    "habitat =",
+    "llm =",
+    "ui =",
+    "backend =",
+)
 
 
 API_ROOT_EXPORTS = (
@@ -77,11 +103,43 @@ def test_split_api_and_examples_docs_exist() -> None:
     assert PYPROJECT.exists()
 
 
+def test_readme_links_all_release_docs_after_contributor_doc_exists() -> None:
+    readme = README.read_text(encoding="utf-8")
+
+    for relative_path in ("docs/API.md", "docs/EXAMPLES.md", "CONTRIBUTING.md"):
+        assert (ROOT / relative_path).exists()
+        assert relative_path in readme
+
+
 def test_api_docs_reference_current_root_exports() -> None:
     api_doc = _api_doc()
 
     for name in API_ROOT_EXPORTS:
         assert name in api_doc
+
+
+def test_contributor_docs_lock_dependency_and_backend_policy() -> None:
+    contributor = CONTRIBUTING.read_text(encoding="utf-8")
+    contributor_lower = contributor.casefold()
+    pyproject = PYPROJECT.read_text(encoding="utf-8")
+
+    assert "dependencies = []" in pyproject
+    assert "Phase 8" not in contributor
+    assert "optional extras" in contributor_lower
+    assert "policy-only for the Mosaic v1 foundation release" in contributor
+    assert "registry" in contributor_lower
+    assert "adapter" in contributor_lower
+    assert "availability" in contributor_lower
+    assert "contract test" in contributor_lower
+    assert "__all__" in contributor
+    assert "docs/API.md" in contributor
+    assert "tests/test_public_api.py" in contributor
+    assert "[project.optional-dependencies]" not in pyproject
+    for forbidden_extra in FORBIDDEN_PLACEHOLDER_EXTRAS:
+        assert all(
+            not line.strip().casefold().startswith(forbidden_extra)
+            for line in pyproject.splitlines()
+        )
 
 
 def test_api_docs_name_deferred_integrations() -> None:
@@ -103,6 +161,16 @@ def test_examples_doc_names_the_canonical_golden_path() -> None:
     assert "uv add torch" not in examples_doc
     assert "pip install ros" not in examples_doc
     assert "uv add habitat" not in examples_doc
+
+
+def test_public_docs_do_not_recommend_heavy_integration_installs() -> None:
+    for path in PUBLIC_DOCS:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            normalized = line.strip().casefold()
+            if any(term in normalized for term in DEFERRED_INSTALL_TERMS):
+                assert not normalized.startswith("pip install")
+                assert not normalized.startswith("uv add")
+                assert not normalized.startswith("uv pip install")
 
 
 def test_documented_golden_path_writes_local_artifact(tmp_path: Path) -> None:
