@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Fusion Diagnostics and Semantics Hardening** - Extend the initial fusion seam with explicit uncertainty/conflict diagnostics and anti-occupancy-grid tests. (completed 2026-05-19)
 - [x] **Phase 5: Evaluation Metric and Failure Gate Hardening** - Extend the initial evaluation harness with richer metrics, failure classification, and regression gates before real backend integration. (completed 2026-05-19)
 - [x] **Phase 6: Agent Posterior View Hardening** - Extend the landed SplatPosteriorView with richer bounded posterior summaries, uncertainty semantics, and determinism coverage. (completed 2026-05-21)
-- [ ] **Phase 7: Representation Memories and Tools** - Add ARNA-informed memory contracts and deterministic tool families for agent-friendly representation access.
+- [x] **Phase 7: Representation Memories and Tools** - Add ARNA-informed memory contracts and deterministic tool families for agent-friendly representation access. (completed 2026-05-21)
 - [ ] **Phase 8: Documentation and Release Readiness** - Document implemented APIs, deferred integrations, examples, contributor policy, and release boundaries.
 
 ## Phase Details
@@ -206,8 +206,8 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 07-04-PLAN.md — Publish Phase 7 symbols through public API barrels.
-- [ ] 07-05-PLAN.md — Add evaluation-facing representation scenario and ablation coverage.
+- [x] 07-04-PLAN.md — Publish Phase 7 symbols through public API barrels.
+- [x] 07-05-PLAN.md — Add evaluation-facing representation scenario and ablation coverage.
 
 ### Phase 8: Documentation and Release Readiness
 
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 4. Fusion Diagnostics and Semantics Hardening | 3/3 | Complete   | 2026-05-19 |
 | 5. Evaluation Metric and Failure Gate Hardening | 4/4 | Complete   | 2026-05-19 |
 | 6. Agent Posterior View Hardening | 3/3 | Complete   | 2026-05-21 |
-| 7. Representation Memories and Tools | 3/5 | In Progress|  |
+| 7. Representation Memories and Tools | 5/5 | Complete   | 2026-05-21 |
 | 8. Documentation and Release Readiness | 0/TBD | Not started | - |
 
 ## Coverage
