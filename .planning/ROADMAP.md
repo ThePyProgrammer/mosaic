@@ -224,8 +224,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 08-01-PLAN.md — Rewrite README as the concise Mosaic v1 foundation orientation and README contract gate.
-- [ ] 08-02-PLAN.md — Add dedicated API and golden-path example docs with split-doc contract tests.
+- [x] 08-01-PLAN.md — Rewrite README as the concise Mosaic v1 foundation orientation and README contract gate.
+- [x] 08-02-PLAN.md — Add dedicated API and golden-path example docs with split-doc contract tests.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -245,7 +245,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 5. Evaluation Metric and Failure Gate Hardening | 4/4 | Complete   | 2026-05-19 |
 | 6. Agent Posterior View Hardening | 3/3 | Complete   | 2026-05-21 |
 | 7. Representation Memories and Tools | 5/5 | Complete   | 2026-05-21 |
-| 8. Documentation and Release Readiness | 0/3 | Not started | - |
+| 8. Documentation and Release Readiness | 2/3 | In Progress|  |
 
 ## Coverage
 
