@@ -194,7 +194,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 07-01-PLAN.md — Define foundational representation-memory contracts and memory-family records.
+- [x] 07-01-PLAN.md — Define foundational representation-memory contracts and memory-family records.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 4. Fusion Diagnostics and Semantics Hardening | 3/3 | Complete   | 2026-05-19 |
 | 5. Evaluation Metric and Failure Gate Hardening | 4/4 | Complete   | 2026-05-19 |
 | 6. Agent Posterior View Hardening | 3/3 | Complete   | 2026-05-21 |
-| 7. Representation Memories and Tools | 0/TBD | Not started | - |
+| 7. Representation Memories and Tools | 1/5 | In Progress|  |
 | 8. Documentation and Release Readiness | 0/TBD | Not started | - |
 
 ## Coverage
