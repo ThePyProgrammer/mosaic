@@ -36,7 +36,11 @@ class SplatPosteriorView:
 
     def summary(self) -> PosteriorSummary:
         splat_count = len(self.splat_map)
-        provenances = {splat.provenance for splat in self.splat_map.splats if splat.provenance is not None}
+        provenances = {
+            splat.provenance
+            for splat in self.splat_map.splats
+            if splat.provenance is not None and splat.provenance.strip()
+        }
         mean_opacity = 0.0
         if splat_count:
             mean_opacity = round(sum(splat.opacity for splat in self.splat_map.splats) / splat_count, 6)
@@ -76,7 +80,7 @@ class SplatPosteriorView:
     def provenance(self) -> ProvenanceSummary:
         counts: dict[str, int] = {}
         for splat in self.splat_map.splats:
-            if splat.provenance is None:
+            if splat.provenance is None or not splat.provenance.strip():
                 continue
             counts[splat.provenance] = counts.get(splat.provenance, 0) + 1
         return ProvenanceSummary(counts=counts)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+from math import isfinite
 from types import MappingProxyType
 from typing import Mapping
 
@@ -21,10 +22,15 @@ class LocalRadiusQuery:
     kind: AgentQueryKind = AgentQueryKind.LOCAL_GEOMETRY
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "center", tuple(self.center))
         if len(self.center) != 3:
             raise ValueError("LocalRadiusQuery center must contain three coordinates")
-        if self.radius <= 0.0:
-            raise ValueError("LocalRadiusQuery radius must be positive")
+        if not all(isfinite(value) for value in self.center):
+            raise ValueError("LocalRadiusQuery center coordinates must be finite")
+        if not isfinite(self.radius) or self.radius <= 0.0:
+            raise ValueError("LocalRadiusQuery radius must be finite and positive")
+        if self.kind is not AgentQueryKind.LOCAL_GEOMETRY:
+            raise ValueError("LocalRadiusQuery kind must be local_geometry")
         if self.max_results <= 0:
             raise ValueError("LocalRadiusQuery max_results must be positive")
 
@@ -98,6 +104,23 @@ class PosteriorUncertaintySummary:
         ):
             if value < 0.0 or value > 1.0:
                 raise ValueError(f"PosteriorUncertaintySummary {name} must be between 0 and 1")
+        if not self.min_opacity <= self.mean_opacity <= self.max_opacity:
+            raise ValueError(
+                "PosteriorUncertaintySummary opacity values must satisfy "
+                "min_opacity <= mean_opacity <= max_opacity"
+            )
+        if any(
+            mean_value > max_value
+            for mean_value, max_value in zip(
+                self.mean_covariance_diagonal,
+                self.max_covariance_diagonal,
+                strict=True,
+            )
+        ):
+            raise ValueError(
+                "PosteriorUncertaintySummary covariance values must satisfy "
+                "mean_covariance_diagonal <= max_covariance_diagonal"
+            )
 
 
 @dataclass(frozen=True, slots=True)

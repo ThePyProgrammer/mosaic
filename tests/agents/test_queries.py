@@ -1,3 +1,5 @@
+from math import inf, nan
+
 import pytest
 
 from mosaic.agents import (
@@ -19,6 +21,27 @@ def test_local_radius_query_requires_three_coordinates() -> None:
 def test_local_radius_query_requires_positive_radius() -> None:
     with pytest.raises(ValueError, match="positive"):
         LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=0.0)
+
+
+@pytest.mark.parametrize("value", [nan, inf, -inf])
+def test_local_radius_query_rejects_non_finite_center_coordinates(value: float) -> None:
+    with pytest.raises(ValueError, match="center coordinates must be finite"):
+        LocalRadiusQuery(center=(value, 0.0, 0.0), radius=1.0)
+
+
+@pytest.mark.parametrize("value", [nan, inf, -inf])
+def test_local_radius_query_rejects_non_finite_radius(value: float) -> None:
+    with pytest.raises(ValueError, match="radius must be finite and positive"):
+        LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=value)
+
+
+def test_local_radius_query_rejects_non_local_geometry_kind() -> None:
+    with pytest.raises(ValueError, match="kind must be local_geometry"):
+        LocalRadiusQuery(
+            center=(0.0, 0.0, 0.0),
+            radius=1.0,
+            kind=AgentQueryKind.UNCERTAINTY,
+        )
 
 
 def test_local_radius_query_defaults_to_local_geometry_kind() -> None:
@@ -115,6 +138,12 @@ def test_posterior_uncertainty_summary_validates_descriptive_statistics() -> Non
         ({"mean_opacity": -0.1}, "between 0 and 1"),
         ({"min_opacity": -0.1}, "between 0 and 1"),
         ({"max_opacity": 1.1}, "between 0 and 1"),
+        ({"min_opacity": 0.6, "mean_opacity": 0.5}, "opacity values must satisfy"),
+        ({"mean_opacity": 0.8, "max_opacity": 0.7}, "opacity values must satisfy"),
+        (
+            {"mean_covariance_diagonal": (0.4, 0.2, 0.2)},
+            "mean_covariance_diagonal <= max_covariance_diagonal",
+        ),
     ],
 )
 def test_posterior_uncertainty_summary_rejects_invalid_values(

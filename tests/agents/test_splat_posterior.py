@@ -73,6 +73,28 @@ def test_provenance_summary_counts_known_sources() -> None:
     assert provenance.counts == {"front": 2, "rear": 1}
 
 
+def test_blank_provenance_is_ignored_by_agent_summaries() -> None:
+    splat_map = SplatMap(
+        frame=FrameId("map"),
+        splats=(
+            GaussianSplat(
+                center=(0.0, 0.0, 0.0),
+                covariance_upper=(0.1, 0.0, 0.0, 0.1, 0.0, 0.1),
+                provenance=" ",
+            ),
+            GaussianSplat(
+                center=(1.0, 0.0, 0.0),
+                covariance_upper=(0.2, 0.0, 0.0, 0.2, 0.0, 0.2),
+                provenance="front",
+            ),
+        ),
+    )
+    view = SplatPosteriorView(splat_map)
+
+    assert view.summary().provenance_count == 1
+    assert view.provenance().counts == {"front": 1}
+
+
 def test_uncertainty_returns_global_descriptive_statistics() -> None:
     uncertainty = SplatPosteriorView(_map()).uncertainty()
 
