@@ -9,11 +9,18 @@ PYPROJECT = ROOT / "pyproject.toml"
 REQUIRED_HEADINGS = (
     "# Mosaic",
     "## Scope",
+    "## Documentation Map",
     "## Install and Test",
     "## Public API Map",
-    "## Quick Smoke Examples",
+    "## Golden Path Teaser",
     "## Backend and Dependency Boundary",
-    "## Known Hardening Gaps",
+    "## Agent-Facing Layers",
+)
+
+REQUIRED_LINKS = (
+    "docs/API.md",
+    "docs/EXAMPLES.md",
+    "CONTRIBUTING.md",
 )
 
 REQUIRED_COMMANDS = (
@@ -33,21 +40,22 @@ REQUIRED_MODULES = (
 )
 
 BOUNDARY_TERMS = (
-    "torch",
-    "opencv",
+    "real 3dgs",
     "ros",
     "habitat",
-    "openai",
-    "anthropic",
+    "ui",
     "websocket",
+    "llm",
+    "lvlm",
     "cuda",
-    "sudo",
+    "native",
+    "production slam",
 )
 
-BOUNDARY_CONTEXT_MARKERS = (
-    "deferred",
-    "not required",
-    "out of scope",
+STALE_PUBLIC_FRAMING = (
+    "Phase 1 baseline",
+    "Phase 7 planned",
+    "not required for Phase 1",
 )
 
 
@@ -59,29 +67,37 @@ def _pyproject() -> str:
     return PYPROJECT.read_text(encoding="utf-8")
 
 
-def test_readme_contains_required_phase_1_headings_and_commands() -> None:
+def test_readme_contains_required_v1_release_headings_links_and_commands() -> None:
     readme = _readme()
+
+    assert "Mosaic v1 foundation" in readme
 
     for heading in REQUIRED_HEADINGS:
         assert heading in readme
 
+    for link in REQUIRED_LINKS:
+        assert link in readme
+
     for command in REQUIRED_COMMANDS:
         assert command in readme
-
-    assert "73" in readme
 
     for module_name in REQUIRED_MODULES:
         assert module_name in readme
 
+    for stale_phrase in STALE_PUBLIC_FRAMING:
+        assert stale_phrase not in readme
 
-def test_readme_examples_preserve_dependency_boundary() -> None:
+
+def test_readme_preserves_v1_dependency_and_release_boundary_terms() -> None:
     readme = _readme()
 
-    assert "not required for Phase 1" in readme
-    assert "deferred, not required for Phase 1, and out of scope" in readme
+    assert "dependencies = []" in readme
+
+    for term in BOUNDARY_TERMS:
+        assert term in readme.casefold()
 
     for line in readme.splitlines():
-        normalized = line.casefold()
+        normalized = line.casefold().strip()
         for term in BOUNDARY_TERMS:
             if term in normalized:
                 assert not normalized.startswith("pip install")
@@ -98,24 +114,36 @@ def test_runtime_dependencies_stay_empty_when_readme_claims_pure_python_boundary
     assert "dependencies = []" in pyproject
 
 
-def test_readme_locks_phase_4_fusion_boundary_language() -> None:
+def test_readme_locks_v1_contract_fixture_language() -> None:
     readme = _readme()
 
-    assert "FusionProvenanceSummary" in readme
-    assert "FusionUncertaintySummary" in readme
-    assert "FusionConflictSummary" in readme
+    assert "DeterministicSplatBackend" in readme
+    assert "deterministic scenarios" in readme
+    assert "benchmark gates" in readme
+    assert "ProvenancePreservingFusion" in readme
+    assert "contract/reference fixtures" in readme
     assert "preserved_not_optimized" in readme
     assert "preserved-not-optimized" not in readme
     assert "does not optimize Gaussians" in readme
     assert "does not collapse overlapping splats into occupancy-grid cells" in readme
 
     for line in readme.splitlines():
-        normalized = line.casefold()
+        normalized = line.casefold().strip()
         for term in BOUNDARY_TERMS:
             if term in normalized:
                 assert not normalized.startswith("pip install")
                 assert not normalized.startswith("uv add")
                 assert not normalized.startswith("uv pip install")
+
+
+def test_readme_separates_provider_free_agent_layers() -> None:
+    readme = _readme()
+
+    assert "SplatPosteriorView" in readme
+    assert "RepresentationMemory" in readme
+    assert "bounded descriptive splat-snapshot query layer" in readme
+    assert "higher deterministic memory/tool contract layer" in readme
+    assert "provider-free" in readme
 
 
 def test_readme_fusion_smoke_example_uses_public_api() -> None:
