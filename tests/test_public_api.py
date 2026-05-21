@@ -99,18 +99,22 @@ def test_public_api_exports_evaluation_types() -> None:
 
 def test_readme_locks_real_backend_integration_block() -> None:
     readme = Path("README.md").read_text()
+    readme_lower = readme.casefold()
 
     assert "real 3DGS backend integration remains blocked until deterministic evaluation gates pass" in readme
     assert "DeterministicSplatBackend" in readme
     assert "metadata-only fake real backend" not in readme
     assert "sample descriptor" not in readme
-    assert "cuda" not in readme.casefold()
-    assert "pytorch" not in readme.casefold()
-    assert "opencv" not in readme.casefold()
-    assert "ros" not in readme.casefold()
-    assert "habitat" not in readme.casefold()
-    assert "openai" not in readme.casefold()
-    assert "anthropic" not in readme.casefold()
+    for boundary_term in (
+        "real 3dgs backends",
+        "ros",
+        "habitat",
+        "ui/websockets",
+        "llm/lvlm providers",
+        "cuda/native stacks",
+        "production slam quality",
+    ):
+        assert boundary_term in readme_lower
 
 
 def test_public_api_exports_agent_types() -> None:
@@ -186,12 +190,10 @@ def test_readme_locks_bounded_posterior_view_boundary() -> None:
 
     assert "bounded descriptive posterior views" in readme
     assert "descriptive_only" in readme
-    assert "not representation memories" in readme
-    assert "Phase 7" in readme
-    assert "LocalRadiusQuery" in readme
-    assert "max_results" in readme
-    assert "total_matches" in readme
-    assert "truncated" in readme
+    assert "bounded descriptive splat-snapshot query layer" in readme
+    assert "higher deterministic memory/tool contract layer" in readme
+    assert "SplatPosteriorView" in readme
+    assert "RepresentationMemory" in readme
     forbidden_as_implemented = (
         "implemented phase 6 scene graph memory",
         "implemented phase 6 spatial memory",
