@@ -108,6 +108,7 @@ None yet.
 | 2026-05-19 | restandardize-research-slam-survey-main | Reworked the SLAM survey around local/global terminology for maps, tracking, alignment, and fusion; verified Tectonic PDF build and 183 passing tests. |
 | 2026-05-20 | extract-arxiv-tex-sources-for-papers-rep | Extracted seven main method diagrams into `research/slam-survey/diagrams/`, with CoMA-SLAM cropped from the AAAI PDF because no arXiv source was found. |
 | 2026-05-20 | formalize-slam-survey-pseudocode | Converted 12 SLAM survey algorithm blocks into concise pseudocode/equation steps with shared notation and verified Tectonic build. |
+| 2026-05-21 | replace-survey-operator-symbols | Replaced five SLAM survey responsibility symbols with snake_case text function names and verified Tectonic PDF build. |
 
 ### Blockers/Concerns
 
