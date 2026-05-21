@@ -17,6 +17,7 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsthm}
+\usepackage{algpseudocode}
 \usepackage{float}
 \usepackage{array}
 \usepackage{siunitx}
@@ -166,27 +167,17 @@ The following systems are summarized as survey-level procedures over the notatio
 \caption{MAGiC-SLAM}
 \label{alg:magic-slam}
 \small
-\noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}_{i\in\mathcal{A}}$, local maps $\{\mathcal{M}_{i,t-1}\}$, Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, keyframe sets $\{\mathcal{K}_{i,t}\}$.\\
-\textbf{Output:} Global Gaussian map $\mathcal{G}_t$ and optimized Gaussian-submap poses $\{\mathbf{P}_v\}$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate the local tracking transform by photometric--depth registration against the previous local Gaussian state,
-  \[
-  \hat{\mathbf{T}}_{\ell_i\leftarrow i,t}
-  =\arg\min_{\mathbf{T}\in SE(3)}
-  \mathcal{L}_{\mathrm{rgbd}}\!\left(z_{i,t},\mathrm{render}(\mathcal{M}_{i,t-1},\mathbf{T})\right).
-  \]
-  \item Update the local map with the survey-level mapping operator,
-  $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$,
-  and refresh the active Gaussian submap $\mathcal{B}_{i}^{m}\subseteq\mathcal{M}_{i,t}$ under the method's submap policy.
-  \item Select and send $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ to the server.
-  \item Form loop constraints $\mathcal{C}_t\leftarrow\mathcal{C}_{t-1}\cup
-  \alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ from verified intra- and inter-agent matches.
-  \item Optimize Gaussian-submap poses,
-  \[
-  \{\mathbf{P}_v^\star\}=\arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}_t\cup\mathcal{C}_t}\rho\!\left(\|r_e(\{\mathbf{P}_v\})\|^2\right).
-  \]
-  \item Merge optimized Gaussian submaps into $\mathcal{G}_t=\Psi_t(\{\mathbf{P}_v^\star\mathcal{B}_v\},\mathcal{C}_t,\mathcal{P}_t)$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require RGB-D streams $\{\mathcal{Z}_i^{1:t}\}_{i\in\mathcal{A}}$, local maps $\{\mathcal{M}_{i,t-1}\}$, Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, keyframe sets $\{\mathcal{K}_{i,t}\}$
+  \Ensure Global Gaussian map $\mathcal{G}_t$ and optimized Gaussian-submap poses $\{\mathbf{P}_v\}$
+  \State $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t} \gets \arg\min_{\mathbf{T}\in SE(3)} \mathcal{L}_{\mathrm{rgbd}}(z_{i,t},\mathrm{render}(\mathcal{M}_{i,t-1},\mathbf{T}))$ \Comment{photometric--depth tracking}
+  \State $\mathcal{M}_{i,t} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{local map update}
+  \State $\mathcal{B}_{i}^{m} \subseteq \mathcal{M}_{i,t}$ \Comment{submap policy refresh}
+  \State $p_{i,t} \gets \mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ \Comment{server packet}
+  \State $\mathcal{C}_t \gets \mathcal{C}_{t-1}\cup\alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ \Comment{verified loop constraints}
+  \State $\{\mathbf{P}_v^\star\} \gets \arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}_t\cup\mathcal{C}_t}\rho(\|r_e(\{\mathbf{P}_v\})\|^2)$ \Comment{submap pose graph}
+  \State $\mathcal{G}_t \gets \Psi_t(\{\mathbf{P}_v^\star\mathcal{B}_v\},\mathcal{C}_t,\mathcal{P}_t)$ \Comment{global submap merge}
+\end{algorithmic}
 \end{algorithm}
 
 \paragraph{Evidence and caveats.} Reported ReplicaMultiagent results include about $0.27\,\mathrm{cm}$ ATE RMSE, $34.26\,\mathrm{dB}$ PSNR, $1.12\,\mathrm{GiB}$ peak GPU memory, $54\,\mathrm{MB}$ submaps, and $167\,\mathrm{s}$ global merge time. These figures make MAGiC-SLAM a mature public research baseline, but they also show that global merging can dominate runtime.
@@ -200,22 +191,17 @@ The following systems are summarized as survey-level procedures over the notatio
 \caption{MAC-Ego3D}
 \label{alg:mac-ego3d}
 \small
-\noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, local Gaussian maps $\{\mathcal{M}_{i,t-1}\}$, communication graph $\mathcal{H}_t$, consensus round $h$.\\
-\textbf{Output:} Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and an eventually consistent global map $\mathcal{G}_t$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate local motion $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}$ and extend $\hat{\mathbf{X}}_{i,1:t}$ from RGB-D tracking.
-  \item Form the provisional local map
-  $\tilde{\mathcal{M}}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
-  \item Regularize nearby local Gaussians by intra-agent consensus,
-  $\mathcal{M}_{i,t}^{\mathrm{loc}}=C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$.
-  \item Select $p_{i,t}^{(h)}=\mu_i(\mathcal{M}_{i,t}^{\mathrm{loc}},\hat{\mathbf{X}}_{i,1:t},h;b_i)$ for neighbor exchange.
-  \item Receive $\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$ over $\mathcal{H}_t$.
-  \item Apply inter-agent Gaussian consensus,
-  \[
-  \mathcal{M}_{i,t}^{(h+1)}=C_{\mathrm{inter}}\!\left(\mathcal{M}_{i,t}^{\mathrm{loc}},\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\};\lambda_{\mathrm{inter}}\right).
-  \]
-  \item Define the distributed global state as $\mathcal{G}_t=\{\mathcal{M}_{i,t}^{(h+1)}:i\in\mathcal{A}\}$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, local Gaussian maps $\{\mathcal{M}_{i,t-1}\}$, communication graph $\mathcal{H}_t$, consensus round $h$
+  \Ensure Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and eventually consistent global map $\mathcal{G}_t$
+  \State $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\hat{\mathbf{X}}_{i,1:t} \gets \tau_i(\mathcal{Z}_i^{1:t},\mathcal{M}_{i,t-1})$ \Comment{RGB-D tracking}
+  \State $\tilde{\mathcal{M}}_{i,t} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{provisional map}
+  \State $\mathcal{M}_{i,t}^{\mathrm{loc}} \gets C_{\mathrm{intra}}(\tilde{\mathcal{M}}_{i,t};\lambda_{\mathrm{intra}})$ \Comment{intra-agent consensus}
+  \State $p_{i,t}^{(h)} \gets \mu_i(\mathcal{M}_{i,t}^{\mathrm{loc}},\hat{\mathbf{X}}_{i,1:t},h;b_i)$ \Comment{neighbor packet}
+  \State $\mathcal{R}_{i,t}^{(h)} \gets \{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$ \Comment{asynchronous exchange}
+  \State $\mathcal{M}_{i,t}^{(h+1)} \gets C_{\mathrm{inter}}(\mathcal{M}_{i,t}^{\mathrm{loc}},\mathcal{R}_{i,t}^{(h)};\lambda_{\mathrm{inter}})$ \Comment{inter-agent consensus}
+  \State $\mathcal{G}_t \gets \{\mathcal{M}_{i,t}^{(h+1)}:i\in\mathcal{A}\}$ \Comment{distributed global state}
+\end{algorithmic}
 \end{algorithm}
 
 \paragraph{Evidence and caveats.} Extracted results report about $0.14\,\mathrm{cm}$ ATE RMSE on Multi-Agent Replica, $40.04\,\mathrm{dB}$ PSNR, $0.02\,\mathrm{s}$ tracking, and $0.05\,\mathrm{s}$ mapping. Communication is reported as intervals rather than bytes.
@@ -229,26 +215,18 @@ The following systems are summarized as survey-level procedures over the notatio
 \caption{CoKo-SLAM}
 \label{alg:coko-slam}
 \small
-\noindent\textbf{Input:} RGB-D local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, budgets $\{b_i\}$, previous global map $\mathcal{G}_{t-1}$.\\
-\textbf{Output:} Compact globally optimized Gaussian map $\mathcal{G}_t$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate the local pose $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}$, extend $\hat{\mathbf{X}}_{i,1:t}$, and update keyframes $\mathcal{K}_{i,t}$.
-  \item Update the local map
-  $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
-  \item Select a compact packet
-  \[
-  p_{i,t}=\arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)
-  \quad\mathrm{s.t.}\quad |p|\leq b_i.
-  \]
-  \item Score packet pairs and retain candidate associations with descriptor, rendered-depth, or camera-depth support above threshold $\tau_a$.
-  \item Estimate relative transforms
-  $\Delta\mathbf{T}_{a\leftarrow b}=\arg\min_{\mathbf{T}\in SE(3)}
-  \mathcal{L}_{\mathrm{reg}}(p_{a,t},p_{b,t},\mathbf{T})$ for accepted packet pairs.
-  \item Mark discarded redundant primitives $\mathcal{D}_t=\{g\in\cup_i\mathcal{M}_{i,t}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
-  \item Define surviving primitive sets $\mathcal{U}_{i,t}=\{g\in\mathcal{M}_{i,t}:g\notin\mathcal{D}_t\}$.
-  \item Fuse compact aligned evidence as
-  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t}\mathcal{U}_{i,t}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require RGB-D local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, budgets $\{b_i\}$, previous global map $\mathcal{G}_{t-1}$
+  \Ensure Compact globally optimized Gaussian map $\mathcal{G}_t$
+  \State $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\hat{\mathbf{X}}_{i,1:t},\mathcal{K}_{i,t} \gets \tau_i(\mathcal{Z}_i^{1:t},\mathcal{M}_{i,t-1})$ \Comment{local pose and keyframes}
+  \State $\mathcal{M}_{i,t} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{local map update}
+  \State $p_{i,t} \gets \arg\max_{p\subseteq(\mathcal{K}_{i,t},\mathcal{M}_{i,t})}\operatorname{info}(p)\;\mathrm{s.t.}\; |p|\leq b_i$ \Comment{compact packet}
+  \State $\mathcal{A}_t \gets \{(a,b):\operatorname{score}(p_{a,t},p_{b,t})\geq\tau_a\}$ \Comment{supported associations}
+  \State $\Delta\mathbf{T}_{a\leftarrow b} \gets \arg\min_{\mathbf{T}\in SE(3)}\mathcal{L}_{\mathrm{reg}}(p_{a,t},p_{b,t},\mathbf{T})$ for $(a,b)\in\mathcal{A}_t$ \Comment{relative alignment}
+  \State $\mathcal{D}_t \gets \{g\in\cup_i\mathcal{M}_{i,t}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$ \Comment{redundancy set}
+  \State $\mathcal{U}_{i,t} \gets \{g\in\mathcal{M}_{i,t}:g\notin\mathcal{D}_t\}$ \Comment{surviving primitives}
+  \State $\mathcal{G}_t \gets \Psi_t(\{\mathbf{T}_{0\leftarrow i,t}\mathcal{U}_{i,t}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$ \Comment{compact global fusion}
+\end{algorithmic}
 \end{algorithm}
 
 \paragraph{Evidence and caveats.} The paper reports $85$--$95\%$ lower transmitted data, but the extracted evidence did not include absolute bandwidth. The public repository supports architectural inspection, but the available evidence is not sufficient for an independent reproducibility claim.
@@ -262,23 +240,18 @@ The following systems are summarized as survey-level procedures over the notatio
 \caption{CoMA-SLAM}
 \label{alg:coma-slam}
 \small
-\noindent\textbf{Input:} Agent observations $\{\mathcal{Z}_i^{1:t}\}$, Gaussian-surfel submaps $\{\mathcal{S}_{i,t-1}\}$, neighbor sets $\{\mathcal{N}_t(i)\}$.\\
-\textbf{Output:} Distributed globally consistent Gaussian-surfel map $\mathcal{G}^{\mathrm{surfel}}_t$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Update the Gaussian-surfel submap
-  $\mathcal{S}_{i,t}\subseteq\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
-  \item Generate intra-agent and inter-agent loop candidates between keyframes or Gaussian-surfel submaps.
-  \item Verify full candidate factors
-  $\mathcal{V}_t=\{(k,\ell,\Delta\mathbf{T}_{k\leftarrow\ell},\boldsymbol{\Omega}_{k\ell},\tau_{k\ell})\}$
-  and update $\mathcal{C}_t\leftarrow\mathcal{C}_{t-1}\cup\mathcal{V}_t$.
-  \item Exchange $p_{i,t}=\mu_i(\mathcal{S}_{i,t},\mathcal{K}_{i,t},\mathcal{C}_t;b_i)$ with neighbors $\mathcal{N}_t(i)$.
-  \item Solve the distributed keyframe/submap optimization
-  \[
-  \mathcal{Q}_t^\star=\arg\min_{\mathcal{Q}}\sum_{(k,\ell)\in\mathcal{C}_t}\rho\!\left(\|r_{k\ell}(\mathcal{Q})\|^2\right).
-  \]
-  \item Place aligned Gaussian-surfel submaps in the global state,
-  $\mathcal{G}^{\mathrm{surfel}}_t=\bigcup_i\mathcal{Q}_t^\star\mathcal{S}_{i,t}$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Agent observations $\{\mathcal{Z}_i^{1:t}\}$, Gaussian-surfel submaps $\{\mathcal{S}_{i,t-1}\}$, neighbor sets $\{\mathcal{N}_t(i)\}$
+  \Ensure Distributed globally consistent Gaussian-surfel map $\mathcal{G}^{\mathrm{surfel}}_t$
+  \State $\mathcal{S}_{i,t} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{surfel submap update}
+  \State $\mathcal{L}_t \gets \operatorname{candidates}(\mathcal{K}_{i,t},\mathcal{S}_{i,t})$ \Comment{intra/inter loops}
+  \State $\mathcal{V}_t \gets \{(k,\ell,\Delta\mathbf{T}_{k\leftarrow\ell},\boldsymbol{\Omega}_{k\ell},\tau_{k\ell})\}$ \Comment{verified factors}
+  \State $\mathcal{C}_t \gets \mathcal{C}_{t-1}\cup\mathcal{V}_t$ \Comment{constraint update}
+  \State $p_{i,t} \gets \mu_i(\mathcal{S}_{i,t},\mathcal{K}_{i,t},\mathcal{C}_t;b_i)$ \Comment{neighbor packet}
+  \State $p_{i,t} \leftrightarrow \{p_{j,t}:j\in\mathcal{N}_t(i)\}$ \Comment{distributed exchange}
+  \State $\mathcal{Q}_t^\star \gets \arg\min_{\mathcal{Q}}\sum_{(k,\ell)\in\mathcal{C}_t}\rho(\|r_{k\ell}(\mathcal{Q})\|^2)$ \Comment{keyframe/submap optimization}
+  \State $\mathcal{G}^{\mathrm{surfel}}_t \gets \bigcup_i\mathcal{Q}_t^\star\mathcal{S}_{i,t}$ \Comment{aligned surfel state}
+\end{algorithmic}
 \end{algorithm}
 
 \paragraph{Evidence and caveats.} The AAAI evidence reports improved pose/rendering/geometric consistency and a $99.8\%$ communication-bandwidth reduction claim, but exact numeric tables were not extracted. The repository was public, but no top-level license was found.
@@ -292,20 +265,17 @@ The following systems are summarized as survey-level procedures over the notatio
 \caption{HAMMER}
 \label{alg:hammer}
 \small
-\noindent\textbf{Input:} Heterogeneous packets $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$ and previous semantic map $\mathcal{G}_{t-1}$.\\
-\textbf{Output:} Metric-semantic global Gaussian map $\mathcal{G}_t$ and bounded query views $v_t(q)$.\\
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Normalize each packet as $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$.
-  \item Estimate device-to-global alignment
-  $\mathbf{A}_{0\leftarrow\ell_i}=\arg\min_{\mathbf{A}\in SE(3)}
-  \mathcal{L}_{\mathrm{align}}(\{u_{i,\tau}\}_{\tau\leq t},\mathcal{G}_{t-1},\mathbf{A})$.
-  \item Transform observations into the global frame,
-  $\tilde{z}_{i,t}=\mathbf{A}_{0\leftarrow\ell_i}\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}z_{i,t}$.
-  \item Associate $\tilde{z}_{i,t}$ with supported primitives $g_k$ or initialize new metric-semantic Gaussians.
-  \item Update $(g_k,\mathbf{h}_k,\pi_k)$ and compute
-  $\mathcal{G}_t=\Psi_t(\mathcal{G}_{t-1},\{\tilde{z}_{i,t}\},\mathcal{C}_t,\mathcal{P}_t)$.
-  \item Answer a bounded query view $v_t(q)=Q(\mathcal{G}_t,q)$ over geometry, semantics, or provenance.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Heterogeneous packets $u_{i,t}=(z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$ and previous semantic map $\mathcal{G}_{t-1}$
+  \Ensure Metric-semantic global Gaussian map $\mathcal{G}_t$ and bounded query views $v_t(q)$
+  \State $u_{i,t} \gets (z_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},e_{i,t},\xi_i)$ \Comment{normalized packet}
+  \State $\mathbf{A}_{0\leftarrow\ell_i} \gets \arg\min_{\mathbf{A}\in SE(3)}\mathcal{L}_{\mathrm{align}}(\{u_{i,\tau}\}_{\tau\leq t},\mathcal{G}_{t-1},\mathbf{A})$ \Comment{device alignment}
+  \State $\tilde{z}_{i,t} \gets \mathbf{A}_{0\leftarrow\ell_i}\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}z_{i,t}$ \Comment{global-frame observation}
+  \State $a_{i,t} \gets \operatorname{associate}(\tilde{z}_{i,t},\mathcal{G}_{t-1})$ \Comment{supported primitives}
+  \State $(g_k,\mathbf{h}_k,\pi_k) \gets \operatorname{update}(a_{i,t},\tilde{z}_{i,t},e_{i,t})$ \Comment{semantic Gaussian update}
+  \State $\mathcal{G}_t \gets \Psi_t(\mathcal{G}_{t-1},\{\tilde{z}_{i,t}\},\mathcal{C}_t,\mathcal{P}_t)$ \Comment{server map update}
+  \State $v_t(q) \gets Q(\mathcal{G}_t,q)$ \Comment{bounded query view}
+\end{algorithmic}
 \end{algorithm}
 
 \paragraph{Evidence and caveats.} Reported evidence includes Replica PSNR around $37.28\,\mathrm{dB}$, online updates around $15$--$38\,\mathrm{ms/frame}$, alignment around $36\,\mathrm{s}$ per new robot, and $30$--$35\,\mathrm{Mbps}$ per device in hardware tests. No public implementation was found.
@@ -319,21 +289,16 @@ The following systems are summarized as survey-level procedures over the notatio
 \caption{GRAND-SLAM}
 \label{alg:grand-slam}
 \small
-\noindent\textbf{Input:} RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, active Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, loop-candidate database.\\
-\textbf{Output:} Globally consistent Gaussian reconstruction $\mathcal{G}_t$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate frame-to-submap pose
-  $\hat{\mathbf{T}}_{\mathcal{B}_i^m\leftarrow i,t}=\arg\min_{\mathbf{T}\in SE(3)}
-  \mathcal{L}_{\mathrm{rgbd}}(z_{i,t},\mathrm{render}(\mathcal{B}_{i}^{m},\mathbf{T}))$.
-  \item Spawn $\mathcal{B}_{i}^{m+1}$ when drift, spatial extent, or support-frame count exceeds the submap threshold.
-  \item Optimize the active Gaussian submap
-  $\mathcal{B}_{i}^{m}\leftarrow\arg\min_{\mathcal{B}}\sum_{z\in\mathcal{K}_{i,t}^{m}}
-  \mathcal{L}_{\mathrm{rgbd}}(z,\mathrm{render}(\mathcal{B}))$.
-  \item Detect and verify intra-robot and inter-robot loop closures between Gaussian submaps or keyframes.
-  \item Solve the submap pose graph with $\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t$ to obtain $\{\mathbf{P}_v^\star\}$.
-  \item Compose the globally consistent reconstruction
-  $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require RGB-D streams $\{\mathcal{Z}_i^{1:t}\}$, active Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, loop-candidate database
+  \Ensure Globally consistent Gaussian reconstruction $\mathcal{G}_t$
+  \State $\hat{\mathbf{T}}_{\mathcal{B}_i^m\leftarrow i,t} \gets \arg\min_{\mathbf{T}\in SE(3)}\mathcal{L}_{\mathrm{rgbd}}(z_{i,t},\mathrm{render}(\mathcal{B}_{i}^{m},\mathbf{T}))$ \Comment{frame-to-submap pose}
+  \State $\mathcal{B}_{i}^{m+1} \gets \operatorname{spawn}(\mathcal{B}_{i}^{m})$ if drift, extent, or support exceeds threshold \Comment{submap split}
+  \State $\mathcal{B}_{i}^{m} \gets \arg\min_{\mathcal{B}}\sum_{z\in\mathcal{K}_{i,t}^{m}}\mathcal{L}_{\mathrm{rgbd}}(z,\mathrm{render}(\mathcal{B}))$ \Comment{active submap optimization}
+  \State $\mathcal{C}_t \gets \operatorname{verify}(\text{intra/inter loop candidates})$ \Comment{loop closures}
+  \State $\{\mathbf{P}_v^\star\} \gets \operatorname{PGO}(\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t)$ \Comment{submap pose graph}
+  \State $\mathcal{G}_t \gets \bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$ \Comment{global reconstruction}
+\end{algorithmic}
 \end{algorithm}
 
 \paragraph{Evidence and caveats.} Extracted results include Multiagent Replica ATE around $0.25\,\mathrm{cm}$ and Kimera-Multi Outdoor six-agent evaluation over about $1.85\,\mathrm{km}$ with average ATE around $4.99\,\mathrm{m}$ \citep{tian2023kimera_multi}. No public code was found in the research pass.
@@ -347,22 +312,18 @@ The following systems are summarized as survey-level procedures over the notatio
 \caption{MAGS-SLAM}
 \label{alg:mags-slam}
 \small
-\noindent\textbf{Input:} Monocular RGB streams $\{\mathcal{Z}_i^{1:t}\}$, local maps $\{\mathcal{M}_{i,t-1}\}$, Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, compact-summary budget $b_i$.\\
-\textbf{Output:} Scale-aligned collaborative global Gaussian map $\mathcal{G}_t$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate monocular pose $\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}$ and scale $\lambda_{i,t}\in\mathbb{R}_{+}$, then extend $\hat{\mathbf{X}}_{i,1:t}$.
-  \item Update the local map
-  $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$,
-  and refresh the active Gaussian submap $\mathcal{B}_{i}^{m}\subseteq\mathcal{M}_{i,t}$.
-  \item Select a compact summary
-  $p_{i,t}=\mu_i(\mathcal{B}_{i}^{m},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$.
-  \item Retain cross-agent candidates whose geometric, appearance, and occupancy evidence passes verification.
-  \item Estimate scale-aware alignment
-  $(\lambda_i^\star,\Delta\mathbf{T}_{a\leftarrow b}^\star)=\arg\min_{\lambda\in\mathbb{R}_{+},\mathbf{T}\in SE(3)}
-  \mathcal{L}_{\mathrm{mono}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$.
-  \item Fuse aligned Gaussian submaps with occupancy evidence,
-  $\mathcal{G}_t=F_{\mathrm{occ}}(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{B}_{i}^{m}\}_i,\mathcal{O}_{t-1})$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Monocular RGB streams $\{\mathcal{Z}_i^{1:t}\}$, local maps $\{\mathcal{M}_{i,t-1}\}$, Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, compact-summary budget $b_i$
+  \Ensure Scale-aligned collaborative global Gaussian map $\mathcal{G}_t$
+  \State $(\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},\lambda_{i,t}) \gets \tau_i(\mathcal{Z}_i^{1:t},\mathcal{M}_{i,t-1})$ \Comment{monocular pose and scale}
+  \State $\hat{\mathbf{X}}_{i,1:t} \gets \hat{\mathbf{X}}_{i,1:t-1}\cup\{\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}\}$ \Comment{trajectory extension}
+  \State $\mathcal{M}_{i,t} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{local map update}
+  \State $\mathcal{B}_{i}^{m} \subseteq \mathcal{M}_{i,t}$ \Comment{active submap refresh}
+  \State $p_{i,t} \gets \mu_i(\mathcal{B}_{i}^{m},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ \Comment{compact summary}
+  \State $\mathcal{A}_t \gets \operatorname{verify}(p_{a,t},p_{b,t};\text{geometry, appearance, occupancy})$ \Comment{accepted candidates}
+  \State $(\lambda_i^\star,\Delta\mathbf{T}_{a\leftarrow b}^\star) \gets \arg\min_{\lambda\in\mathbb{R}_{+},\mathbf{T}\in SE(3)}\mathcal{L}_{\mathrm{mono}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$ \Comment{scale-aware alignment}
+  \State $\mathcal{G}_t \gets F_{\mathrm{occ}}(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{B}_{i}^{m}\}_i,\mathcal{O}_{t-1})$ \Comment{occupancy-aware fusion}
+\end{algorithmic}
 \end{algorithm}
 
 \paragraph{Evidence and caveats.} MAGS-SLAM is the leading claimed monocular multi-agent 3DGS SLAM direction in this set, but available evidence is project-page/arXiv-stage. Code and data were reported as release-upon-acceptance, so runtime and bandwidth claims remain provisional.
@@ -391,20 +352,17 @@ Central-server systems place most of $\alpha_t$ and $\Psi_t$ on a global mapper.
 \caption{Central-server submap and Gaussian fusion pattern}
 \label{alg:taxonomy-central-server}
 \small
-\noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}\}$, local trajectories $\{\hat{\mathbf{X}}_{i,1:t}\}$, packets $\{p_{i,t}\}$, previous server-side global map $\mathcal{G}_{t-1}$.\\
-\textbf{Output:} Server-side global Gaussian map $\mathcal{G}_t$ and global-frame agent transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Compute local updates $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
-  \item Transmit bounded packets $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ to the server.
-  \item Estimate cross-agent constraints
-  $\mathcal{C}_t=\alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ by loop closure, rendered-depth alignment, camera-depth alignment, or heterogeneous registration.
-  \item Optimize global-frame Gaussian-submap or device transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$ from $\mathcal{C}_t$ and odometry factors.
-  \item Mark redundant primitives for exclusion,
-  $\mathcal{D}_t=\{g\in\cup_i\mathcal{M}_{i,t_i}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$.
-  \item Define surviving aligned primitive sets $\mathcal{U}_{i,t_i}=\{g\in\mathcal{M}_{i,t_i}:g\notin\mathcal{D}_t\}$.
-  \item Fuse aligned nonredundant geometry, appearance, and optional semantics into
-  $\mathcal{G}_t=\Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{U}_{i,t_i}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Local maps $\{\mathcal{M}_{i,t}\}$, trajectories $\{\hat{\mathbf{X}}_{i,1:t}\}$, packets $\{p_{i,t}\}$, previous global map $\mathcal{G}_{t-1}$
+  \Ensure Server-side global Gaussian map $\mathcal{G}_t$ and transforms $\{\mathbf{T}_{0\leftarrow i,t}\}$
+  \State $\mathcal{M}_{i,t} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{local update}
+  \State $p_{i,t} \gets \mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ \Comment{bounded upload}
+  \State $\mathcal{C}_t \gets \alpha_t(\{p_{i,t_i}\}_{i\in\mathcal{A}})$ \Comment{cross-agent constraints}
+  \State $\{\mathbf{T}_{0\leftarrow i,t}\} \gets \operatorname{optimize}(\mathcal{C}_t,\mathcal{E}^{\mathrm{odom}}_t)$ \Comment{global-frame transforms}
+  \State $\mathcal{D}_t \gets \{g\in\cup_i\mathcal{M}_{i,t_i}:\operatorname{overlap}(g,\mathcal{G}_{t-1})>\tau_o\}$ \Comment{redundancy filter}
+  \State $\mathcal{U}_{i,t_i} \gets \{g\in\mathcal{M}_{i,t_i}:g\notin\mathcal{D}_t\}$ \Comment{surviving evidence}
+  \State $\mathcal{G}_t \gets \Psi_t(\{\mathbf{T}_{0\leftarrow i,t_i}\mathcal{U}_{i,t_i}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$ \Comment{server fusion}
+\end{algorithmic}
 \end{algorithm}
 
 The advantage of this pattern is a coherent global optimization point. Server-side fusion can compare packets across agents, remove duplicate primitives, and maintain a single $\mathcal{G}_t$. The cost is that merge latency, memory, bandwidth, and single-server availability become first-order variables. MAGiC-SLAM's reported global merge time illustrates this cost, while HAMMER's hardware results are unusually explicit about per-device Mbps streams. Available ablation evidence is mostly about loop closure, alignment, compaction, or baseline comparisons rather than a complete systems ablation over bandwidth and agent count.
@@ -417,19 +375,16 @@ Distributed Gaussian consensus keeps every $\mathcal{M}_{i,t}$ active and uses p
 \caption{Distributed Gaussian consensus pattern}
 \label{alg:taxonomy-distributed-consensus}
 \small
-\noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}^{(h)}\}$, communication graph $\mathcal{H}_t$, neighbor packets $\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$.\\
-\textbf{Output:} Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and distributed global state $\mathcal{G}_t$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Update local Gaussian or Gaussian-surfel state
-  $\mathcal{M}_{i,t}^{(h)}\leftarrow\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
-  \item Regularize local primitives or submaps by
-  $\bar{\mathcal{M}}_{i,t}^{(h)}=C_{\mathrm{intra}}(\mathcal{M}_{i,t}^{(h)};\lambda_{\mathrm{intra}})$.
-  \item Select $p_{i,t}^{(h)}=\mu_i(\bar{\mathcal{M}}_{i,t}^{(h)},\mathcal{C}_t,h;b_i)$.
-  \item Exchange packets with neighbors $\mathcal{N}_t(i)$ under the asynchronous schedule on $\mathcal{H}_t$.
-  \item Estimate pairwise alignments or consensus factors and update the local constraint view $\mathcal{C}_{i,t}$.
-  \item Compute
-  $\mathcal{M}_{i,t}^{(h+1)}=C_{\mathrm{inter}}(\bar{\mathcal{M}}_{i,t}^{(h)},\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\};\lambda_{\mathrm{inter}})$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Local maps $\{\mathcal{M}_{i,t}^{(h)}\}$, graph $\mathcal{H}_t$, neighbor packets $\{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$
+  \Ensure Consensus-refined local maps $\{\mathcal{M}_{i,t}^{(h+1)}\}$ and distributed global state $\mathcal{G}_t$
+  \State $\mathcal{M}_{i,t}^{(h)} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{local Gaussian state}
+  \State $\bar{\mathcal{M}}_{i,t}^{(h)} \gets C_{\mathrm{intra}}(\mathcal{M}_{i,t}^{(h)};\lambda_{\mathrm{intra}})$ \Comment{local regularization}
+  \State $p_{i,t}^{(h)} \gets \mu_i(\bar{\mathcal{M}}_{i,t}^{(h)},\mathcal{C}_t,h;b_i)$ \Comment{scheduled packet}
+  \State $\mathcal{R}_{i,t}^{(h)} \gets \{p_{j,t}^{(h)}:j\in\mathcal{N}_t(i)\}$ \Comment{neighbor exchange}
+  \State $\mathcal{C}_{i,t} \gets \alpha_t(p_{i,t}^{(h)},\mathcal{R}_{i,t}^{(h)})$ \Comment{local constraint view}
+  \State $\mathcal{M}_{i,t}^{(h+1)} \gets C_{\mathrm{inter}}(\bar{\mathcal{M}}_{i,t}^{(h)},\mathcal{R}_{i,t}^{(h)};\lambda_{\mathrm{inter}})$ \Comment{consensus update}
+\end{algorithmic}
 \end{algorithm}
 
 This pattern reduces dependence on a single fusion server and can naturally support asynchronous collaboration. Its hard problems are convergence, conflict resolution, duplicate primitive handling, stale packets, and communication scheduling. Reported evidence supports strong tracking/rendering for MAC-Ego3D and large relative communication reductions for CoMA-SLAM, but byte-level communication, stale-update, and failure-mode ablations remain sparse in the available evidence.
@@ -442,22 +397,17 @@ Submap-plus-pose-graph systems treat dense Gaussian maps as local products whose
 \caption{Submap-plus-pose-graph consistency pattern}
 \label{alg:taxonomy-submap-pose-graph}
 \small
-\noindent\textbf{Input:} Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, odometry factors $\mathcal{E}^{\mathrm{odom}}_t$, loop candidates, previous Gaussian-submap poses $\{\mathbf{P}_v\}$.\\
-\textbf{Output:} Globally consistent Gaussian-submap placement and global map $\mathcal{G}_t$.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate observation-to-submap poses and create a new Gaussian-submap node when drift or support exceeds threshold.
-  \item Optimize each active Gaussian submap
-  $\mathcal{B}_{i}^{m}\leftarrow\arg\min_{\mathcal{B}}\sum_{z\in\mathcal{K}_{i,t}^{m}}
-  \mathcal{L}_{\mathrm{rgbd}}(z,\mathrm{render}(\mathcal{B}))$.
-  \item Verify intra-agent and inter-agent loop closures and add relative-pose constraints to $\mathcal{C}_t$.
-  \item Build the pose graph $(\mathcal{V}_t^{\mathrm{pg}},\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t)$ over Gaussian-submap poses.
-  \item Solve
-  \[
-  \{\mathbf{P}_v^\star\}=\arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t}
-  \rho\!\left(\|r_e(\{\mathbf{P}_v\})\|_{\boldsymbol{\Omega}_e}^{2}\right).
-  \]
-  \item Compose $\mathcal{G}_t=\bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$ after overlap reconciliation.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Gaussian submaps $\{\mathcal{B}_{i}^{m}\}$, odometry factors $\mathcal{E}^{\mathrm{odom}}_t$, loop candidates, previous poses $\{\mathbf{P}_v\}$
+  \Ensure Globally consistent Gaussian-submap placement and global map $\mathcal{G}_t$
+  \State $\hat{\mathbf{T}}_{\mathcal{B}\leftarrow i,t} \gets \tau_i(z_{i,t},\mathcal{B}_{i}^{m})$ \Comment{observation-to-submap pose}
+  \State $\mathcal{B}_{i}^{m+1} \gets \operatorname{spawn}(\mathcal{B}_{i}^{m})$ if drift or support exceeds threshold \Comment{submap node creation}
+  \State $\mathcal{B}_{i}^{m} \gets \arg\min_{\mathcal{B}}\sum_{z\in\mathcal{K}_{i,t}^{m}}\mathcal{L}_{\mathrm{rgbd}}(z,\mathrm{render}(\mathcal{B}))$ \Comment{submap optimization}
+  \State $\mathcal{C}_t \gets \operatorname{verify}(\text{intra/inter loop closures})$ \Comment{relative-pose constraints}
+  \State $(\mathcal{V}_t^{\mathrm{pg}},\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t) \gets \operatorname{graph}(\{\mathcal{B}_{i}^{m}\})$ \Comment{pose graph}
+  \State $\{\mathbf{P}_v^\star\} \gets \arg\min_{\{\mathbf{P}_v\}}\sum_{e\in\mathcal{E}^{\mathrm{odom}}_t\cup\mathcal{C}_t}\rho(\|r_e(\{\mathbf{P}_v\})\|_{\boldsymbol{\Omega}_e}^{2})$ \Comment{global consistency}
+  \State $\mathcal{G}_t \gets \bigcup_v\mathbf{P}_v^\star\mathcal{B}_v$ \Comment{overlap-reconciled map}
+\end{algorithmic}
 \end{algorithm}
 
 The strength of this pattern is that it reuses a mature SLAM abstraction: dense maps can remain local while global corrections act through $\mathbf{P}_v^\star$. The main risk is that a corrected pose graph does not by itself remove duplicate or inconsistent Gaussian primitives. A useful ablation surface is loop closure: GRAND-SLAM reports weaker results without loop closure, which supports the claim that cross-agent consistency factors, not only local photometric mapping, drive the large-scale result.
@@ -470,19 +420,17 @@ Compact communication appears in both RGB-D and monocular systems, but it become
 \caption{Compact communication and monocular submap fusion pattern}
 \label{alg:taxonomy-compact-monocular}
 \small
-\noindent\textbf{Input:} Local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, optional scale hypotheses $\{\lambda_{i,t}\}$, packet budgets $\{b_i\}$.\\
-\textbf{Output:} Bandwidth-limited global map $\mathcal{G}_t$ and verified cross-agent alignments.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Estimate local poses $\hat{\mathbf{X}}_{i,1:t}$ and monocular scale hypotheses $\lambda_{i,t}\in\mathbb{R}_{+}$.
-  \item Update local maps $\mathcal{M}_{i,t}=\phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$.
-  \item Score candidate keyframes, Gaussian submaps, descriptors, and primitives by $\operatorname{info}(\cdot)$ under budget $b_i$.
-  \item Select $p_{i,t}=\mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ rather than dense observations.
-  \item Verify packet pairs with geometry, appearance, rendered depth, camera depth, or occupancy residuals.
-  \item Estimate rigid or scale-aware transforms
-  $(\lambda_i^\star,\Delta\mathbf{T}_{a\leftarrow b}^\star)=\arg\min_{\lambda\in\mathbb{R}_{+},\mathbf{T}\in SE(3)}\mathcal{L}_{\mathrm{align}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$.
-  \item Fuse accepted nonredundant evidence into
-  $\mathcal{G}_t=\Psi_t(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Local maps $\{\mathcal{M}_{i,t}\}$, keyframes $\{\mathcal{K}_{i,t}\}$, scale hypotheses $\{\lambda_{i,t}\}$, packet budgets $\{b_i\}$
+  \Ensure Bandwidth-limited global map $\mathcal{G}_t$ and verified cross-agent alignments
+  \State $(\hat{\mathbf{X}}_{i,1:t},\lambda_{i,t}) \gets \tau_i(\mathcal{Z}_i^{1:t},\mathcal{M}_{i,t-1})$ \Comment{local pose and scale}
+  \State $\mathcal{M}_{i,t} \gets \phi_i(\mathcal{Z}_i^{1:t},\hat{\mathbf{X}}_{i,1:t},\mathcal{P}_{i,t})$ \Comment{local map}
+  \State $s(x) \gets \operatorname{info}(x)$ for $x\in\mathcal{K}_{i,t}\cup\mathcal{M}_{i,t}$ \Comment{packet scoring}
+  \State $p_{i,t} \gets \mu_i(\mathcal{M}_{i,t},\mathcal{K}_{i,t},\hat{\mathbf{X}}_{i,1:t};b_i)$ \Comment{compact evidence}
+  \State $\mathcal{A}_t \gets \operatorname{verify}(p_{a,t},p_{b,t})$ \Comment{geometry/appearance checks}
+  \State $(\lambda_i^\star,\Delta\mathbf{T}_{a\leftarrow b}^\star) \gets \arg\min_{\lambda\in\mathbb{R}_{+},\mathbf{T}\in SE(3)}\mathcal{L}_{\mathrm{align}}(p_{a,t},p_{b,t},\lambda,\mathbf{T})$ \Comment{scale-aware transform}
+  \State $\mathcal{G}_t \gets \Psi_t(\{\lambda_i^\star\mathbf{T}_{0\leftarrow i,t}\mathcal{M}_{i,t}\}_{i\in\mathcal{A}},\mathcal{C}_t,\mathcal{P}_t)$ \Comment{accepted fusion}
+\end{algorithmic}
 \end{algorithm}
 
 The tradeoff is between informativeness and bandwidth. Small packets help online operation, but if $p_{i,t}$ omits the wrong geometry, appearance, or occupancy evidence, $\alpha_t$ cannot reliably recover the transform. Monocular systems add scale ambiguity, so the alignment problem includes both rigid transform and scale hypotheses. CoKo-SLAM reports large relative transmission reductions; MAGS-SLAM is important architecturally but its code/data and quantitative communication evidence remain provisional in the sources used here.
@@ -495,18 +443,17 @@ HAMMER expands the global map from geometry and radiance to metric-semantic scen
 \caption{Heterogeneous semantic global Gaussian mapping pattern}
 \label{alg:taxonomy-heterogeneous-semantic}
 \small
-\noindent\textbf{Input:} Heterogeneous streams $\{z_{i,t}^{\mathrm{het}}\}$, local SLAM poses $\{\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}\}$, semantic descriptors $\{e_{i,t}\}$, previous semantic map $\mathcal{G}_{t-1}$.\\
-\textbf{Output:} Metric-semantic global map $\mathcal{G}_t$ with provenance-aware query views.
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Encode heterogeneous observations as $z_{i,t}^{\mathrm{het}}=(I_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},d_{i,t},e_{i,t},\xi_i)$.
-  \item Estimate device-to-global alignments
-  $\mathbf{A}_{0\leftarrow\ell_i}=\arg\min_{\mathbf{A}\in SE(3)}
-  \mathcal{L}_{\mathrm{het}}(\{z_{i,\tau}^{\mathrm{het}}\}_{\tau\leq t},\mathcal{G}_{t-1},\mathbf{A})$.
-  \item Transform observations into $\mathcal{F}_0$ and associate them with supported primitives or new candidates.
-  \item Update $(\boldsymbol{\mu}_k,\mathbf{R}_k,\mathbf{s}_k,o_k,\mathbf{c}_k,\mathbf{h}_k,\pi_k)$ for associated primitives.
-  \item Prune, merge, or retain conflicting primitive evidence by uncertainty, source support, and semantic consistency.
-  \item Return bounded views $v_t(q)=Q(\mathcal{G}_t,q)$ over $\mathcal{G}_t$.
-\end{enumerate}
+\begin{algorithmic}[1]
+  \Require Heterogeneous streams $\{z_{i,t}^{\mathrm{het}}\}$, local poses $\{\hat{\mathbf{T}}_{\ell_i\leftarrow i,t}\}$, descriptors $\{e_{i,t}\}$, previous semantic map $\mathcal{G}_{t-1}$
+  \Ensure Metric-semantic global map $\mathcal{G}_t$ with provenance-aware query views
+  \State $z_{i,t}^{\mathrm{het}} \gets (I_{i,t},\hat{\mathbf{T}}_{\ell_i\leftarrow i,t},d_{i,t},e_{i,t},\xi_i)$ \Comment{heterogeneous encoding}
+  \State $\mathbf{A}_{0\leftarrow\ell_i} \gets \arg\min_{\mathbf{A}\in SE(3)}\mathcal{L}_{\mathrm{het}}(\{z_{i,\tau}^{\mathrm{het}}\}_{\tau\leq t},\mathcal{G}_{t-1},\mathbf{A})$ \Comment{device alignment}
+  \State $\tilde{z}_{i,t} \gets \mathbf{A}_{0\leftarrow\ell_i}z_{i,t}^{\mathrm{het}}$ \Comment{global-frame packet}
+  \State $a_{i,t} \gets \operatorname{associate}(\tilde{z}_{i,t},\mathcal{G}_{t-1})$ \Comment{supported primitives}
+  \State $(\boldsymbol{\mu}_k,\mathbf{R}_k,\mathbf{s}_k,o_k,\mathbf{c}_k,\mathbf{h}_k,\pi_k) \gets \operatorname{update}(a_{i,t},e_{i,t})$ \Comment{metric-semantic update}
+  \State $\mathcal{G}_t \gets \operatorname{resolve}(\mathcal{G}_{t-1},a_{i,t};\text{uncertainty, support, semantics})$ \Comment{conflict handling}
+  \State $v_t(q) \gets Q(\mathcal{G}_t,q)$ \Comment{bounded view}
+\end{algorithmic}
 \end{algorithm}
 
 This pattern is attractive because robot teams rarely have identical sensors or roles. A global map that contains semantics, source provenance, and queryable local evidence can support navigation, inspection, and human-robot interaction more directly than a purely photometric reconstruction. The open ablation surface is correspondingly broader: papers need to isolate the value of semantic descriptors, frame-alignment design, device heterogeneity, and communication choices rather than reporting only rendering quality or depth error.
