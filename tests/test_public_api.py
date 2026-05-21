@@ -15,6 +15,7 @@ from mosaic import (
     InMemorySequence,
     LocalRadiusQuery,
     PlatformRegistry,
+    PosteriorUncertaintySummary,
     ProvenancePreservingFusion,
     RegressionGate,
     SplatMap,
@@ -89,6 +90,41 @@ def test_readme_locks_real_backend_integration_block() -> None:
 def test_public_api_exports_agent_types() -> None:
     view = SplatPosteriorView(SplatMap(frame=FrameId("map")))
     query = LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=1.0)
+    uncertainty = PosteriorUncertaintySummary(splat_count=0)
 
     assert query.kind is AgentQueryKind.LOCAL_GEOMETRY
+    assert AgentQueryKind.UNCERTAINTY.value == "uncertainty"
     assert view.query_local(query).count == 0
+    assert uncertainty.semantics == "descriptive_only"
+    assert PosteriorUncertaintySummary.__name__ == "PosteriorUncertaintySummary"
+
+
+def test_readme_locks_bounded_posterior_view_boundary() -> None:
+    readme = Path("README.md").read_text()
+    readme_lower = readme.casefold()
+
+    assert "bounded descriptive posterior views" in readme
+    assert "descriptive_only" in readme
+    assert "not representation memories" in readme
+    assert "Phase 7" in readme
+    assert "LocalRadiusQuery" in readme
+    assert "max_results" in readme
+    assert "total_matches" in readme
+    assert "truncated" in readme
+    forbidden_as_implemented = (
+        "implemented phase 6 scene graph memory",
+        "implemented phase 6 spatial memory",
+        "implemented phase 6 raster memory",
+        "implemented phase 6 textual memory",
+        "implemented phase 6 belief store",
+        "implemented phase 6 provenance store",
+        "implemented phase 6 commitment memory",
+        "implemented phase 6 navigation tool",
+        "implemented phase 6 perception tool",
+        "implemented phase 6 coordination tool",
+        "implemented phase 6 provider wrapper",
+        "implemented phase 6 robot execution",
+        "implemented phase 6 spatial indexing",
+        "implemented phase 6 real backend",
+    )
+    assert all(phrase not in readme_lower for phrase in forbidden_as_implemented)

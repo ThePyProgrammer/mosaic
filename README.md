@@ -51,7 +51,7 @@ Public imports are exposed from explicit package surfaces. The root `mosaic` pac
 | `mosaic.platforms` | Robot-neutral platform descriptions and camera rigs | `CameraRig`, `PlatformRegistry`, `quadruped_front_rig`, `ugv_surround_rig`, `humanoid_stereo_rig` |
 | `mosaic.fusion` | Splat-map fusion contracts and deterministic reference strategy | `FusionInput`, `FusionResult`, `FusionStatus`, `FusionProvenanceSummary`, `FusionUncertaintySummary`, `FusionConflictSummary`, `ProvenancePreservingFusion` |
 | `mosaic.evaluation` | Synthetic scenarios, benchmark artifacts, metric families, regression gates, and readiness checks | `synthetic_forward_sequence`, `run_slam_benchmark`, `FailureClass`, `RegressionGate`, `evaluation_ready_for_real_backend`, `write_benchmark_artifacts_jsonl` |
-| `mosaic.agents` | Provider-free bounded posterior query contracts | `LocalRadiusQuery`, `SplatQueryResult`, `PosteriorSummary`, `ProvenanceSummary`, `SplatPosteriorView` |
+| `mosaic.agents` | Provider-free bounded descriptive posterior views over immutable splat snapshots | `AgentQueryKind.UNCERTAINTY`, `LocalRadiusQuery`, `SplatQueryResult`, `PosteriorSummary`, `PosteriorUncertaintySummary`, `ProvenanceSummary`, `SplatPosteriorView.uncertainty()` |
 
 Root imports are intended for concise examples and user-facing smoke checks:
 
@@ -141,12 +141,16 @@ splat_map = SplatMap(
     ),
 )
 view = SplatPosteriorView(splat_map)
-nearby = view.query_local(LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=1.0))
+nearby = view.query_local(LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=1.0, max_results=8))
 summary = view.summary()
+uncertainty = view.uncertainty()
 provenance = view.provenance()
 
 assert nearby.count == 1
+assert nearby.total_matches == 1
+assert nearby.truncated is False
 assert summary.splat_count == 1
+assert uncertainty.semantics == "descriptive_only"
 assert provenance.counts == {"front-camera": 1}
 ```
 
@@ -159,6 +163,8 @@ real 3DGS backend integration remains blocked until deterministic evaluation gat
 `DeterministicSplatBackend` is a deterministic reference backend for contract tests, examples, replay validation, and benchmark smoke checks. It is not a real 3D Gaussian Splatting optimizer.
 
 `ProvenancePreservingFusion` is a provenance-preserving contract strategy. It validates compatible map inputs, preserves and diagnoses splats, reports the stable machine-readable label `preserved_not_optimized`, does not optimize Gaussians, and does not collapse overlapping splats into occupancy-grid cells. It is not real Gaussian optimization, calibrated uncertainty minimization, loop closure, map alignment, or multi-session reconstruction.
+
+Agent posterior APIs provide bounded descriptive posterior views over immutable `SplatMap` snapshots. Their uncertainty summaries use `descriptive_only` semantics and are not representation memories, tool facades, provider wrappers, robot execution paths, spatial indexes, or real backend behavior; those Phase 7 representation memories/tools remain planned as separate contracts.
 
 The following remain deferred, not required for Phase 1, and out of scope for the core setup path:
 
@@ -180,7 +186,7 @@ Mosaic intentionally leaves several hardening tracks for later phases:
 - backend registry metadata, availability checks, optional dependency reporting, and parametrized contract tests are not complete
 - fusion diagnostics need richer uncertainty, conflict, and anti-occupancy-grid semantics beyond the initial reference strategy
 - future production backend work must keep passing deterministic lifecycle, trajectory, map-fusion, and agent-query evaluation gates before integration
-- agent posterior APIs need richer uncertainty summaries and repeated-query determinism coverage before representation memory layers are added
-- ARNA-informed spatial, scene-graph, text, belief/provenance, commitment, and tool-memory APIs are planned but not part of this baseline
+- agent posterior APIs now provide bounded descriptive posterior views with request-limited local results, truncation metadata, descriptive uncertainty summaries, and repeated-query determinism coverage; Phase 7 representation memories/tools remain planned separately
+- ARNA-informed representation-memory and deterministic tool APIs are planned but not part of this baseline
 
 The cranky version: Phase 1 gives us a usable typed contract baseline, not magic robotic autonomy. That is a feature, not a bug.

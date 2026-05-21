@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from mosaic.agents import AgentQueryKind, LocalRadiusQuery, SplatPosteriorView
 from mosaic.core import FrameId
 from mosaic.splats import GaussianSplat, SplatMap
@@ -81,6 +83,60 @@ def test_uncertainty_returns_global_descriptive_statistics() -> None:
     assert uncertainty.mean_opacity == 0.583333
     assert uncertainty.min_opacity == 0.25
     assert uncertainty.max_opacity == 1.0
+
+
+def test_repeated_posterior_queries_return_exactly_equal_values() -> None:
+    view = SplatPosteriorView(_map())
+    local_query = LocalRadiusQuery(
+        center=(0.0, 0.0, 0.0),
+        radius=10.0,
+        max_results=2,
+    )
+
+    first_local = view.query_local(local_query)
+    second_local = view.query_local(local_query)
+    assert first_local == second_local
+    assert first_local.splat_ids == (0, 1)
+    assert first_local.count == 2
+    assert first_local.total_matches == 3
+    assert first_local.truncated is True
+
+    first_summary = view.summary()
+    second_summary = view.summary()
+    assert first_summary == second_summary
+    assert first_summary.mean_opacity == 0.583333
+
+    first_uncertainty = view.uncertainty()
+    second_uncertainty = view.uncertainty()
+    assert first_uncertainty == second_uncertainty
+    assert first_uncertainty.mean_covariance_diagonal == (0.2, 0.2, 0.2)
+    assert first_uncertainty.max_covariance_diagonal == (0.3, 0.3, 0.3)
+    assert first_uncertainty.mean_opacity == 0.583333
+    assert first_uncertainty.min_opacity == 0.25
+    assert first_uncertainty.max_opacity == 1.0
+
+    first_provenance = view.provenance()
+    second_provenance = view.provenance()
+    assert first_provenance == second_provenance
+    assert first_provenance.counts == {"front": 2, "rear": 1}
+    assert tuple(first_provenance.counts) == ("front", "rear")
+    with pytest.raises(TypeError):
+        first_provenance.counts["front"] = 99  # type: ignore[index]
+
+    aggregate_only_keys = set(first_provenance.counts)
+    assert aggregate_only_keys == {"front", "rear"}
+    forbidden_provenance_keys = {
+        "evidence",
+        "examples",
+        "source_uncertainty",
+        "confidence",
+        "status",
+        "timestamp",
+        "staleness",
+        "memory_id",
+        "claim",
+    }
+    assert aggregate_only_keys.isdisjoint(forbidden_provenance_keys)
 
 
 def test_agent_posterior_boundary_stays_provider_free() -> None:

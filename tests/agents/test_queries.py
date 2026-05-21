@@ -155,12 +155,14 @@ def test_agents_exports_public_query_and_result_types() -> None:
     import mosaic.agents as agents
 
     assert agents.AgentQueryKind is AgentQueryKind
+    assert agents.AgentQueryKind.UNCERTAINTY is AgentQueryKind.UNCERTAINTY
     assert agents.LocalRadiusQuery is LocalRadiusQuery
     assert agents.PosteriorSummary is PosteriorSummary
     assert agents.PosteriorUncertaintySummary is PosteriorUncertaintySummary
     assert agents.ProvenanceSummary is ProvenanceSummary
     assert agents.SplatPosteriorView is SplatPosteriorView
     assert agents.SplatQueryResult is SplatQueryResult
+    assert "PosteriorUncertaintySummary" in agents.__all__
     assert set(agents.__all__) >= {
         "AgentQueryKind",
         "LocalRadiusQuery",
