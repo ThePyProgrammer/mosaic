@@ -393,22 +393,19 @@ Source: Phase 7 requires supplied timestamp stale transitions and existing `Time
 | A3 | Full dumps are easier than family-specific bounded result shapes. | Common Pitfalls | If wrong, no impact; bounded result shapes remain required. |
 | A4 | ARNA inspiration may tempt runtime integration scope creep. | Common Pitfalls | If wrong, no impact; deferred scope remains explicit. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should Phase 7 symbols be root-exported from `mosaic` or only from `mosaic.agents`?**
-   - What we know: Existing stable agent types are exported from both `mosaic.agents` and root `mosaic`. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/src/mosaic/__init__.py]
-   - What's unclear: The phase context says update root only for stable root-level APIs, but does not list exact symbols. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-CONTEXT.md]
-   - Recommendation: Export all Phase 7 stable contracts from `mosaic.agents`; root-export only `RepresentationMemory` and core result/query enums if public API tests intentionally lock them. [ASSUMED]
+1. **RESOLVED: Should Phase 7 symbols be root-exported from `mosaic` or only from `mosaic.agents`?**
+   - Outcome: Export all Phase 7 stable contracts through `mosaic.agents`; additionally root-export only the selected stable caller-facing symbols locked by Plan 07-04: `RepresentationMemory`, `QueryFamily`, `ClaimStatus`, `EntityKind`, `EvidenceReference`, `MemoryQueryResult`, and `mark_stale_claims`. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-04-PLAN.md]
+   - Rationale: This follows the existing stable agent type pattern while avoiding a root-level dump of every implementation record. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/src/mosaic/__init__.py] [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-PATTERNS.md]
 
-2. **How granular should memory-family modules be?**
-   - What we know: The context permits exact class/module naming discretion. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-CONTEXT.md]
-   - What's unclear: Whether one `memory.py` will become too large during implementation. [ASSUMED]
-   - Recommendation: Start with one `memory.py` for plan simplicity; split only if class count becomes unreviewable. [ASSUMED]
+2. **RESOLVED: How granular should memory-family modules be?**
+   - Outcome: Start Phase 7 with a single `src/mosaic/agents/memory.py` module containing the aggregate, five memory families, records, query rows, and deterministic helpers. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-01-PLAN.md] [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-03-PLAN.md]
+   - Rationale: The user decisions require one caller-facing aggregate and first-class family contracts, not separate stores callers must compose manually. A single module keeps the Phase 7 public seam explicit; future splitting can preserve imports if implementation size later justifies it. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-CONTEXT.md]
 
-3. **Should scenario fixtures live in `mosaic.evaluation.scenarios` or only in tests?**
-   - What we know: Existing synthetic scenario helpers are in `src/mosaic/evaluation/scenarios.py`; D-20 wants evaluation-facing scenario coverage. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/src/mosaic/evaluation/scenarios.py] [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-CONTEXT.md]
-   - What's unclear: Whether Phase 7 scenario helpers are stable enough for public package export. [ASSUMED]
-   - Recommendation: Keep detailed blocked-path/search-frontier/task-allocation fixture builders private to tests initially unless they are needed by public evaluation artifacts. [ASSUMED]
+3. **RESOLVED: Should scenario fixtures live in `mosaic.evaluation.scenarios` or only in tests?**
+   - Outcome: Keep blocked-path, search-frontier, task-allocation, and ablation fixture builders private in `tests/evaluation/test_representation_scenarios.py` for Phase 7. Do not promote them to public `mosaic.evaluation.scenarios` helpers in this phase. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-05-PLAN.md]
+   - Rationale: D-20 requires evaluation-facing scenario coverage, not a new stable public scenario API. Private fixtures satisfy REPR-08 while avoiding premature public exports for synthetic ARNA-style examples. [VERIFIED: /home/prannayag/pragnition/robotics/mosaic/.planning/phases/07-representation-memories-and-tools/07-CONTEXT.md]
 
 ## Environment Availability
 

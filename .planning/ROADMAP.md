@@ -190,7 +190,24 @@ Plans:
   3. User can call a deterministic tool facade for one query in each family: perception, navigation, coordination, belief/provenance, and memory/context.
   4. User can run scenario tests for conflicting robot reports, stale claims, frontier/traversability queries, blocked-path explanations, and ARNA-style memory ablations.
 
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — Define foundational representation-memory contracts and memory-family records.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-02-PLAN.md — Add belief claims, visible conflicts, opaque evidence, and stale transitions.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-03-PLAN.md — Add aggregate representation memory, immutable update helpers, and named bounded queries.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 07-04-PLAN.md — Publish Phase 7 symbols through public API barrels.
+- [ ] 07-05-PLAN.md — Add evaluation-facing representation scenario and ablation coverage.
 
 ### Phase 8: Documentation and Release Readiness
 
