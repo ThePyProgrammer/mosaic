@@ -39,6 +39,22 @@ def test_local_radius_query_returns_splat_indices_inside_radius() -> None:
     assert result.query_kind is AgentQueryKind.LOCAL_GEOMETRY
     assert result.splat_ids == (0, 1)
     assert result.count == 2
+    assert result.total_matches == 2
+    assert result.truncated is False
+
+
+def test_local_radius_query_returns_bounded_tuple_order_results() -> None:
+    view = SplatPosteriorView(_map())
+
+    result = view.query_local(
+        LocalRadiusQuery(center=(0.0, 0.0, 0.0), radius=10.0, max_results=2)
+    )
+
+    assert result.query_kind is AgentQueryKind.LOCAL_GEOMETRY
+    assert result.splat_ids == (0, 1)
+    assert result.count == 2
+    assert result.total_matches == 3
+    assert result.truncated is True
 
 
 def test_summary_reports_count_provenance_and_mean_opacity() -> None:
@@ -53,6 +69,18 @@ def test_provenance_summary_counts_known_sources() -> None:
     provenance = SplatPosteriorView(_map()).provenance()
 
     assert provenance.counts == {"front": 2, "rear": 1}
+
+
+def test_uncertainty_returns_global_descriptive_statistics() -> None:
+    uncertainty = SplatPosteriorView(_map()).uncertainty()
+
+    assert uncertainty.semantics == "descriptive_only"
+    assert uncertainty.splat_count == 3
+    assert uncertainty.mean_covariance_diagonal == (0.2, 0.2, 0.2)
+    assert uncertainty.max_covariance_diagonal == (0.3, 0.3, 0.3)
+    assert uncertainty.mean_opacity == 0.583333
+    assert uncertainty.min_opacity == 0.25
+    assert uncertainty.max_opacity == 1.0
 
 
 def test_agent_posterior_boundary_stays_provider_free() -> None:
