@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: completed
 stopped_at: context exhaustion at 75% (2026-05-22)
-last_updated: "2026-05-22T08:01:08.862Z"
-last_activity: 2026-05-21
+last_updated: "2026-05-22T08:31:47.135Z"
+last_activity: 2026-05-22
 progress:
   total_phases: 8
   completed_phases: 8
@@ -28,7 +28,7 @@ See: /home/prannayag/pragnition/robotics/mosaic/.planning/PROJECT.md (updated 20
 Phase: 08
 Plan: Not started
 Status: Milestone complete
-Last activity: 2026-05-21
+Last activity: 2026-05-22
 
 Progress: [----------] 0%
 
@@ -112,6 +112,7 @@ None yet.
 | 2026-05-20 | extract-arxiv-tex-sources-for-papers-rep | Extracted seven main method diagrams into `research/slam-survey/diagrams/`, with CoMA-SLAM cropped from the AAAI PDF because no arXiv source was found. |
 | 2026-05-20 | formalize-slam-survey-pseudocode | Converted 12 SLAM survey algorithm blocks into concise pseudocode/equation steps with shared notation and verified Tectonic build. |
 | 2026-05-21 | replace-survey-operator-symbols | Replaced five SLAM survey responsibility symbols with snake_case text function names and verified Tectonic PDF build. |
+| 2026-05-22 | amend-slam-survey-paper-prose | Converted repeated Mechanics/Evidence-and-caveats blocks into continuous academic prose, normalized repository-footnote opening order, and verified Tectonic PDF build. |
 
 ### Blockers/Concerns
 
