@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: completed
 stopped_at: context exhaustion at 75% (2026-05-22)
-last_updated: "2026-05-22T08:31:47.135Z"
+last_updated: "2026-05-22T08:53:02.747Z"
 last_activity: 2026-05-22
 progress:
   total_phases: 8
@@ -113,6 +113,7 @@ None yet.
 | 2026-05-20 | formalize-slam-survey-pseudocode | Converted 12 SLAM survey algorithm blocks into concise pseudocode/equation steps with shared notation and verified Tectonic build. |
 | 2026-05-21 | replace-survey-operator-symbols | Replaced five SLAM survey responsibility symbols with snake_case text function names and verified Tectonic PDF build. |
 | 2026-05-22 | amend-slam-survey-paper-prose | Converted repeated Mechanics/Evidence-and-caveats blocks into continuous academic prose, normalized repository-footnote opening order, and verified Tectonic PDF build. |
+| 2026-05-22 | remove-slam-survey-project-pages | Removed HAMMER and MAGS-SLAM github.io project-page citations and BibTeX entries while preserving paper citations; verified Tectonic PDF build. |
 
 ### Blockers/Concerns
 

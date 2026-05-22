@@ -264,7 +264,7 @@ The AAAI evidence reports improved pose/rendering/geometric consistency and a $9
 \subsection{HAMMER}
 \label{sec:systems:hammer}
 
-HAMMER \citep{yu2025hammer,yu2025hammer_project} is a server-side heterogeneous semantic mapper. Robots/devices stream local SLAM poses and visual/perception outputs; the server estimates global frame alignment without prior relative poses and trains or updates a metric-semantic global Gaussian map. The distinctive output is not just geometry, but a semantic Gaussian map usable by downstream agents.
+HAMMER \citep{yu2025hammer} is a server-side heterogeneous semantic mapper. Robots/devices stream local SLAM poses and visual/perception outputs; the server estimates global frame alignment without prior relative poses and trains or updates a metric-semantic global Gaussian map. The distinctive output is not just geometry, but a semantic Gaussian map usable by downstream agents.
 
 \begin{algorithm}[H]
 \caption{HAMMER}
@@ -311,7 +311,7 @@ Extracted results include Multiagent Replica ATE around $0.25\,\mathrm{cm}$ and 
 \subsection{MAGS-SLAM}
 \label{sec:systems:mags-slam}
 
-MAGS-SLAM \citep{cao2026mags_slam,cao2026mags_slam_project} is the RGB-only outlier: each monocular agent builds Gaussian submaps from its local map, transmits compact summaries, verifies cross-agent associations with geometry and appearance, and fuses via occupancy-aware Gaussian fusion. The core problem is scale-aware collaboration without active depth.
+MAGS-SLAM \citep{cao2026mags_slam} is the RGB-only outlier: each monocular agent builds Gaussian submaps from its local map, transmits compact summaries, verifies cross-agent associations with geometry and appearance, and fuses via occupancy-aware Gaussian fusion. The core problem is scale-aware collaboration without active depth.
 
 \begin{algorithm}[H]
 \caption{MAGS-SLAM}
@@ -558,7 +558,7 @@ The main text uses compact operators to keep the system comparisons readable. Th
 \end{algorithmic}
 \end{algorithm}
 
-\Cref{alg:app-mags-monocular-tracking} is paper-level only: the available MAGS-SLAM evidence describes a monocular DROID/JDSA front end and local Gaussian-map optimization, while public implementation code was not verified in this survey pass \citep{cao2026mags_slam,cao2026mags_slam_project}.
+\Cref{alg:app-mags-monocular-tracking} is paper-level only: the available MAGS-SLAM evidence describes a monocular DROID/JDSA front end and local Gaussian-map optimization, while public implementation code was not verified in this survey pass \citep{cao2026mags_slam}.
 
 \subsection{Local Mapping and Update Selection}
 
