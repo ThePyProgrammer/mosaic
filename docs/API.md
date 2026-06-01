@@ -60,8 +60,11 @@ A `SplatMap` is the public snapshot boundary. It is not a raw dense map dump, a 
 - `DeterministicSplatBackend` is the built-in reference backend for contract tests, examples, replay validation, and benchmark smoke checks.
 - `BackendDependency`, `AvailabilityResult`, `BackendDescriptor`, `BackendRegistry`, and `default_backend_registry` are the optional backend registration and availability-check seam.
 - `assert_backend_lifecycle_contract`, `assert_backend_deterministic_replay`, `assert_backend_state_update_contract`, and `skip_unavailable_backend` are test helpers for backend implementers.
+- `MagicSlamConfig`, `MagicSlamRunner`, `MagicSlamRunResult`, `MagicSlamBackend`, `MagicReplicaExportResult`, `MagicReplicaMultiAgentExportResult`, `export_sequence_to_magic_replica`, `export_agent_sequences_to_magic_replica`, `write_magic_replica_config`, `magic_run_result_to_benchmark_artifact`, `load_magic_ply_splat_map`, and `magic_slam_backend_descriptor` provide a standard-library-only out-of-process integration shell for an external MAGiC-SLAM checkout.
 
 `DeterministicSplatBackend` is a contract/reference fixture. It is not production SLAM, not real Gaussian optimization, and not reconstruction-quality mapping.
+
+The MAGiC-SLAM integration shell does not vendor MAGiC-SLAM and does not import CUDA, PyTorch, Open3D, FAISS, or custom rasterizer packages during normal Mosaic import. It prepares single-agent and multi-agent MAGiC-style RGB-D folders, can write a conservative Replica-style MAGiC config from exported camera metadata, invokes an external `run_slam.py` process, reports known output artifacts, converts MAGiC metric JSON into `BenchmarkArtifact`, and exposes availability through the backend descriptor seam. `load_magic_ply_splat_map` provides a lossy ASCII and binary-little-endian PLY conversion path from MAGiC Gaussian outputs to Mosaic `SplatMap`. MAGiC remains batch/session-oriented; the Mosaic shell does not claim frame-by-frame `process(...)` execution.
 
 ## Platforms
 
