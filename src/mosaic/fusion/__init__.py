@@ -8,8 +8,10 @@ from mosaic.fusion.protocol import (
     SplatFusionStrategy,
 )
 from mosaic.fusion.strategies import ProvenancePreservingFusion
+from mosaic.fusion.transforms import COVARIANCE_TRANSFORM_MODEL, transform_splat_map
 
 __all__ = [
+    "COVARIANCE_TRANSFORM_MODEL",
     "FusionConflictSummary",
     "FusionInput",
     "FusionProvenanceSummary",
@@ -18,4 +20,5 @@ __all__ = [
     "FusionUncertaintySummary",
     "ProvenancePreservingFusion",
     "SplatFusionStrategy",
+    "transform_splat_map",
 ]
