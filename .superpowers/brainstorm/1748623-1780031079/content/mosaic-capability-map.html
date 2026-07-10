@@ -1,0 +1,51 @@
+<h2>Mosaic placeholder systems map</h2>
+<p class="subtitle">The current demo proves the typed pipeline. These placeholders would make it feel like a full robotics mapping system without adding real CUDA, ROS, or LLM dependencies yet.</p>
+
+<div class="section">
+  <div class="mockup">
+    <div class="mockup-header">Current demo path</div>
+    <div class="mockup-body">
+      <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 12px; align-items: stretch;">
+        <div class="placeholder">Synthetic<br>camera frames</div>
+        <div class="placeholder">Deterministic<br>backend</div>
+        <div class="placeholder">Splat map<br>snapshot</div>
+        <div class="placeholder">Benchmark +<br>fusion</div>
+        <div class="placeholder">Agent-style<br>queries</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Placeholder layers that could complete the story</h3>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="dataset" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Dataset Adapter Placeholder</h3>
+        <p>Pretends to load real robot logs by converting simple files into Mosaic camera observations.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="backend" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Realistic Backend Placeholder</h3>
+        <p>Behaves like a real 3DGS SLAM backend: initialization, tracking loss, map growth, uncertainty, and diagnostics.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="visualizer" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Visualization Placeholder</h3>
+        <p>Exports maps and benchmark results to simple HTML/JSON/CSV so a layman can see the pipeline output.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="agent" onclick="toggleSelect(this)">
+      <div class="letter">D</div>
+      <div class="content">
+        <h3>Agent Tool Placeholder</h3>
+        <p>Simulates an agent asking bounded questions: what is nearby, what is uncertain, and which evidence supports the answer.</p>
+      </div>
+    </div>
+  </div>
+</div>

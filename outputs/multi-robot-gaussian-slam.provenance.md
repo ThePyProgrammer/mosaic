@@ -1,0 +1,24 @@
+# Provenance: Multi-Robot Online Gaussian SLAM
+
+- **Date:** 2026-05-19
+- **Rounds:** 2 researcher rounds: one broad four-researcher round plus one targeted follow-up round for code/architecture contradictions.
+- **Sources consulted:** 90+ unique URLs across researcher reports, follow-up reports, repository inspections, project pages, arXiv/CVF/AAAI/DBLP records, and dataset pages.
+- **Sources accepted:** 21 final cited sources in `outputs/multi-robot-gaussian-slam.md`.
+- **Sources rejected or downgraded:**
+  - HAMMER implementation code link: downgraded because project page says code is coming and no public repository was found.
+  - MAGS-SLAM implementation: downgraded because only website/project page is public and code/data are promised after acceptance.
+  - GRAND-SLAM implementation: downgraded because no credible public code repository was found.
+  - MANG-SLAM: downgraded to low-confidence bibliographic lead because only DBLP/DOI evidence was accessible.
+  - RobotFlow-Labs/project_slam_coko: downgraded to scaffold because its README marks core runtime and loop closure incomplete.
+  - Elonian/MultiAgent-GauassianSplat-SLAM: downgraded to unofficial adjacent code artifact because no paper provenance was found.
+- **Verification:** PASS WITH NOTES — core candidate URLs were live-checked with WebFetch; code/license and architecture claims were cross-checked by specialized researcher reports. Remaining caveats are licensing gaps, inaccessible/private/not-yet-released code, and sparse communication/runtime evidence for most systems.
+- **Plan:** `outputs/.plans/multi-robot-gaussian-slam.md`
+- **Draft:** `outputs/.drafts/multi-robot-gaussian-slam-draft.md`
+- **Final report:** `outputs/multi-robot-gaussian-slam.md`
+- **Research files:**
+  - `outputs/multi-robot-gaussian-slam-research-papers.md`
+  - `outputs/multi-robot-gaussian-slam-research-code.md`
+  - `outputs/multi-robot-gaussian-slam-research-fusion.md`
+  - `outputs/multi-robot-gaussian-slam-research-benchmarks.md`
+  - `outputs/multi-robot-gaussian-slam-research-followup-code.md`
+  - `outputs/multi-robot-gaussian-slam-research-followup-architecture.md`

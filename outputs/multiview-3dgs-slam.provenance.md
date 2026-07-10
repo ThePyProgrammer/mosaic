@@ -1,0 +1,22 @@
+# Provenance: Open-source multi-view moving-camera online 3D Gaussian Splatting SLAM implementations
+
+- **Date:** 2026-05-18
+- **Rounds:** 2 research rounds: one broad four-agent survey, one targeted two-agent follow-up for AgriGS-SLAM and source/license corrections
+- **Sources consulted:** 140 unique URLs across intermediate research files
+- **Sources accepted:** 21 final cited sources in `outputs/multiview-3dgs-slam.md`; core final sources were directly checked with `WebFetch` during final verification
+- **Sources rejected or downgraded:**
+  - `https://github.com/cvg/vigs-slam` — linked from VIGS-SLAM project page but returned 404 during verification; cited only as inaccessible via the corrections report, not as available code
+  - GS-SLAM full implementation claim — downgraded because only project page plus modified rasterizer code were verified
+  - AgriGS-SLAM exact per-sequence benchmark table values — downgraded because PDF text extraction was unreliable; only cleanly extracted ablation averages are quoted
+  - Newer 2025-2026 systems with promised or inaccessible code — excluded from main open-source implementation table or labeled as unverified in intermediate research
+- **Verification:** PASS WITH NOTES — final artifacts exist; primary final URLs were checked; remaining caveats are explicitly labeled in the report
+- **Plan:** `outputs/.plans/multiview-3dgs-slam.md`
+- **Draft:** `outputs/.drafts/multiview-3dgs-slam-draft.md`
+- **Final report:** `outputs/multiview-3dgs-slam.md`
+- **Research files:**
+  - `outputs/multiview-3dgs-slam-research-papers.md`
+  - `outputs/multiview-3dgs-slam-research-code.md`
+  - `outputs/multiview-3dgs-slam-research-multicamera.md`
+  - `outputs/multiview-3dgs-slam-research-benchmarks.md`
+  - `outputs/multiview-3dgs-slam-research-agrigs-followup.md`
+  - `outputs/multiview-3dgs-slam-research-corrections.md`

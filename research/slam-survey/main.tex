@@ -31,19 +31,29 @@
   methodarrow/.style={->, thick}
 }
 
-\title{Collaborative Gaussian SLAM for Multi-Robot Mapping: A Survey of Online Local-to-Global Systems}
+\title{World Representation Models for Collaborative Gaussian SLAM in Multi-Robot Mapping}
 
 \author[1]{Prannaya Gupta}
 \affil[1]{Pragnition Labs}
 
-\date{May 2026}
+\date{}
 
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 \newcommand{\targetclass}{multi-robot online Gaussian SLAM}
 \newcommand{\systemname}[1]{\textsc{#1}}
 
 \begin{abstract}
-Multi-robot Gaussian SLAM has emerged as a narrow but important variant of 3D Gaussian Splatting research: multiple independently moving robots or agents incrementally estimate local motion and local map state, then apply global alignment and global fusion to observations, local maps, Gaussian submaps, keyframes, or Gaussian primitives to form a global Gaussian or Gaussian-like map. This survey examines seven current systems: public or partly public implementation candidates MAGiC-SLAM, MAC-Ego3D, CoKo-SLAM, and CoMA-SLAM; and paper-only or not-yet-auditable systems HAMMER, GRAND-SLAM, and MAGS-SLAM. The main finding is architectural rather than leaderboard-based. Current systems are organized by fusion pattern---central-server global fusion, distributed Gaussian consensus, submap-plus-pose-graph consistency, monocular compact-submap fusion, and heterogeneous semantic global mapping---while benchmark evidence remains uneven. Accuracy and rendering metrics are commonly reported on Replica-derived multi-agent benchmarks, but communication, memory, merge latency, and scaling evidence are still sparse and not directly comparable across papers.
+Multi-robot Gaussian SLAM involves multiple independently moving robots or agents incrementally
+estimating local motion and local map state, then applying global alignment and global fusion to
+observations, local maps, Gaussian submaps, keyframes, or Gaussian primitives to form a global
+Gaussian or Gaussian-like map. This paper examines a 
+
+
+The main 
+finding is architectural rather than leaderboard-based. Current systems are organized by 
+fusion pattern---central-server global fusion, distributed Gaussian consensus, 
+submap-plus-pose-graph consistency, monocular compact-submap fusion, and heterogeneous 
+semantic global mapping---while benchmark evidence remains uneven.
 \end{abstract}
 
 \begin{document}

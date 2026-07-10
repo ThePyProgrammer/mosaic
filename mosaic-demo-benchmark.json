@@ -1,0 +1,82 @@
+{
+  "backend_metadata": {
+    "name": "deterministic-splat",
+    "parameter_deterministic": true,
+    "runs_out_of_process": false,
+    "supports_incremental_mapping": true,
+    "supports_multi_view": true,
+    "supports_uncertainty": false
+  },
+  "backend_name": "deterministic-splat",
+  "diagnostics": {
+    "last_splat_count": 5,
+    "metric_lost_tracking_count": 0.0,
+    "metric_not_initialized_tracking_count": 0.0,
+    "metric_splat_count": 5.0,
+    "metric_update_count": 5.0,
+    "snapshot_splat_count": 5
+  },
+  "failure_classification": "none",
+  "gate_results": [],
+  "metrics": [
+    {
+      "family": "lifecycle",
+      "name": "update_count",
+      "unit": "count",
+      "value": 5.0
+    },
+    {
+      "family": "lifecycle",
+      "name": "tracking_success_rate",
+      "unit": "ratio",
+      "value": 1.0
+    },
+    {
+      "family": "lifecycle",
+      "name": "lost_tracking_count",
+      "unit": "count",
+      "value": 0.0
+    },
+    {
+      "family": "lifecycle",
+      "name": "not_initialized_tracking_count",
+      "unit": "count",
+      "value": 0.0
+    },
+    {
+      "family": "lifecycle",
+      "name": "splat_count",
+      "unit": "splats",
+      "value": 5.0
+    },
+    {
+      "family": "map_quality",
+      "name": "map_splat_count",
+      "unit": "splats",
+      "value": 5.0
+    },
+    {
+      "family": "map_quality",
+      "name": "map_frame_match",
+      "unit": "flag",
+      "value": 1.0
+    },
+    {
+      "family": "map_quality",
+      "name": "map_provenance_source_count",
+      "unit": "count",
+      "value": 1.0
+    }
+  ],
+  "scenario_name": "synthetic-forward-5",
+  "scenario_summary": {
+    "camera_ids": [
+      "front"
+    ],
+    "expected_map_frame": "map",
+    "frame_count": 5,
+    "name": "synthetic-forward-5",
+    "update_count": 5
+  },
+  "update_count": 5
+}
